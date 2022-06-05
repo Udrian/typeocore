@@ -7,10 +7,15 @@
     <Company>Typedeaf</Company>
     <Product>TypeO</Product>
     <PreserveCompilationContext>false</PreserveCompilationContext>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="System.Drawing.Common" Version="6.0.0" />
   </ItemGroup>
+
+  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+    <Exec Command="cmd /c &quot;$(ProjectDir)../typer/dependency.py -p $(ProjectDir)../&quot;" />
+  </Target>
 
 </Project>
