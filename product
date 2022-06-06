@@ -1,7 +1,7 @@
 {
     "name": "TypeOCore",
     "version": "0.1.0",
-    "externals": ["System.Drawing.Common.dll"],
+    "externals": ["MathNet.Numerics.dll"],
     "dependencies": [],
     "type" : "Module"
 }

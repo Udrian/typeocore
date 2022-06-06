@@ -4,33 +4,40 @@
     {
         public class Matrix
         {
-            private readonly System.Drawing.Drawing2D.Matrix _matrix;
+            private readonly MathNet.Numerics.LinearAlgebra.Double.DenseMatrix _matrix;
 
             public Matrix()
             {
-                _matrix = new System.Drawing.Drawing2D.Matrix();
+                // Create a identity matrix
+                _matrix = MathNet.Numerics.LinearAlgebra.Double.DenseMatrix.CreateIdentity(3);
             }
 
             public Vec2 Translation {
-                get { return new Vec2(_matrix.OffsetX, _matrix.OffsetY); }
+                get { return new Vec2(_matrix[0, 2], _matrix[1, 2]); }
                 set { Translate(value - Translation); }
             }
 
             public void Translate(double translateX, double translateY)
             {
-                _matrix.Translate((float)translateX, (float)translateY);
+                // TODO: Need to fix so that we actually use the matrix
+                _matrix[0, 2] += translateX;
+                _matrix[1, 2] += translateY;
             }
 
             public void Translate(Vec2 translate)
             {
                 Translate(translate.X, translate.Y);
             }
+            public Vec2 Transform(double transformX, double transformY)
+            {
+                var translateVec = MathNet.Numerics.LinearAlgebra.Double.DenseVector.OfArray(new double[] { transformX, transformY, 1 });
+                var result = _matrix.Multiply(translateVec);
+                return new Vec2(result[0], result[1]);
+            }
 
             public Vec2 Transform(Vec2 transform)
             {
-                var points = new System.Drawing.PointF[] { new System.Drawing.PointF((float)transform.X, (float)transform.Y) };
-                _matrix.TransformPoints(points);
-                return new Vec2(points[0].X, points[0].Y);
+                return Transform(transform.X, transform.Y);
             }
         }
     }
