@@ -1,0 +1,11 @@
+-Naming
+--Module name
+TypeO[Module].dll
+--Base namespace
+TypeOEngine.[Company].[Module]
+--Pascal Case
+Always use Pascal Case on Folders, Namespaces and Classes
+--Structure
+Folders Should have the same structures as the namespaces
+--Interfaces
+Interfaces should always be in Interfaces folder
