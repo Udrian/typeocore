@@ -2,6 +2,8 @@
     "name": "TypeOCore",
     "version": "0.1.0",
     "externals": ["MathNet.Numerics.dll"],
-    "dependencies": [],
+    "dependencies": [
+        "TypeDCore-0.1.0;dev"
+    ],
     "type" : "Module"
 }
