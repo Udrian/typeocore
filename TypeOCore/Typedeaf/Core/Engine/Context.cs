@@ -60,11 +60,9 @@ namespace TypeOEngine.Typedeaf.Core
 
                 if(Logger == null)
                 {
-                    Logger = new DefaultLogger
-                    {
-                        LogLevel = LogLevel.None
-                    };
+                    TypeO.SetLogger();
                 }
+
                 //We need to set Context here before so that the logger works in InitializeObject
                 (Logger as IHasContext)?.SetContext(this);
                 InitializeObject(Logger);

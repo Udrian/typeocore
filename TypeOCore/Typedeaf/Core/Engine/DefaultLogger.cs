@@ -10,6 +10,9 @@ namespace TypeOEngine.Typedeaf.Core
 {
     namespace Engine
     {
+        /// <summary>
+        /// Default Logger instance, will write to System.Console.WriteLine and System.Diagnostics.Debug.WriteLine. If SaveLogs option is set to True, then will also write to file on disk.
+        /// </summary>
         public class DefaultLogger : ILogger, IHasContext
         {
             private static readonly Mutex FileAccessMutex = new Mutex();
@@ -17,9 +20,9 @@ namespace TypeOEngine.Typedeaf.Core
             Context IHasContext.Context { get; set; }
             private Context Context { get => (this as IHasContext).Context; set => (this as IHasContext).Context = value; }
 
-            public bool LogToDisk { get; set; }
-            public string LogPath { get; set; }
-            public LogLevel LogLevel { get; set; }
+            private bool SaveLogs { get; set; }
+            private string LogPath { get; set; }
+            private LogLevel LogLevel { get; set; }
 
             private List<string> Logs { get; set; }
 
@@ -27,11 +30,26 @@ namespace TypeOEngine.Typedeaf.Core
             private double TimeToLog { get; set; } = 0;
             private double TimerToLog { get; set; } = 1;
 
+            /// <summary>
+            /// Do not instanciate, instead set through TypeO Context object by using SetLogger.
+            /// </summary>
             public DefaultLogger()
             {
                 Logs = new List<string>();
             }
+            
+            /// <inheritdoc/>
+            public void SetOption(ILoggerOption option)
+            {
+                LogLevel = option.LogLevel;
+                if(option is DefaultLoggerOption defaultLoggerOption)
+                {
+                    SaveLogs = defaultLoggerOption.SaveLogs;
+                    LogPath = defaultLoggerOption.LogPath;
+                }
+            }
 
+            /// <inheritdoc/>
             public async void Log(LogLevel level, string log)
             {
                 if(LogLevel == LogLevel.None) return;
@@ -76,7 +94,7 @@ namespace TypeOEngine.Typedeaf.Core
 
                 Console.ForegroundColor = defaultColor;
 
-                if(LogToDisk)
+                if(SaveLogs)
                 {
                     var now = DateTime.UtcNow;
                     TimeToLog += (now - LastTick).TotalSeconds;

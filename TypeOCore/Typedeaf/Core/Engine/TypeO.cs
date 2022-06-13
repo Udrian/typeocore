@@ -55,19 +55,13 @@ namespace TypeOEngine.Typedeaf.Core
 
             public ITypeO SetLogger(LogLevel logLevel = LogLevel.None)
             {
-                Context.Logger = new DefaultLogger()
-                {
-                    LogLevel = logLevel
-                };
-                return this;
+                return SetLogger<DefaultLogger>(new DefaultLoggerOption() { LogLevel = logLevel});
             }
 
-            public ITypeO SetLogger<L>(LogLevel logLevel = LogLevel.None) where L : ILogger, new()
+            public ITypeO SetLogger<L>(ILoggerOption option) where L : ILogger, new()
             {
-                Context.Logger = new L
-                {
-                    LogLevel = logLevel
-                };
+                Context.Logger = new L();
+                Context.Logger.SetOption(option);
                 return this;
             }
 
