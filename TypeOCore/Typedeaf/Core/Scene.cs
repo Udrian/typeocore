@@ -1,6 +1,7 @@
 ﻿using TypeOEngine.Typedeaf.Core.Engine;
 using TypeOEngine.Typedeaf.Core.Engine.Contents;
 using TypeOEngine.Typedeaf.Core.Engine.Graphics;
+using TypeOEngine.Typedeaf.Core.Engine.Graphics.Interfaces;
 using TypeOEngine.Typedeaf.Core.Engine.Interfaces;
 using TypeOEngine.Typedeaf.Core.Entities.Drawables;
 using TypeOEngine.Typedeaf.Core.Entities.Interfaces;
@@ -13,7 +14,7 @@ namespace TypeOEngine.Typedeaf.Core
         private Context Context { get => (this as IHasContext).Context; set => (this as IHasContext).Context = value; }
 
         public SceneList Scenes { get; set; }
-        public Window Window { get; set; }
+        public IWindow Window { get; set; }
         public Canvas Canvas { get; set; }
         public ContentLoader ContentLoader { get; set; }
         public EntityList Entities { get; set; } //TODO: Look over this

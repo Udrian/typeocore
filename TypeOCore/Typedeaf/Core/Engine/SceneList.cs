@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using TypeOEngine.Typedeaf.Core.Engine.Contents;
 using TypeOEngine.Typedeaf.Core.Engine.Graphics;
+using TypeOEngine.Typedeaf.Core.Engine.Graphics.Interfaces;
 using TypeOEngine.Typedeaf.Core.Engine.Interfaces;
 
 namespace TypeOEngine.Typedeaf.Core.Engine
@@ -14,7 +15,7 @@ namespace TypeOEngine.Typedeaf.Core.Engine
 
         private Dictionary<Type, Scene> Scenes { get; set; }
         public Scene CurrentScene { get; private set; }
-        public Window Window { get; set; }
+        public IWindow Window { get; set; }
         public Canvas Canvas { get; set; }
         public ContentLoader ContentLoader { get; set; }
 
@@ -25,7 +26,8 @@ namespace TypeOEngine.Typedeaf.Core.Engine
 
         public void Cleanup()
         {
-            Window?.Cleanup();
+            if(Window is TypeObject typeObject)
+                typeObject?.DoCleanup();
             Canvas?.Cleanup();
             //TODO: Cleanup all scenes?
         }

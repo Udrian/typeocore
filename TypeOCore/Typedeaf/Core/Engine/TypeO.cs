@@ -76,7 +76,7 @@ namespace TypeOEngine.Typedeaf.Core
                     module.GetType().GetProperty("Option").SetValue(module, option);
                 }
 
-                module.GetType().GetProperty("TypeO").SetValue(module, this);
+                //module.GetType().GetProperty("TypeO").SetValue(module, this);
                 module.GetType().GetProperty("WillLoadExtensions").SetValue(module, loadExtensions);
 
                 Context.Modules.Add(module);

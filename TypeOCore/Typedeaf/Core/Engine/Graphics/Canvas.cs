@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using TypeOEngine.Typedeaf.Core.Common;
 using TypeOEngine.Typedeaf.Core.Engine.Contents;
+using TypeOEngine.Typedeaf.Core.Engine.Graphics.Interfaces;
 using TypeOEngine.Typedeaf.Core.Entities;
 
 namespace TypeOEngine.Typedeaf.Core
@@ -9,7 +10,7 @@ namespace TypeOEngine.Typedeaf.Core
     {
         public abstract class Canvas
         {
-            public Window Window { get; set; }
+            public IWindow Window { get; set; }
             public abstract Rectangle Viewport { get; set; }
             public Matrix WorldMatrix { get; private set; }
 

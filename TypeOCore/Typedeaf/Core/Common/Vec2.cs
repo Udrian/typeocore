@@ -9,6 +9,8 @@ namespace TypeOEngine.Typedeaf.Core
             public double X { get; set; }
             public double Y { get; set; }
 
+            public static explicit operator Vec2i(Vec2 v) => new Vec2i((int)v.X, (int)v.Y);
+
             public Vec2(double xy)
             {
                 X = xy;
@@ -22,6 +24,12 @@ namespace TypeOEngine.Typedeaf.Core
             }
 
             public Vec2(Vec2 vec)
+            {
+                X = vec.X;
+                Y = vec.Y;
+            }
+
+            public Vec2(Vec2i vec)
             {
                 X = vec.X;
                 Y = vec.Y;

@@ -4,9 +4,9 @@
     {
         public interface IHasContext
         {
-            public Context Context { get; set; }
+            public Context Context { get; internal set; }
 
-            public void SetContext(Context context)
+            internal void SetContext(Context context)
             {
                 Context = context;
             }

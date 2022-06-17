@@ -16,17 +16,17 @@ namespace TypeOEngine.Typedeaf.Core
     {
         public class Context
         {
-            public string Name { get; private set; }
-            public Game Game { get; private set; }
-            public TypeO TypeO { get; private set; }
-            public TimeSpan TimeSinceStart { get; private set; }
-            public DateTime StartTime { get; private set; }
-            public DateTime LastTick { get; private set; }
-            public List<Module> Modules { get; set; }
-            public Dictionary<Type, Hardware> Hardwares { get; set; }
-            public Dictionary<Type, Dictionary<string, Service>> Services { get; set; }
-            public Dictionary<Type, Type> ContentBinding { get; set; }
-            public ILogger Logger { get; set; }
+            public string Name { get; internal set; }
+            public Game Game { get; internal set; }
+            public TypeO TypeO { get; internal set; }
+            public TimeSpan TimeSinceStart { get; internal set; }
+            public DateTime StartTime { get; internal set; }
+            public DateTime LastTick { get; internal set; }
+            public List<Module> Modules { get; internal set; }
+            public Dictionary<Type, Hardware> Hardwares { get; internal set; }
+            public Dictionary<Type, Dictionary<string, Service>> Services { get; internal set; }
+            public Dictionary<Type, Type> ContentBinding { get; internal set; }
+            public ILogger Logger { get; internal set; }
 
             internal Context(Game game, TypeO typeO, string name) : base()
             {
@@ -54,7 +54,7 @@ namespace TypeOEngine.Typedeaf.Core
                 {
                     if(module.WillLoadExtensions)
                     {
-                        module.LoadExtensions();
+                        module.DoLoadExtensions(TypeO);
                     }
                 }
 
@@ -85,7 +85,7 @@ namespace TypeOEngine.Typedeaf.Core
                     {
                         var service = servicePair.Value;
                         InitializeObject(service);
-                        service.Initialize();
+                        service.DoInitialize();
 
                         Logger.Log($"Service of type '{service.GetType().FullName}' loaded");
                     }
@@ -95,7 +95,7 @@ namespace TypeOEngine.Typedeaf.Core
                 foreach(var module in Modules)
                 {
                     InitializeObject(module);
-                    module.Initialize();
+                    module.DoInitialize();
 
                     Logger.Log($"Module of type '{module.GetType().FullName}' loaded");
                 }
@@ -160,7 +160,7 @@ namespace TypeOEngine.Typedeaf.Core
                 {
                     foreach(var servicePair in serviceIdPair.Value)
                     {
-                        servicePair.Value.Cleanup();
+                        servicePair.Value.DoCleanup();
                     }
                 }
 
@@ -171,7 +171,7 @@ namespace TypeOEngine.Typedeaf.Core
 
                 foreach(var module in Modules)
                 {
-                    module.Cleanup();
+                    module.DoCleanup();
                 }
 
                 Logger.Log("Bye bye\n\r\n\r");
