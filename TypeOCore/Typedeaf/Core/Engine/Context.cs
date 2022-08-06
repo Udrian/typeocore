@@ -258,11 +258,18 @@ namespace TypeOEngine.Typedeaf.Core
                     Logger.Log(LogLevel.Ludacris, $"Creating EntityList in {obj.GetType().FullName}");
                     InitializeObject(hasEntities.Entities, obj);
                 }
+
+                if (obj is TypeObject typeObject)
+                {
+                    Logger.Log(LogLevel.Debug, $"´Calling Initialize on '{obj.GetType().FullName}'" + (from != null ? $" from '{from.GetType().FullName}'" : ""));
+                    typeObject.DoInitialize();
+                }
             }
 
             private void SetHardwares(object obj)
             {
                 var type = obj.GetType();
+                //TODO: Should set hardware from a attribute
                 var properties = type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
                 foreach(var property in properties)
                 {
@@ -285,6 +292,7 @@ namespace TypeOEngine.Typedeaf.Core
             private void SetServices(object obj)
             {
                 var type = obj.GetType();
+                //TODO: Should set Service from a attribute
                 var properties = type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
                 foreach(var property in properties)
                 {
@@ -308,7 +316,7 @@ namespace TypeOEngine.Typedeaf.Core
                         throw new InvalidOperationException(message);
                     }
 
-                    Logger.Log(LogLevel.Ludacris, $"Service '{Services[property.PropertyType].GetType().FullName}' injected to property '{property.Name}' on object '{obj.GetType().FullName}'");
+                    Logger.Log(LogLevel.Ludacris, $"Service '{Services[property.PropertyType][serviceId.Id].GetType().FullName}' injected to property '{property.Name}' on object '{obj.GetType().FullName}'");
                     property.SetValue(obj, Services[property.PropertyType][serviceId.Id]);
                 }
             }

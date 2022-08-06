@@ -84,18 +84,6 @@ namespace TypeOEngine.Typedeaf.Core
                 HasEntities.Process();
             }
 
-            public Entity Create(Type type, Vec2? position, Vec2? scale = null, double rotation = 0, Vec2? origin = null, bool pushToUpdateLoop = true, bool pushToDrawStack = true) //TODO: Split out
-            {
-                var entity = Create(type, pushToUpdateLoop, pushToDrawStack) as Entity2d;
-
-                entity.Position = position ?? entity.Position;
-                entity.Scale = scale ?? entity.Scale;
-                entity.Rotation = rotation;
-                entity.Origin = origin ?? entity.Origin;
-
-                return entity;
-            }
-
             public Entity Create(Type type, bool pushToUpdateLoop = true, bool pushToDrawStack = true) //TODO: Split out, Should be able to push automatically to draw stack and update stack
             {
                 var entity = Activator.CreateInstance(type) as Entity;
@@ -108,18 +96,6 @@ namespace TypeOEngine.Typedeaf.Core
                 };
 
                 return Create(entity, pushToUpdateLoop, pushToDrawStack);
-            }
-
-            public E Create<E>(Vec2? position, Vec2? scale = null, double rotation = 0, Vec2? origin = null, bool pushToUpdateLoop = true, bool pushToDrawStack = true) where E : Entity2d, new() //TODO: Split out
-            {
-                var entity = Create<E>(pushToUpdateLoop, pushToDrawStack) as Entity2d;
-
-                entity.Position = position ?? entity.Position;
-                entity.Scale = scale ?? entity.Scale;
-                entity.Rotation = rotation;
-                entity.Origin = origin ?? entity.Origin;
-
-                return entity as E;
             }
 
             public E Create<E>(bool pushToUpdateLoop = true, bool pushToDrawStack = true) where E : Entity, new() //TODO: Split out, Should be able to push automatically to draw stack and update stack

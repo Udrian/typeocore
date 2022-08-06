@@ -12,6 +12,12 @@ namespace TypeOEngine.Typedeaf.Core
             public int G { get; set; }
             public int B { get; set; }
 
+            //TODO: This is not super optimal, should maybe create a ColorF class
+            public float Af { get { return A / 255f; } set { A = (int)(value * 255); } }
+            public float Rf { get { return R / 255f; } set { R = (int)(value * 255); } }
+            public float Gf { get { return G / 255f; } set { G = (int)(value * 255); } }
+            public float Bf { get { return B / 255f; } set { B = (int)(value * 255); } }
+
             public Color(int a, int r, int g, int b)
             {
                 A = a;
