@@ -4,9 +4,8 @@ using TypeOEngine.Typedeaf.Core.Engine.Graphics.Interfaces;
 
 namespace TypeOEngine.Typedeaf.Core.Engine.Graphics
 {
-
     /// <inheritdoc/>
-    public class Canvas : ICanvas
+    public abstract class Canvas : ICanvas
     {
         /// <inheritdoc/>
         public IWindow Window { get; set; }
@@ -29,15 +28,9 @@ namespace TypeOEngine.Typedeaf.Core.Engine.Graphics
         }
 
         /// <inheritdoc/>
-        public virtual void Clear(Color clearColor)
-        {
-            throw new NotImplementedException();
-        }
+        public abstract void Clear(Color clearColor);
 
         /// <inheritdoc/>
-        public virtual void Present()
-        {
-            throw new NotImplementedException();
-        }
+        public abstract void Present();
     }
 }
