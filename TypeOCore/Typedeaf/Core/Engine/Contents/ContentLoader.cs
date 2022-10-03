@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using TypeOEngine.Typedeaf.Core.Engine.Graphics;
+using TypeOEngine.Typedeaf.Core.Engine.Graphics.Interfaces;
 using TypeOEngine.Typedeaf.Core.Engine.Interfaces;
 
 namespace TypeOEngine.Typedeaf.Core
@@ -15,10 +15,10 @@ namespace TypeOEngine.Typedeaf.Core
             protected ILogger Logger { get; set; }
 
             public string BasePath { get; set; }
-            public Canvas Canvas { get; private set; }
+            public ICanvas Canvas { get; private set; }
             protected Dictionary<Type, Type> ContentBinding { get; private set; }
 
-            protected ContentLoader(Canvas canvas, Dictionary<Type, Type> contentBinding)
+            protected ContentLoader(ICanvas canvas, Dictionary<Type, Type> contentBinding)
             {
                 Canvas = canvas;
                 ContentBinding = contentBinding;

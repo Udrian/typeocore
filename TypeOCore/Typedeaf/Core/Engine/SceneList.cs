@@ -15,7 +15,7 @@ namespace TypeOEngine.Typedeaf.Core.Engine
         private Dictionary<Type, Scene> Scenes { get; set; }
         public Scene CurrentScene { get; private set; }
         public IWindow Window { get; set; }
-        public Canvas Canvas { get; set; }
+        public ICanvas Canvas { get; set; }
         public ContentLoader ContentLoader { get; set; }
 
         internal SceneList()
@@ -27,7 +27,7 @@ namespace TypeOEngine.Typedeaf.Core.Engine
         {
             if(Window is TypeObject typeObject)
                 typeObject?.DoCleanup();
-            Canvas?.Cleanup();
+            //Canvas?.Cleanup();
             //TODO: Cleanup all scenes?
         }
 

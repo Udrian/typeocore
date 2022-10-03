@@ -15,7 +15,7 @@ namespace TypeOEngine.Typedeaf.Core
 
         public SceneList Scenes { get; set; }
         public IWindow Window { get; set; }
-        public Canvas Canvas { get; set; }
+        public ICanvas Canvas { get; set; }
         public ContentLoader ContentLoader { get; set; }
         public EntityList Entities { get; set; } //TODO: Look over this
         public DrawStack DrawStack { get; private set; } //TODO: Should be able to create draw stack from Game maybe?

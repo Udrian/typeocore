@@ -1,5 +1,5 @@
 ﻿using TypeOEngine.Typedeaf.Core.Collections;
-using TypeOEngine.Typedeaf.Core.Engine.Graphics;
+using TypeOEngine.Typedeaf.Core.Engine.Graphics.Interfaces;
 using TypeOEngine.Typedeaf.Core.Entities.Interfaces;
 
 namespace TypeOEngine.Typedeaf.Core
@@ -15,7 +15,7 @@ namespace TypeOEngine.Typedeaf.Core
                 Drawables = new SortedDelayedList<IDrawable>();
             }
 
-            public void Draw(Canvas canvas)
+            public void Draw(ICanvas canvas)
             {
                 var needSort = false;
                 var lastDraworder = int.MinValue;

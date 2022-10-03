@@ -1,4 +1,4 @@
-﻿using TypeOEngine.Typedeaf.Core.Engine.Graphics;
+﻿using TypeOEngine.Typedeaf.Core.Engine.Graphics.Interfaces;
 using TypeOEngine.Typedeaf.Core.Entities.Interfaces;
 
 namespace TypeOEngine.Typedeaf.Core
@@ -15,7 +15,7 @@ namespace TypeOEngine.Typedeaf.Core
 
             public abstract void Initialize();
             public abstract void Cleanup();
-            public abstract void Draw(Canvas canvas);
+            public abstract void Draw(ICanvas canvas);
         }
     }
 }

@@ -1,44 +1,43 @@
-﻿using System.Collections.Generic;
+﻿using System;
 using TypeOEngine.Typedeaf.Core.Common;
-using TypeOEngine.Typedeaf.Core.Engine.Contents;
 using TypeOEngine.Typedeaf.Core.Engine.Graphics.Interfaces;
-using TypeOEngine.Typedeaf.Core.Entities;
 
-namespace TypeOEngine.Typedeaf.Core
+namespace TypeOEngine.Typedeaf.Core.Engine.Graphics
 {
-    namespace Engine.Graphics
+
+    /// <inheritdoc/>
+    public class Canvas : ICanvas
     {
-        public abstract class Canvas
+        /// <inheritdoc/>
+        public IWindow Window { get; set; }
+        /// <inheritdoc/>
+        public Rectangle Viewport { get; set; }
+        /// <inheritdoc/>
+        public Matrix WorldMatrix { get; set; }
+
+        /// <summary>
+        /// Canvas constructor.
+        /// </summary>
+        /// <param name="window">Window that the Canvas is attached to</param>
+        /// <param name="viewport">Canvas viewport</param>
+        /// <param name="worldMatrix">Canvas World Matrix</param>
+        public Canvas(IWindow window, Rectangle viewport, Matrix worldMatrix)
         {
-            public IWindow Window { get; set; }
-            public abstract Rectangle Viewport { get; set; }
-            public Matrix WorldMatrix { get; private set; }
+            Window = window;
+            Viewport = viewport;
+            WorldMatrix = worldMatrix;
+        }
 
-            protected Canvas()
-            {
-                WorldMatrix = new Matrix();
-            }
+        /// <inheritdoc/>
+        public virtual void Clear(Color clearColor)
+        {
+            throw new NotImplementedException();
+        }
 
-            public abstract void Initialize();
-            public abstract void Cleanup();
-
-            public abstract void Clear(Color clearColor);
-            public abstract void DrawLine(Vec2 from, Vec2 size, Color color, IAnchor2d anchor = null);
-            public abstract void DrawLineE(Vec2 from, Vec2 to, Color color, IAnchor2d anchor = null);
-            public abstract void DrawLines(List<Vec2> points, Color color, IAnchor2d anchor = null);
-            public abstract void DrawPixel(Vec2 point, Color color, IAnchor2d anchor = null);
-            public abstract void DrawPixels(List<Vec2> points, Color color, IAnchor2d anchor = null);
-            public abstract void DrawRectangle(Rectangle rectangle, bool filled, Color color, IAnchor2d anchor = null);
-            public abstract void DrawRectangle(Vec2 from, Vec2 size, bool filled, Color color, IAnchor2d anchor = null);
-            public abstract void DrawRectangleE(Vec2 from, Vec2 to, bool filled, Color color, IAnchor2d anchor = null);
-
-            public abstract void DrawImage(Texture texture, Vec2 pos, IAnchor2d anchor = null);
-            public abstract void DrawImage(Texture texture, Vec2 pos, Vec2? scale = null, double rotation = 0, Vec2? origin = null, Color? color = null, Flipped flipped = Flipped.None, Rectangle? source = null, IAnchor2d anchor = null);
-
-            public abstract void DrawText(Font font, string text, Vec2 pos, IAnchor2d anchor = null);
-            public abstract void DrawText(Font font, string text, Vec2 pos, Vec2? scale = null, double rotation = 0, Vec2? origin = null, Color? color = null, Flipped flipped = Flipped.None, Rectangle? source = null, IAnchor2d anchor = null);
-
-            public abstract void Present();
+        /// <inheritdoc/>
+        public virtual void Present()
+        {
+            throw new NotImplementedException();
         }
     }
 }

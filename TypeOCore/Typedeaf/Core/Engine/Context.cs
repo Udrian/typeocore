@@ -142,10 +142,13 @@ namespace TypeOEngine.Typedeaf.Core
                             (hardware as IUpdatable)?.Update(dt);
                     }
 
-                    foreach(var service in Services.Values)
+                    foreach(var serviceids in Services.Values)
                     {
-                        if((service as IUpdatable)?.Pause == false)
-                            (service as IUpdatable)?.Update(dt);
+                        foreach(var service in serviceids.Values)
+                        {
+                            if ((service as IUpdatable)?.Pause == false)
+                                (service as IUpdatable)?.Update(dt);
+                        }
                     }
 
                     Game.Update(dt);

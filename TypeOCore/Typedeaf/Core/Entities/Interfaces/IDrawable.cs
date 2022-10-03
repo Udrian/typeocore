@@ -1,5 +1,5 @@
 ﻿using System;
-using TypeOEngine.Typedeaf.Core.Engine.Graphics;
+using TypeOEngine.Typedeaf.Core.Engine.Graphics.Interfaces;
 
 namespace TypeOEngine.Typedeaf.Core
 {
@@ -9,7 +9,7 @@ namespace TypeOEngine.Typedeaf.Core
         {
             public bool Hidden { get; set; }
             public int DrawOrder { get; set; }
-            public void Draw(Canvas canvas);
+            public void Draw(ICanvas canvas);
 
             int IComparable<IDrawable>.CompareTo(IDrawable other)
             {
