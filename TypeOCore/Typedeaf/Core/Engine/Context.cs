@@ -151,6 +151,8 @@ namespace TypeOEngine.Typedeaf.Core
                         }
                     }
 
+                    if (ExitApplication) return;
+
                     Game.Update(dt);
                     Game.Draw();
                 }
