@@ -1,31 +1,45 @@
 ﻿using System;
 using System.Collections.Generic;
-using TypeOEngine.Typedeaf.Core.Engine.Graphics.Interfaces;
+using System.IO;
 using TypeOEngine.Typedeaf.Core.Engine.Interfaces;
 
 namespace TypeOEngine.Typedeaf.Core
 {
     namespace Engine.Contents
     {
+        /// <summary>
+        /// Class for handling and loading content, such as images, music and fonts
+        /// </summary>
         public class ContentLoader : IHasContext
         {
             Context IHasContext.Context { get; set; }
             private Context Context { get => (this as IHasContext).Context; set => (this as IHasContext).Context = value; }
 
-            protected ILogger Logger { get; set; }
+            private ILogger Logger { get; set; }
 
+            /// <summary>
+            /// Set base loading path
+            /// </summary>
             public string BasePath { get; set; }
-            public ICanvas Canvas { get; private set; }
-            protected Dictionary<Type, Type> ContentBinding { get; private set; }
+            private Dictionary<Type, Type> ContentBinding { get; set; }
 
-            protected ContentLoader(ICanvas canvas, Dictionary<Type, Type> contentBinding)
+            internal ContentLoader(Dictionary<Type, Type> contentBinding)
             {
-                Canvas = canvas;
+                BasePath = Directory.GetCurrentDirectory();
                 ContentBinding = contentBinding;
             }
 
+            /// <summary>
+            /// Loads a content of specified type
+            /// </summary>
+            /// <typeparam name="C">The content to load</typeparam>
+            /// <param name="path">The path to the content, BasePath is appended to this path</param>
+            /// <returns>The loaded content</returns>
+            /// <exception cref="Exception"></exception>
             public C LoadContent<C>(string path) where C : Content
             {
+                path = Path.Combine(BasePath, path);
+
                 Content content;
                 if(ContentBinding.ContainsKey(typeof(C)))
                 {
@@ -46,6 +60,7 @@ namespace TypeOEngine.Typedeaf.Core
 
                 Context.InitializeObject(content);
 
+                content.FilePath = path;
                 content.Load(path, this);
                 return content as C;
             }

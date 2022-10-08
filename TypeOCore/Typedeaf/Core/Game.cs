@@ -1,4 +1,5 @@
 ﻿using TypeOEngine.Typedeaf.Core.Engine;
+using TypeOEngine.Typedeaf.Core.Engine.Contents;
 using TypeOEngine.Typedeaf.Core.Engine.Interfaces;
 using TypeOEngine.Typedeaf.Core.Entities.Drawables;
 
@@ -13,6 +14,7 @@ namespace TypeOEngine.Typedeaf.Core
 
         public DrawableManager<Drawable> Drawables { get; private set; }
         public LogicManager Logics { get; private set; }
+        public ContentLoader ContentLoader { get; private set; }
 
         public bool Initialized { get; internal set; }
 
@@ -31,6 +33,8 @@ namespace TypeOEngine.Typedeaf.Core
             Context.InitializeObject(Drawables, this);
             Logics = new LogicManager(null, this);
             Context.InitializeObject(Logics, this);
+            ContentLoader = new ContentLoader(Context.ContentBinding);
+            Context.InitializeObject(ContentLoader);
         }
 
         public abstract void Initialize();
