@@ -31,6 +31,12 @@ namespace TypeOEngine.Typedeaf.Core.Engine.Graphics
         public abstract void Clear(Color clearColor);
 
         /// <inheritdoc/>
+        public abstract void PreDraw();
+
+        /// <inheritdoc/>
         public abstract void Present();
+
+        /// <inheritdoc/>
+        public abstract void PostDraw();
     }
 }

@@ -13,13 +13,15 @@ namespace TypeOEngine.Typedeaf.Core.Engine
         private ILogger Logger { get; set; }
 
         private Dictionary<Type, Scene> Scenes { get; set; }
+        private Game Game { get; set; }
         public Scene CurrentScene { get; private set; }
-        public IWindow Window { get; set; }
-        public ICanvas Canvas { get; set; }
-        public ContentLoader ContentLoader { get; set; }
+        public IWindow Window { get => Game.MainWindow; }
+        public ICanvas Canvas { get => Game.MainCanvas; }
+        public ContentLoader ContentLoader { get => Game.ContentLoader; }
 
-        internal SceneList()
+        internal SceneList(Game game)
         {
+            Game = game;
             Scenes = new Dictionary<Type, Scene>();
         }
 
@@ -122,9 +124,12 @@ namespace TypeOEngine.Typedeaf.Core.Engine
         {
             CurrentScene?.Update(dt);
         }
+
         public virtual void Draw()
         {
+            Canvas?.PreDraw();
             CurrentScene?.Draw();
+            Canvas?.PostDraw();
         }
     }
 }

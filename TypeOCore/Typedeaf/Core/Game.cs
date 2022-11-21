@@ -1,5 +1,6 @@
 ﻿using TypeOEngine.Typedeaf.Core.Engine;
 using TypeOEngine.Typedeaf.Core.Engine.Contents;
+using TypeOEngine.Typedeaf.Core.Engine.Graphics.Interfaces;
 using TypeOEngine.Typedeaf.Core.Engine.Interfaces;
 using TypeOEngine.Typedeaf.Core.Entities.Drawables;
 
@@ -15,17 +16,13 @@ namespace TypeOEngine.Typedeaf.Core
         public DrawableManager<Drawable> Drawables { get; private set; }
         public LogicManager Logics { get; private set; }
         public ContentLoader ContentLoader { get; private set; }
+        public SceneList Scenes { get; private set; }
+        public IWindow MainWindow { get; set; }
+        public ICanvas MainCanvas { get { return MainWindow?.Canvas; } }
 
         public bool Initialized { get; internal set; }
 
         protected Game() { }
-
-        public SceneList CreateSceneHandler()
-        {
-            var scenes = new SceneList();
-            Context.InitializeObject(scenes);
-            return scenes;
-        }
 
         internal void InternalInitialize()
         {
@@ -35,6 +32,8 @@ namespace TypeOEngine.Typedeaf.Core
             Context.InitializeObject(Logics, this);
             ContentLoader = new ContentLoader(Context.ContentBinding);
             Context.InitializeObject(ContentLoader);
+            Scenes = new SceneList(this);
+            Context.InitializeObject(Scenes);
         }
 
         public abstract void Initialize();

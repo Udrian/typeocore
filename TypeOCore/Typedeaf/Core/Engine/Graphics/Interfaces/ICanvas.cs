@@ -31,6 +31,16 @@ namespace TypeOEngine.Typedeaf.Core
             public abstract void Clear(Color clearColor);
 
             /// <summary>
+            /// Called before Draw is called
+            /// </summary>
+            public abstract void PreDraw();
+
+            /// <summary>
+            /// Called after Draw is called
+            /// </summary>
+            public abstract void PostDraw();
+
+            /// <summary>
             /// Swaps the buffer and present everything that have been drawn to the Canvas.
             /// </summary>
             public abstract void Present();

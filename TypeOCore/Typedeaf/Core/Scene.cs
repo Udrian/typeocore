@@ -12,10 +12,10 @@ namespace TypeOEngine.Typedeaf.Core
         Context IHasContext.Context { get; set; }
         private Context Context { get => (this as IHasContext).Context; set => (this as IHasContext).Context = value; }
 
-        public SceneList Scenes { get; set; }
-        public IWindow Window { get; set; }
-        public ICanvas Canvas { get; set; }
-        public ContentLoader ContentLoader { get; set; }
+        public SceneList Scenes { get; internal set; }
+        public IWindow Window { get; internal set; }
+        public ICanvas Canvas { get; internal set; }
+        public ContentLoader ContentLoader { get; internal set; }
         public EntityList Entities { get; set; } //TODO: Look over this
         public DrawStack DrawStack { get; private set; } //TODO: Should be able to create draw stack from Game maybe?
         public UpdateLoop UpdateLoop { get; private set; } //TODO: Should be able to create Update loop from Game maybe?
@@ -23,7 +23,7 @@ namespace TypeOEngine.Typedeaf.Core
         public DrawableManager<Drawable> Drawables { get; private set; }
         public LogicManager Logics { get; private set; }
 
-        public bool IsInitialized { get; set; } = false;
+        public bool IsInitialized { get; internal set; } = false;
         public bool Pause         { get; set; } = false;
         public bool Hide          { get; set; } = false;
 
