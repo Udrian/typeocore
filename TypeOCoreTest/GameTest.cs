@@ -1,6 +1,5 @@
 ﻿using TypeOEngine.Typedeaf.Core;
 using TypeOEngine.Typedeaf.Core.Engine;
-using Xunit;
 
 namespace TypeOCoreTest
 {

@@ -22,7 +22,10 @@ namespace TypeOEngine.Typedeaf.Core
 
             private bool SaveLogs { get; set; }
             private string LogPath { get; set; }
-            private LogLevel LogLevel { get; set; }
+            /// <summary>
+            /// Current Log level
+            /// </summary>
+            public LogLevel LogLevel { get; private set; }
 
             private List<string> Logs { get; set; }
 

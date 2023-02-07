@@ -1,0 +1,20 @@
+﻿<UserControl x:Class="TypeDCore.View.Panels.ComponentPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:TypeDCore.View.Panels"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800">
+    <TreeView Name="ComponentsTree" ItemsSource="{Binding Nodes}">
+        <TreeView.ItemTemplate>
+            <HierarchicalDataTemplate ItemsSource="{Binding Nodes}">
+                <TextBlock Text="{Binding Title}"/>
+            </HierarchicalDataTemplate>
+        </TreeView.ItemTemplate>
+        
+        <TreeView.ContextMenu>
+            <ContextMenu Opened="ContextMenu_Opened"/>
+        </TreeView.ContextMenu>
+    </TreeView>
+</UserControl>

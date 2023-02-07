@@ -1,5 +1,3 @@
-using System;
-using System.Linq;
 using TypeOEngine.Typedeaf.Core;
 using TypeOEngine.Typedeaf.Core.Engine;
 using TypeOEngine.Typedeaf.Core.Engine.Contents;
@@ -7,187 +5,83 @@ using TypeOEngine.Typedeaf.Core.Engine.Hardwares;
 using TypeOEngine.Typedeaf.Core.Engine.Hardwares.Interfaces;
 using TypeOEngine.Typedeaf.Core.Engine.Interfaces;
 using TypeOEngine.Typedeaf.Core.Engine.Services;
-using Xunit;
 
 namespace TypeOCoreTest
 {
     public class TypeOTest
     {
         public string GameName { get; set; } = "test";
-
         public class TestGame : Game
         {
-            public override void Initialize()
-            {
-            }
-
-            public override void Update(double dt)
-            {
-                Exit();
-            }
-
-            public override void Draw()
-            {
-            }
-
-            public override void Cleanup()
-            {
-            }
+            public override void Initialize() { }
+            public override void Update(double dt) { Exit(); }
+            public override void Draw() { }
+            public override void Cleanup() { }
         }
-
         public class TestGameWithServiceHardware : Game
         {
             public TestServiceWithHardware TestServiceWithHardware { get; set; }
-
-            public override void Initialize()
-            {
-            }
-
-            public override void Update(double dt)
-            {
-                Exit();
-            }
-
-            public override void Draw()
-            {
-            }
-
-            public override void Cleanup()
-            {
-            }
+            public override void Initialize() { }
+            public override void Update(double dt) { Exit(); }
+            public override void Draw() { }
+            public override void Cleanup() { }
         }
-
         public class TestGameWithService : Game
         {
             public TestService TestService { get; set; }
-
-            public override void Initialize()
-            {
-            }
-
-            public override void Update(double dt)
-            {
-                Exit();
-            }
-
-            public override void Draw()
-            {
-            }
-
-            public override void Cleanup()
-            {
-            }
+            public override void Initialize() { }
+            public override void Update(double dt) { Exit(); }
+            public override void Draw() { }
+            public override void Cleanup() { }
         }
-
         public class TestService : Service
         {
-            public override void Cleanup()
-            {
-            }
-
-            public override void Initialize()
-            {
-            }
+            protected override void Initialize() { }
+            protected override void Cleanup() { }
         }
-
         public class TestServiceWithHardware : Service
         {
             public ITestHardware TestHardware { get; set; }
-
-            public override void Cleanup()
-            {
-            }
-
-            public override void Initialize()
-            {
-            }
-        }
-
-        public interface ITestHardware : IHardware
-        {
+            protected override void Initialize() { }
+            protected override void Cleanup() { }
 
         }
+        public interface ITestHardware : IHardware { }
         public class TestHardware : Hardware, ITestHardware
         {
-            public override void Cleanup()
-            {
-            }
-
-            public override void Initialize()
-            {
-            }
+            public override void Initialize() { }
+            public override void Cleanup() { }
         }
-
-        public abstract class BaseContent : Content
-        {
-
-        }
-
+        public abstract class BaseContent : Content { }
         public class SubContent : BaseContent
         {
-            public override void Cleanup()
-            {
-            }
-
-            public override void Load(string path, ContentLoader contentLoader)
-            {
-            }
+            protected override void Cleanup() { }
+            public override void Load(string path, ContentLoader contentLoader) { }
         }
-
         public class TestModuleOption : ModuleOption { }
-
         public class TestModule : Module<TestModuleOption>
         {
-            public TestModule() : base()
-            {
-            }
-
+            public TestModule() : base() { }
             public TestServiceWithHardware TestService { get; set; }
             public ITestHardware TestHardware { get; set; }
 
-            public override void Initialize()
-            {
-            }
-
-            public override void Cleanup()
-            {
-            }
-
-            public override void LoadExtensions()
-            {
-            }
+            protected override void Initialize() { }
+            protected override void Cleanup() { }
+            protected override void LoadExtensions(TypeO typeO) { }
         }
-
         public class TestRefModule : Module<TestModuleOption>
         {
-            public TestRefModule() : base()
-            {
-            }
-
-            public override void Cleanup()
-            {
-            }
-
-            public override void Initialize()
-            {
-            }
-
-            public override void LoadExtensions()
-            {
-            }
+            public TestRefModule() : base() { }
+            protected override void Initialize() {}
+            protected override void Cleanup() { }
+            protected override void LoadExtensions(TypeO typeO) { }
         }
-
         public class TestLogger : ILogger
         {
             public LogLevel LogLevel { get; set; }
-
-            public void Cleanup()
-            {
-            }
-
-            public void Log(LogLevel level, string log)
-            {
-            }
+            public void Cleanup() { }
+            public void Log(LogLevel level, string log) { }
+            public void SetOption(ILoggerOption option) {}
         }
 
         [Fact]
@@ -281,15 +175,15 @@ namespace TypeOCoreTest
 
             Assert.NotNull(typeO.Context.Logger);
             Assert.IsType<DefaultLogger>(typeO.Context.Logger);
-            Assert.Equal(LogLevel.None, typeO.Context.Logger.LogLevel);
+            Assert.Equal(LogLevel.None, (typeO.Context.Logger as DefaultLogger)?.LogLevel);
 
             typeO = TypeO.Create<TestGame>(GameName)
-                .SetLogger<TestLogger>(LogLevel.None) as TypeO;
+                .SetLogger<TestLogger>(new DefaultLoggerOption() { LogLevel = LogLevel.None }) as TypeO;
             typeO.Start();
 
             Assert.NotNull(typeO.Context.Logger);
             Assert.IsType<TestLogger>(typeO.Context.Logger);
-            Assert.Equal(LogLevel.None, typeO.Context.Logger.LogLevel);
+            Assert.Equal(LogLevel.None, (typeO.Context.Logger as TestLogger)?.LogLevel);
         }
     }
 }

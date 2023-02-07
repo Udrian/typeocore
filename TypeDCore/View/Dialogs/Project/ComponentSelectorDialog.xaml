@@ -1,0 +1,35 @@
+﻿<Window x:Class="TypeDCore.View.Dialogs.Project.ComponentSelectorDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:TypeDCore.View.Dialogs.Project"
+        mc:Ignorable="d"
+        Title="Select Component" Height="450" Width="800">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="auto"/>
+        </Grid.RowDefinitions>
+        <ListBox x:Name="lbComponents" Grid.Row="0" ItemsSource="{Binding FilteredComponents}" HorizontalContentAlignment="Stretch" MouseDoubleClick="lbComponents_MouseDoubleClick">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Text="{Binding FullName}" Grid.Row="0" Margin="20,0,0,0" HorizontalAlignment="Left" FontWeight="Bold" />
+                        <TextBlock Text="{Binding TypeOBaseType}" Grid.Row="1" Grid.ColumnSpan="2" HorizontalAlignment="Left" FontSize="10" TextTrimming="CharacterEllipsis" />
+                    </Grid>
+
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+        <TextBox x:Name="tbFilter" Grid.Row="1" TextChanged="tbFilter_TextChanged" />
+    </Grid>
+</Window>
