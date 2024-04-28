@@ -26,25 +26,24 @@ namespace TypeDCore.Code.Drawable
                 AddUsings(new List<string>()
                 {
                     "TypeOEngine.Typedeaf.Core.Common",
-                    "TypeOEngine.Typedeaf.Core.Engine.Graphics"
+                    "TypeOEngine.Typedeaf.Core.Engine.Graphics.Interfaces"
                 });
 
-                AddProperty(new Property("public override Vec2 Size", () => { Writer.AddLine("get; protected set;"); }));
                 AddFunction(new Function("public override void Initialize()", () => { }));
-                AddFunction(new Function("public override void Draw(Canvas canvas)", () => { }));
+                AddFunction(new Function("public override void Draw(ICanvas canvas)", () => { }));
                 AddFunction(new Function("public override void Cleanup()", () => { }));
             }
             else
             {
                 AddUsings(new List<string>()
                 {
-                    "TypeOEngine.Typedeaf.Core.Engine.Graphics"
+                    "TypeOEngine.Typedeaf.Core.Engine.Graphics.Interfaces"
                 });
 
                 AddFunction(new Function("public override void Initialize()", () => {
                     Writer.AddLine("base.Initialize();");
                 }));
-                AddFunction(new Function("public override void Draw(Canvas canvas)", () => {
+                AddFunction(new Function("public override void Draw(ICanvas canvas)", () => {
                     Writer.AddLine("base.Draw(canvas);");
                 }));
                 AddFunction(new Function("public override void Cleanup()", () => {

@@ -17,8 +17,7 @@ namespace TypeDCore.Code.Game
 
             AddUsings(new List<string>()
             {
-                "TypeOEngine.Typedeaf.Core",
-                "TypeOEngine.Typedeaf.Core.Engine"
+                "TypeOEngine.Typedeaf.Core"
             });
             SetDynamicUsing(() =>
             {
@@ -32,16 +31,13 @@ namespace TypeDCore.Code.Game
                 return usings;
             });
 
-            AddProperty(new Property("protected SceneList Scenes"));
-
             AddFunction(new Function("public override void Initialize()", () => {
-                Writer.AddLine("Scenes = CreateSceneHandler();");
+                Writer.AddLine("InternalInitialize();");
                 Component defaultScene = ComponentProvider.Load(Project, Project.StartScene);
                 if (defaultScene != null)
                 {
                     Writer.AddLine($"Scenes.SetScene<{defaultScene.ClassName}>();");
                 }
-                Writer.AddLine("InternalInitialize();");
             }));
             AddFunction(new Function("public override void Update(double dt)", () => {
                 Writer.AddLine("Scenes.Update(dt);");
