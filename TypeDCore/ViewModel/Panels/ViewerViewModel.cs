@@ -83,7 +83,7 @@ namespace TypeDCore.ViewModel.Panels
             TabItem foundItem = null;
             foreach (var item in ViewerPanel.Tabs.Items)
             {
-                if (((item as TabItem)?.Content as IViewer)?.Component?.FullName == hook.Component.FullName)
+                if (((item as TabItem)?.Content as IViewer)?.Component?.FullName == hook.Component?.FullName)
                 {
                     foundItem = item as TabItem;
                     break;
