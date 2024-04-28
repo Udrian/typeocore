@@ -6,6 +6,7 @@ using TypeD.Code;
 using TypeD.Models.Data;
 using TypeD.Models.Interfaces;
 using TypeD.Models.Providers.Interfaces;
+using TypeDCore.Components;
 using TypeDCore.Models.Data.SaveContexts;
 using TypeDCore.Models.Interfaces;
 using TypeOEngine.Typedeaf.Core;
@@ -97,8 +98,8 @@ namespace TypeDCore.Models
                 }
             }
 
-            // Check if we are missing Program.cs and Game.cs
-            if(!File.Exists(Path.Combine(project.Location, project.ProjectName, "Program.cs")))
+            // Check if we are missing Program.cs
+            if (!File.Exists(Path.Combine(project.Location, project.ProjectName, "Program.cs")))
             {
                 ProjectModel.InitAndSaveCode(project, new ProgramCode());
             }
@@ -146,9 +147,29 @@ namespace TypeDCore.Models
                 }
             }
 
-            if(updateTree)
+            if (updateTree)
             {
                 ProjectModel.BuildComponentTree(project);
+            }
+
+            // Check if we are missing Game.cs and StartScene
+            if (!File.Exists(Path.Combine(project.Location, project.ProjectName, $"{project.ProjectName}Game")))
+            {
+                ComponentProvider.Create<GameComponent>(
+                    project,
+                    $"{project.ProjectName}Game",
+                    project.ProjectName
+                );
+                if (!File.Exists(Path.Combine(project.Location, project.ProjectName, "Scenes", "StartScene")))
+                {
+                    var scene = ComponentProvider.Create<SceneComponent>(
+                        project,
+                        "StartScene",
+                        $"{project.ProjectName}.Scenes"
+                    );
+
+                    TypeDCoreProjectModel.SetStartScene(project, scene.Component);
+                }
             }
         }
 
