@@ -108,6 +108,8 @@ namespace TypeOEngine.Typedeaf.Core
                         await WriteLogsToDisk();
                     }
                 }
+                if(level == LogLevel.Fatal)
+                    throw new Exception(log);
             }
 
             private async Task WriteLogsToDisk()

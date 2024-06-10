@@ -52,7 +52,6 @@ namespace TypeOEngine.Typedeaf.Core
                     {
                         var message = $"Base content type '{typeof(C).Name}' is missing a sub class Content Binding";
                         Logger.Log(LogLevel.Fatal, message);
-                        throw new Exception(message);
                     }
                     Logger.Log(LogLevel.Debug, $"Loading content path '{path}' of type '{typeof(C).FullName}'");
                     content = Activator.CreateInstance(typeof(C)) as Content;

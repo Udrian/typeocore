@@ -21,6 +21,11 @@ namespace TypeOEngine.Typedeaf.Core
             /// Path to where the logs should be saved to disk, only applicable if SaveLogs is set to True.
             /// </summary>
             public string LogPath { get; set; } = null;
+
+            /// <summary>
+            /// True if the logger should throw an exception on fatal logs, defaults to True
+            /// </summary>
+            public bool ThrowExceptionOnFatal { get; set; } = true;
         }
     }
 }
