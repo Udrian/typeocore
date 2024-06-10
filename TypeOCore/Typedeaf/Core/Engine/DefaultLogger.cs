@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Diagnostics;
 using TypeOEngine.Typedeaf.Core.Engine.Interfaces;
 
 namespace TypeOEngine.Typedeaf.Core
@@ -20,6 +15,7 @@ namespace TypeOEngine.Typedeaf.Core
             Context IHasContext.Context { get; set; }
             private Context Context { get => (this as IHasContext).Context; set => (this as IHasContext).Context = value; }
 
+            private bool ThrowExceptionOnFatal { get; set; }
             private bool SaveLogs { get; set; }
             private string LogPath { get; set; }
             /// <summary>
@@ -49,14 +45,14 @@ namespace TypeOEngine.Typedeaf.Core
                 {
                     SaveLogs = defaultLoggerOption.SaveLogs;
                     LogPath = defaultLoggerOption.LogPath;
+                    ThrowExceptionOnFatal = defaultLoggerOption.ThrowExceptionOnFatal;
                 }
             }
 
             /// <inheritdoc/>
             public async void Log(LogLevel level, string log)
             {
-                if(LogLevel == LogLevel.None) return;
-                if(LogLevel > level) return;
+                if (LogLevel == LogLevel.None || LogLevel > level) { FatalExceptionThrow(level, log); return; }
 
                 var defaultColor = Console.ForegroundColor;
                 string levelMessage = "";
@@ -108,7 +104,12 @@ namespace TypeOEngine.Typedeaf.Core
                         await WriteLogsToDisk();
                     }
                 }
-                if(level == LogLevel.Fatal)
+                FatalExceptionThrow(level, log);
+            }
+
+            private void FatalExceptionThrow(LogLevel level, string log)
+            {
+                if (ThrowExceptionOnFatal && level == LogLevel.Fatal)
                     throw new Exception(log);
             }
 

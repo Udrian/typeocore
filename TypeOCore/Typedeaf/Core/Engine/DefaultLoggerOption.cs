@@ -23,9 +23,9 @@ namespace TypeOEngine.Typedeaf.Core
             public string LogPath { get; set; } = null;
 
             /// <summary>
-            /// True if the logger should throw an exception on fatal logs, defaults to True
+            /// True if the logger should throw an exception on fatal logs, defaults to False
             /// </summary>
-            public bool ThrowExceptionOnFatal { get; set; } = true;
+            public bool ThrowExceptionOnFatal { get; set; } = false;
         }
     }
 }
