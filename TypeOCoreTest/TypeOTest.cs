@@ -56,7 +56,7 @@ namespace TypeOCoreTest
         public class SubContent : BaseContent
         {
             protected override void Cleanup() { }
-            public override void Load(string path, ContentLoader contentLoader) { }
+            protected override void Load(string path) { }
         }
         public class TestModuleOption : ModuleOption { }
         public class TestModule : Module<TestModuleOption>

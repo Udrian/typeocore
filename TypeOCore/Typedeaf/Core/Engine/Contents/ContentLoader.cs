@@ -35,23 +35,39 @@ namespace TypeOEngine.Typedeaf.Core
             /// <typeparam name="C">The content to load</typeparam>
             /// <param name="path">The path to the content, BasePath is appended to this path</param>
             /// <returns>The loaded content</returns>
-            /// <exception cref="Exception"></exception>
             public C LoadContent<C>(string path) where C : Content
             {
                 path = Path.Combine(BasePath, path);
 
+                Content content = CreateContent<C>(path);
+                if (content == null) return null;
+
+                content.FilePath = path;
+                content.InternalLoad(path);
+                return (C)content;
+            }
+
+            internal C CreateContent<C>(string path) where C : Content
+            {
+                if(path != null && !File.Exists(path))
+                {
+                    Logger.Log(LogLevel.Fatal, $"File of type '{typeof(C).FullName}' does not exists with path '{path}'");
+                    return null;
+                }
+
                 Content content;
-                if(ContentBinding.ContainsKey(typeof(C)))
+                if (ContentBinding.ContainsKey(typeof(C)))
                 {
                     Logger.Log(LogLevel.Debug, $"Loading content path '{path}' of type '{typeof(C).FullName}' bound to type '{ContentBinding[typeof(C)].FullName}'");
                     content = Activator.CreateInstance(ContentBinding[typeof(C)]) as Content;
                 }
                 else
                 {
-                    if(typeof(C).IsAbstract)
+                    if (typeof(C).IsAbstract)
                     {
                         var message = $"Base content type '{typeof(C).Name}' is missing a sub class Content Binding";
                         Logger.Log(LogLevel.Fatal, message);
+                        return null;
                     }
                     Logger.Log(LogLevel.Debug, $"Loading content path '{path}' of type '{typeof(C).FullName}'");
                     content = Activator.CreateInstance(typeof(C)) as Content;
@@ -59,9 +75,7 @@ namespace TypeOEngine.Typedeaf.Core
 
                 Context.InitializeObject(content);
 
-                content.FilePath = path;
-                content.Load(path, this);
-                return content as C;
+                return (C)content;
             }
         }
     }
