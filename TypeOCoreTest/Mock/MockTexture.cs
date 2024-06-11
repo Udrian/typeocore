@@ -12,5 +12,7 @@ namespace TypeOCoreTest.Mock
         protected override void Cleanup() { }
 
         public override void Save(string path) {}
+
+        public override Color PixelAt(int x, int y) { return Color.White; }
     }
 }

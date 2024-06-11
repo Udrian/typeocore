@@ -36,6 +36,21 @@ namespace TypeOEngine.Typedeaf.Core
             /// </summary>
             /// <param name="path">File path to the saved texture</param>
             public abstract void Save(string path);
+
+            /// <summary>
+            /// Returns the pixel at the given position
+            /// </summary>
+            /// <param name="x">X position from top right corner</param>
+            /// <param name="y">Y position from top right corner</param>
+            /// <returns>The pixel in Color</returns>
+            public abstract Color PixelAt(int x, int y);
+
+            /// <summary>
+            /// Returns the pixel at the given position
+            /// </summary>
+            /// <param name="pos">The position from top right corner</param>
+            /// <returns>The pixel in Color</returns>
+            public  Color PixelAt(Vec2i pos) { return PixelAt(pos.X, pos.Y); }
         }
     }
 }
