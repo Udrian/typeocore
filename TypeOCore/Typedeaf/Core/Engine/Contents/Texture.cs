@@ -30,6 +30,12 @@ namespace TypeOEngine.Typedeaf.Core
                 Size = size;
                 Create(size, data);
             }
+
+            /// <summary>
+            /// Saves the texture to disk
+            /// </summary>
+            /// <param name="path">File path to the saved texture</param>
+            public abstract void Save(string path);
         }
     }
 }

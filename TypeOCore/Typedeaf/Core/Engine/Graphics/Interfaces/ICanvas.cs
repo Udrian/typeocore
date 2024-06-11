@@ -1,4 +1,5 @@
 ﻿using TypeOEngine.Typedeaf.Core.Common;
+using TypeOEngine.Typedeaf.Core.Engine.Contents;
 
 namespace TypeOEngine.Typedeaf.Core
 {
@@ -44,6 +45,19 @@ namespace TypeOEngine.Typedeaf.Core
             /// Swaps the buffer and present everything that have been drawn to the Canvas.
             /// </summary>
             public abstract void Present();
+
+            /// <summary>
+            /// Creates a screenshot of the entire canvas
+            /// </summary>
+            /// <returns>The texture containing the screenshot</returns>
+            public abstract Texture Screenshot();
+
+            /// <summary>
+            /// Creates a screenshot of a part of the canvas
+            /// </summary>
+            /// <param name="screenRect">The rectangle bounds of the screenshot</param>
+            /// <returns>The texture containing the screenshot</returns>
+            public abstract Texture Screenshot(Rectangle screenRect);
         }
     }
 }

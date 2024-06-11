@@ -10,5 +10,7 @@ namespace TypeOCoreTest.Mock
         protected override void Load(string path) { }
 
         protected override void Cleanup() { }
+
+        public override void Save(string path) {}
     }
 }

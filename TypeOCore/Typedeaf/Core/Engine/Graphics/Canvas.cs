@@ -1,5 +1,5 @@
-﻿using System;
-using TypeOEngine.Typedeaf.Core.Common;
+﻿using TypeOEngine.Typedeaf.Core.Common;
+using TypeOEngine.Typedeaf.Core.Engine.Contents;
 using TypeOEngine.Typedeaf.Core.Engine.Graphics.Interfaces;
 
 namespace TypeOEngine.Typedeaf.Core.Engine.Graphics
@@ -38,5 +38,11 @@ namespace TypeOEngine.Typedeaf.Core.Engine.Graphics
 
         /// <inheritdoc/>
         public abstract void PostDraw();
+
+        /// <inheritdoc/>
+        public abstract Texture Screenshot();
+
+        /// <inheritdoc/>
+        public abstract Texture Screenshot(Rectangle screenRect);
     }
 }
