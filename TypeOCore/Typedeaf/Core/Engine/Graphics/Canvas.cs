@@ -40,7 +40,7 @@ namespace TypeOEngine.Typedeaf.Core.Engine.Graphics
         public abstract void PostDraw();
 
         /// <inheritdoc/>
-        public abstract Texture Screenshot();
+        public Texture Screenshot() { return Screenshot(Viewport); }
 
         /// <inheritdoc/>
         public abstract Texture Screenshot(Rectangle screenRect);
