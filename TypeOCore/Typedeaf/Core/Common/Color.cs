@@ -1,5 +1,5 @@
-﻿using System;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 
 namespace TypeOEngine.Typedeaf.Core
 {
@@ -7,18 +7,18 @@ namespace TypeOEngine.Typedeaf.Core
     {
         public struct Color : IEquatable<Color>
         {
-            public int A { get; set; }
-            public int R { get; set; }
-            public int G { get; set; }
-            public int B { get; set; }
+            public byte A { get; set; }
+            public byte R { get; set; }
+            public byte G { get; set; }
+            public byte B { get; set; }
 
             //TODO: This is not super optimal, should maybe create a ColorF class
-            public float Af { get { return A / 255f; } set { A = (int)(value * 255); } }
-            public float Rf { get { return R / 255f; } set { R = (int)(value * 255); } }
-            public float Gf { get { return G / 255f; } set { G = (int)(value * 255); } }
-            public float Bf { get { return B / 255f; } set { B = (int)(value * 255); } }
+            public float Af { get { return A / 255f; } set { A = (byte)(value * 255); } }
+            public float Rf { get { return R / 255f; } set { R = (byte)(value * 255); } }
+            public float Gf { get { return G / 255f; } set { G = (byte)(value * 255); } }
+            public float Bf { get { return B / 255f; } set { B = (byte)(value * 255); } }
 
-            public Color(int a, int r, int g, int b)
+            public Color(byte a, byte r, byte g, byte b)
             {
                 A = a;
                 R = r;
@@ -26,7 +26,7 @@ namespace TypeOEngine.Typedeaf.Core
                 B = b;
             }
 
-            public Color(int r, int g, int b)
+            public Color(byte r, byte g, byte b)
             {
                 A = 255;
                 R = r;
@@ -34,20 +34,36 @@ namespace TypeOEngine.Typedeaf.Core
                 B = b;
             }
 
+            public Color(int a, int r, int g, int b)
+            {
+                A = (byte)a;
+                R = (byte)r;
+                G = (byte)g;
+                B = (byte)b;
+            }
+
+            public Color(int r, int g, int b)
+            {
+                A = 255;
+                R = (byte)r;
+                G = (byte)g;
+                B = (byte)b;
+            }
+
             public Color(double a, double r, double g, double b)
             {
-                A = (int)(a * 255);
-                R = (int)(r * 255);
-                G = (int)(g * 255);
-                B = (int)(b * 255);
+                A = (byte)(a * 255);
+                R = (byte)(r * 255);
+                G = (byte)(g * 255);
+                B = (byte)(b * 255);
             }
 
             public Color(double r, double g, double b)
             {
                 A = 255;
-                R = (int)(r * 255);
-                G = (int)(g * 255);
-                B = (int)(b * 255);
+                R = (byte)(r * 255);
+                G = (byte)(g * 255);
+                B = (byte)(b * 255);
             }
 
             public static bool operator ==(Color? a, Color? b)
@@ -121,6 +137,28 @@ namespace TypeOEngine.Typedeaf.Core
                     hashCode = (hashCode * 397) ^ B;
                     return hashCode;
                 }
+            }
+
+            public override string ToString()
+            {
+                string colorName = "";
+
+                var properties = GetType().GetProperties(BindingFlags.Public | BindingFlags.Static);
+
+                foreach (var property in properties)
+                {
+                    if (property.PropertyType == typeof(Color))
+                    {
+                        var val = (property.GetValue(null) as Color?);
+                        if (val.HasValue && val.Value == this)
+                        {
+                            colorName = property.Name;
+                            break;
+                        }
+                    }
+                }
+
+                return $"R: {R}, G: {G}, B: {B}, A:{A}" + (string.IsNullOrEmpty(colorName) ? "" : $" - {colorName}");
             }
 
             public static Color SoftBlack { get { return new Color(255, 20, 20, 20); } }
