@@ -149,7 +149,7 @@ namespace TypeOEngine.Typedeaf.Core
                         }
                     }
 
-                    if (ExitApplication) return;
+                    if (ExitApplication) break;
 
                     Game.Update(dt);
                     Game.Draw();
