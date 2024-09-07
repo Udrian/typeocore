@@ -19,6 +19,7 @@ namespace TypeDCore.Code.Entity
             Updatable = component.Interfaces.Contains(typeof(IUpdatable));
             Drawable = component.Interfaces.Contains(typeof(IDrawable)); ;
         }
+
         protected override void InitClass()
         {
             if(IsBaseComponentType)
@@ -49,13 +50,13 @@ namespace TypeDCore.Code.Entity
 
             if (Drawable && (ParentComponent == null || !ParentComponent.Interfaces.Contains(typeof(IDrawable))))
             {
-                AddUsing("TypeOEngine.Typedeaf.Core.Engine.Graphics");
-                AddFunction(new Function("public virtual void Draw(Canvas canvas)", () => { }));
+                AddUsing("TypeOEngine.Typedeaf.Core.Engine.Graphics.Interfaces");
+                AddFunction(new Function("public virtual void Draw(ICanvas canvas)", () => { }));
             }
             else if(Drawable)
             {
-                AddUsing("TypeOEngine.Typedeaf.Core.Engine.Graphics");
-                AddFunction(new Function("public override void Draw(Canvas canvas)", () => {
+                AddUsing("TypeOEngine.Typedeaf.Core.Engine.Graphics.Interfaces");
+                AddFunction(new Function("public override void Draw(ICanvas canvas)", () => {
                     Writer.AddLine("base.Draw(canvas);");
                 }));
             }
