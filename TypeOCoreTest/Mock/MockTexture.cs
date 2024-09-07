@@ -14,5 +14,15 @@ namespace TypeOCoreTest.Mock
         public override void Save(string path) {}
 
         public override Color PixelAt(int x, int y) { return Color.White; }
+
+        public override void FlipVertical()
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void FlipHorizontal()
+        {
+            throw new NotImplementedException();
+        }
     }
 }
