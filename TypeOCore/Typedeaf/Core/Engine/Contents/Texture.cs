@@ -50,7 +50,17 @@ namespace TypeOEngine.Typedeaf.Core
             /// </summary>
             /// <param name="pos">The position from top right corner</param>
             /// <returns>The pixel in Color</returns>
-            public  Color PixelAt(Vec2i pos) { return PixelAt(pos.X, pos.Y); }
+            public Color PixelAt(Vec2i pos) { return PixelAt(pos.X, pos.Y); }
+
+            /// <summary>
+            /// Flips the image vertically
+            /// </summary>
+            public abstract void FlipVertical();
+
+            /// <summary>
+            /// Flips the image horizontally
+            /// </summary>
+            public abstract void FlipHorizontal();
         }
     }
 }
