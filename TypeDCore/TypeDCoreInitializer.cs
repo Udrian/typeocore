@@ -97,7 +97,7 @@ namespace TypeDCore
         public override void Uninitializer()
         {
             // Panels
-            PanelModel.DetachPanel("typed_tabs");
+            PanelModel.DetachPanel("typed_viewer");
             PanelModel.DetachPanel("typed_component");
             PanelModel.DetachPanel("typed_output");
             PanelModel.DetachPanel("typed_componenttypebrowser");
@@ -420,7 +420,7 @@ namespace TypeDCore
             hook.Menu.Items.Add(
                 new MenuItem()
                 {
-                    Name = "_Add Component",
+                    Name = "_Add Child Component",
                     ClickParameter = "LoadedProject",
                     Click = (param) =>
                     {
