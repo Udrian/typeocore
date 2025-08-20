@@ -5,12 +5,27 @@ using TypeD.Models.Providers.Interfaces;
 
 namespace TypeDCore.Code.Game
 {
+    /// <summary>
+    /// Represents a specialized <see cref="Component"/> type for managing game-specific functionality, including initialization,
+    /// updates, rendering, and cleanup of game scenes.
+    /// </summary>
+    /// <remarks>This class extends <see cref="ComponentTypeCode"/> to provide game-specific behavior. It
+    /// integrates with a <see cref="Component"/> provider to load and manage game scenes dynamically. The class is designed to
+    /// handle the lifecycle of game scenes, including initialization, updates, rendering, and cleanup, by leveraging
+    /// the provided <see cref="Component"/> system.</remarks>
     public partial class GameCode : ComponentTypeCode
     {
         // Provider
         IComponentProvider ComponentProvider { get; set; }
 
         // Constructors
+        /// <summary>
+        /// Initializes the TypeD class by configuring components, dynamic usings, and core functions.
+        /// </summary>
+        /// <remarks>This method sets up the necessary components and functions required for the TypeD
+        /// class to operate. It adds required namespaces, and defines core lifecycle
+        /// functions such as <c>Initialize</c>, <c>Update</c>, <c>Draw</c>, and <c>Cleanup</c>. The dynamic usings are
+        /// determined based on the project's start scene, if available.</remarks>
         protected override void InitTypeDClass()
         {
             ComponentProvider = Resources.Get<IComponentProvider>();

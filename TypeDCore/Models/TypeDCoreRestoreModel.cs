@@ -155,14 +155,14 @@ namespace TypeDCore.Models
             // Check if we are missing Game.cs and StartScene
             if (!File.Exists(Path.Combine(project.Location, project.ProjectName, $"{project.ProjectName}Game")))
             {
-                ComponentProvider.Create<GameComponent>(
+                ComponentProvider.Create<GameComponentTemplate>(
                     project,
                     $"{project.ProjectName}Game",
                     project.ProjectName
                 );
                 if (!File.Exists(Path.Combine(project.Location, project.ProjectName, "Scenes", "StartScene")) && (project.StartScene == null || project.StartScene == $"{project.ProjectName}.Scenes.StartScene"))
                 {
-                    var scene = ComponentProvider.Create<SceneComponent>(
+                    var scene = ComponentProvider.Create<SceneComponentTemplate>(
                         project,
                         "StartScene",
                         $"{project.ProjectName}.Scenes"

@@ -45,7 +45,7 @@ namespace TypeDCore.Models
                 interfaces.Add(typeof(IDrawable).FullName);
             }
 
-            ComponentProvider.Create<EntityComponent>(
+            ComponentProvider.Create<EntityComponentTemplate>(
                 project,
                 className,
                 @namespace,
@@ -58,7 +58,7 @@ namespace TypeDCore.Models
         {
             @namespace = ProjectModel.TransformNamespaceString(project, @namespace);
 
-            ComponentProvider.Create<SceneComponent>(
+            ComponentProvider.Create<SceneComponentTemplate>(
                 project,
                 className,
                 @namespace,
@@ -70,7 +70,7 @@ namespace TypeDCore.Models
         {
             @namespace = ProjectModel.TransformNamespaceString(project, @namespace);
 
-            ComponentProvider.Create<Drawable2dComponent>(
+            ComponentProvider.Create<DrawableComponentTemplate>(
                 project,
                 className,
                 @namespace,

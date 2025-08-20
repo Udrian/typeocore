@@ -19,7 +19,7 @@ using TypeDCore.View.Viewer;
 
 namespace TypeDCore
 {
-    public class TypeDCoreInitializer : TypeDModuleInitializer
+    internal class TypeDCoreInitializer : TypeDModuleInitializer
     {
         // Providers
         IComponentProvider ComponentProvider { get; set; }
@@ -29,12 +29,11 @@ namespace TypeDCore
         ITypeDCoreRestoreModel TypeDCoreRestoreModel { get; set; }
         ISettingModel SettingModel { get; set; }
         IPanelModel PanelModel { get; set; }
-        IProjectModel ProjectModel { get; set; }
 
         // Commands
         CreateEntityTypeCommand CreateEntityTypeCommand { get; set; }
         CreateSceneTypeCommand CreateSceneTypeCommand { get; set; }
-        CreateDrawableTypeCommand CreateDrawable2dTypeCommand { get; set; }
+        CreateDrawableTypeCommand CreateDrawableTypeCommand { get; set; }
         DeleteComponentTypeCommand DeleteComponentTypeCommand { get; set; }
         RenameComponentTypeCommand RenameComponentTypeCommand { get; set; }
         SetStartSceneCommand SetStartSceneCommand { get; set; }
@@ -61,12 +60,11 @@ namespace TypeDCore
             // Models
             SettingModel = Resources.Get<ISettingModel>();
             PanelModel = Resources.Get<IPanelModel>();
-            ProjectModel = Resources.Get<IProjectModel>();
 
             // Commands
             CreateEntityTypeCommand = new CreateEntityTypeCommand(Resources);
             CreateSceneTypeCommand = new CreateSceneTypeCommand(Resources);
-            CreateDrawable2dTypeCommand = new CreateDrawableTypeCommand(Resources);
+            CreateDrawableTypeCommand = new CreateDrawableTypeCommand(Resources);
             DeleteComponentTypeCommand = new DeleteComponentTypeCommand(Resources);
             RenameComponentTypeCommand = new RenameComponentTypeCommand(Resources);
             SetStartSceneCommand = new SetStartSceneCommand(Resources);
@@ -122,12 +120,12 @@ namespace TypeDCore
         // Events
         void ProjectCreate(ProjectCreateHook hook)
         {
-            ComponentProvider.Create<GameComponent>(
+            ComponentProvider.Create<GameComponentTemplate>(
                 hook.Project,
                 $"{hook.Project.ProjectName}Game",
                 hook.Project.ProjectName
             );
-            var scene = ComponentProvider.Create<SceneComponent>(
+            var scene = ComponentProvider.Create<SceneComponentTemplate>(
                 hook.Project,
                 "StartScene",
                 $"{hook.Project.ProjectName}.Scenes"
@@ -172,10 +170,10 @@ namespace TypeDCore
                                     }
                                 },
                                 new MenuItem() {
-                                    Name = "_Drawable2d",
+                                    Name = "_Drawable",
                                     ClickParameter = "LoadedProject",
                                     Click = (param) => {
-                                        CreateDrawable2dTypeCommand.Execute(new CreateComponentCommandData(param as Project, $"Drawables"));
+                                        CreateDrawableTypeCommand.Execute(new CreateComponentCommandData(param as Project, $"Drawables"));
                                     }
                                 }
                             }
@@ -269,7 +267,7 @@ namespace TypeDCore
                             }
                         },
                         new MenuItem() {
-                            Name = "_Drawable2d",
+                            Name = "_Drawable",
                             ClickParameter = "LoadedProject",
                             Click = (param) => {
                                 var @namespace = "Drawables";
@@ -289,7 +287,7 @@ namespace TypeDCore
                                     };
                                     @namespace = getParentName(hook.Node);
                                 }
-                                CreateDrawable2dTypeCommand.Execute(new CreateComponentCommandData(param as Project, @namespace));
+                                CreateDrawableTypeCommand.Execute(new CreateComponentCommandData(param as Project, @namespace));
                             }
                         }
                     }
