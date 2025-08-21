@@ -1,6 +1,7 @@
 ﻿using TypeD.Code;
 using TypeOEngine.Typedeaf.Core.Entities.Interfaces;
 using TypeOEngine.Typedeaf.Core.Interfaces;
+using TypeD.Models.Data;
 
 namespace TypeDCore.Code.Entity
 {

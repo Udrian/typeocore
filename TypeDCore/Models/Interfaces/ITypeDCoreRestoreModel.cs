@@ -1,5 +1,8 @@
 ﻿using TypeD.Models.Data;
 using TypeD.Models.Interfaces;
+using TypeOEngine.Typedeaf.Core;
+using TypeOEngine.Typedeaf.Core.Entities;
+using TypeOEngine.Typedeaf.Core.Entities.Drawables;
 
 namespace TypeDCore.Models.Interfaces
 {
