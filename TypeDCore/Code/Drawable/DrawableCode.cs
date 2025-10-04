@@ -45,25 +45,19 @@ namespace TypeDCore.Code.Drawable
         {
             PartialClass = false;
 
+            AddUsings(new List<string>()
+            {
+                "TypeOEngine.Typedeaf.Core.Engine.Graphics.Interfaces"
+            });
+
             if (IsBaseComponentType)
             {
-                AddUsings(new List<string>()
-                {
-                    "TypeOEngine.Typedeaf.Core.Common",
-                    "TypeOEngine.Typedeaf.Core.Engine.Graphics.Interfaces"
-                });
-
                 AddFunction(new Function("public override void Initialize()", () => { }));
                 AddFunction(new Function("public override void Draw(ICanvas canvas)", () => { }));
                 AddFunction(new Function("public override void Cleanup()", () => { }));
             }
             else
             {
-                AddUsings(new List<string>()
-                {
-                    "TypeOEngine.Typedeaf.Core.Engine.Graphics.Interfaces"
-                });
-
                 AddFunction(new Function("public override void Initialize()", () => {
                     Writer.AddLine("base.Initialize();");
                 }));

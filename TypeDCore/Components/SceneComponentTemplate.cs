@@ -14,16 +14,6 @@ namespace TypeDCore.Components
     /// filters to child entities.</remarks>
     public class SceneComponentTemplate : ComponentTemplate<SceneCode>
     {
-        // Constructors
-        /// <summary>
-        /// Initializes the object and prepares it for use.
-        /// </summary>
-        /// <remarks>This method overrides the base implementation to perform any necessary setup or
-        /// initialization specific to the derived class.</remarks>
-        public override void Init()
-        {
-        }
-
         // Functions
         /// <summary>
         /// Applies a filter to include child entities of the specified type.

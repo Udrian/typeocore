@@ -15,16 +15,6 @@ namespace TypeDCore.Components
     /// components, such as <see cref="Drawable"/> and <see cref="Entity"/>.</remarks>
     public class GameComponentTemplate : ComponentTemplate<GameCode>
     {
-        // Constructors
-        /// <summary>
-        /// Initializes the object and prepares it for use.
-        /// </summary>
-        /// <remarks>This method overrides the base implementation to perform any necessary setup or
-        /// initialization specific to the derived class.</remarks>
-        public override void Init()
-        {
-        }
-
         // Functions
         /// <summary>
         /// Filters out specific types from the children collection during processing.

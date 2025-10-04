@@ -13,16 +13,6 @@ namespace TypeDCore.Components
     /// behaviors.</remarks>
     public class EntityComponentTemplate : ComponentTemplate<EntityCode>
     {
-        // Constructors
-        /// <summary>
-        /// Initializes the object and prepares it for use.
-        /// </summary>
-        /// <remarks>This method overrides the base implementation to perform any necessary setup or
-        /// initialization specific to the derived class.</remarks>
-        public override void Init()
-        {
-        }
-
         // Functions
         /// <summary>
         /// Applies a filter to include only child elements of type <see cref="Drawable"/>.
