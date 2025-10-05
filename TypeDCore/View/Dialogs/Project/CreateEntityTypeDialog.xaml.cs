@@ -1,4 +1,5 @@
 ﻿using System.Windows;
+using TypeDCore.Components;
 using TypeDCore.ViewModel.Dialogs.Project;
 
 namespace TypeDCore.View.Dialogs.Project
@@ -15,7 +16,7 @@ namespace TypeDCore.View.Dialogs.Project
         public CreateEntityTypeDialog(TypeD.Models.Data.Project project, string @namespace)
         {
             InitializeComponent();
-            ViewModel = new CreateEntityTypeViewModel(project, @namespace, typeof(TypeOEngine.Typedeaf.Core.Entities.Entity).FullName);
+            ViewModel = new CreateEntityTypeViewModel(this, project, @namespace, CoreComponent.EntityComponent());
             this.DataContext = ViewModel;
         }
 

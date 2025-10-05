@@ -1,4 +1,5 @@
-﻿using TypeD.Models.Data;
+﻿using System.Windows;
+using TypeD.Models.Data;
 using TypeOEngine.Typedeaf.Core.Entities.Interfaces;
 using TypeOEngine.Typedeaf.Core.Interfaces;
 
@@ -15,7 +16,7 @@ namespace TypeDCore.ViewModel.Dialogs.Project
         public bool ComponentDrawableEnabled { get; set; }
 
         // Constructors
-        public CreateEntityTypeViewModel(TypeD.Models.Data.Project project, string @namespace, string componentBaseType) : base(project, @namespace, componentBaseType)
+        public CreateEntityTypeViewModel(FrameworkElement element, TypeD.Models.Data.Project project, string @namespace, Component componentBaseType) : base(element, project, @namespace, componentBaseType)
         {
             ComponentUpdatableEnabled = true;
             ComponentDrawableEnabled = true;

@@ -1,4 +1,5 @@
 ﻿using System.Windows;
+using TypeDCore.Components;
 using TypeDCore.ViewModel.Dialogs.Project;
 
 namespace TypeDCore.View.Dialogs.Project
@@ -15,7 +16,7 @@ namespace TypeDCore.View.Dialogs.Project
         public CreateSceneTypeDialog(TypeD.Models.Data.Project project, string @namespace)
         {
             InitializeComponent();
-            ViewModel = new CreateComponentTypeBaseViewModel(project, @namespace, typeof(TypeOEngine.Typedeaf.Core.Scene).FullName);
+            ViewModel = new CreateComponentTypeBaseViewModel(this, project, @namespace, CoreComponent.SceneComponent());
             this.DataContext = ViewModel;
         }
 

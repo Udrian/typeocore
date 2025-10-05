@@ -3,7 +3,6 @@ using TypeD.Models.Data;
 using TypeD.Models.Data.SaveContexts;
 using TypeD.Models.Interfaces;
 using TypeD.Models.Providers.Interfaces;
-using TypeDCore.Components;
 using TypeDCore.Models.Interfaces;
 using TypeOEngine.Typedeaf.Core;
 using TypeOEngine.Typedeaf.Core.Entities.Interfaces;
@@ -16,6 +15,7 @@ namespace TypeDCore.Models
         // Models
         IProjectModel ProjectModel { get; set; }
         ISaveModel SaveModel { get; set; }
+        IComponentModel ComponentModel { get; set; }
 
         // Providers
         IComponentProvider ComponentProvider { get; set; }
@@ -28,6 +28,7 @@ namespace TypeDCore.Models
             ProjectModel = resourceModel.Get<IProjectModel>();
             SaveModel = resourceModel.Get<ISaveModel>();
             ComponentProvider = resourceModel.Get<IComponentProvider>();
+            ComponentModel = resourceModel.Get<IComponentModel>();
         }
 
         // Functions
@@ -45,7 +46,7 @@ namespace TypeDCore.Models
                 interfaces.Add(typeof(IDrawable).FullName);
             }
 
-            ComponentProvider.Create<EntityComponentTemplate>(
+            ComponentProvider.Create(
                 project,
                 className,
                 @namespace,
@@ -58,7 +59,7 @@ namespace TypeDCore.Models
         {
             @namespace = ProjectModel.TransformNamespaceString(project, @namespace);
 
-            ComponentProvider.Create<SceneComponentTemplate>(
+            ComponentProvider.Create(
                 project,
                 className,
                 @namespace,
@@ -70,7 +71,7 @@ namespace TypeDCore.Models
         {
             @namespace = ProjectModel.TransformNamespaceString(project, @namespace);
 
-            ComponentProvider.Create<DrawableComponentTemplate>(
+            ComponentProvider.Create(
                 project,
                 className,
                 @namespace,
@@ -80,7 +81,7 @@ namespace TypeDCore.Models
 
         public void SetStartScene(Project project, Component scene)
         {
-            if (scene.TypeOBaseType != typeof(Scene)) return;
+            if (!ComponentModel.IsOfType(scene, typeof(Scene))) return;
             project.StartScene = scene.FullName;
 
             SaveModel.AddSave<ProjectSaveContext>(project);

@@ -7,6 +7,7 @@ using TypeD.Models.Data;
 using TypeD.Models.Interfaces;
 using TypeD.Models.Providers.Interfaces;
 using TypeDCore.Components;
+using TypeDCore.Models.Data.Hooks;
 using TypeDCore.Models.Data.SaveContexts;
 using TypeDCore.Models.Interfaces;
 using TypeOEngine.Typedeaf.Core;
@@ -22,9 +23,12 @@ namespace TypeDCore.Models
         // Models
         IRestoreModel RestoreModel { get; set; }
         ITypeDCoreProjectModel TypeDCoreProjectModel { get; set; }
-        IComponentProvider ComponentProvider { get; set; }
         ISaveModel SaveModel { get; set; }
         IProjectModel ProjectModel { get; set; }
+        IComponentModel ComponentModel { get; set; }
+
+        // Providers
+        IComponentProvider ComponentProvider { get; set; }
 
         // Constructors
         public TypeDCoreRestoreModel() { }
@@ -33,9 +37,11 @@ namespace TypeDCore.Models
         {
             RestoreModel = resourceModel.Get<IRestoreModel>();
             TypeDCoreProjectModel = resourceModel.Get<ITypeDCoreProjectModel>();
-            ComponentProvider = resourceModel.Get<IComponentProvider>();
             SaveModel = resourceModel.Get<ISaveModel>();
             ProjectModel = resourceModel.Get<IProjectModel>();
+            ComponentModel = resourceModel.Get<IComponentModel>();
+
+            ComponentProvider = resourceModel.Get<IComponentProvider>();
 
             RestoreModel.AddRestoreMethod(Restore);
         }
@@ -60,20 +66,27 @@ namespace TypeDCore.Models
                     // Fetch parent component, will be null if there is none
                     var parentComponent = ComponentProvider.Load(project, type.BaseType.FullName);
 
-                    if (type == typeof(Entity))
+                    if(parentComponent == null)
+                    {
+                        var componentBaseTypes = ComponentProvider.GetBaseTypeComponents();
+                        parentComponent = componentBaseTypes.Find(c => c.FullName == type.BaseType.FullName);
+                    }
+
+                    if (type.IsSubclassOf(typeof(Entity)))
                     {
                         var updatable = type.GetInterfaces().Contains(typeof(IUpdatable));
                         var drawable = type.GetInterfaces().Contains(typeof(IDrawable));
                         TypeDCoreProjectModel.CreateEntity(project, type.Name, type.Namespace, parentComponent, updatable, drawable);
                     }
-                    else if (type == typeof(Scene))
+                    else if (type.IsSubclassOf(typeof(Scene)))
                     {
                         TypeDCoreProjectModel.CreateScene(project, type.Name, type.Namespace, parentComponent);
                     }
-                    else if (type == typeof(Drawable))
+                    else if (type.IsSubclassOf(typeof(Drawable)))
                     {
                         TypeDCoreProjectModel.CreateDrawable(project, type.Name, type.Namespace, parentComponent);
                     }
+                    parentComponent.Template.Init();
 
                     var csFilePath = Path.Combine(project.Location, $"{type.FullName.Replace('.', Path.DirectorySeparatorChar)}.cs");
                     // If CS files already exists, check if we need to convert them to typed.cs pair
@@ -110,9 +123,8 @@ namespace TypeDCore.Models
             {
                 var csFile = component.Template.Code.FilePath();
                 var csTypeDFile = component.Template.Code.FilePathTypeD();
-                var parentComponent = ComponentProvider.Load(project, component.ParentComponent?.FullName);
 
-                if (component.TypeOBaseType == typeof(Entity))
+                if (ComponentModel.IsOfType(component, typeof(Entity)))
                 {
                     if (!File.Exists(csFile) || !File.Exists(csTypeDFile))
                     {
@@ -122,7 +134,7 @@ namespace TypeDCore.Models
                         updateTree = true;
                     }
                 }
-                else if (component.TypeOBaseType == typeof(Scene))
+                else if (ComponentModel.IsOfType(component, typeof(Scene)))
                 {
                     if (!File.Exists(csFile) || !File.Exists(csTypeDFile))
                     {
@@ -130,7 +142,7 @@ namespace TypeDCore.Models
                         updateTree = true;
                     }
                 }
-                else if (component.TypeOBaseType == typeof(Drawable))
+                else if (ComponentModel.IsOfType(component, typeof(Drawable)))
                 {
                     if (!File.Exists(csFile))
                     {
@@ -138,7 +150,7 @@ namespace TypeDCore.Models
                         updateTree = true;
                     }
                 }
-                else if(component.TypeOBaseType == typeof(Game))
+                else if(ComponentModel.IsOfType(component, typeof(Game)))
                 {
                     if (!File.Exists(Path.Combine(project.Location, project.ProjectName, $"{project.ProjectName}Game.cs")))
                     {
@@ -153,19 +165,21 @@ namespace TypeDCore.Models
             }
 
             // Check if we are missing Game.cs and StartScene
-            if (!File.Exists(Path.Combine(project.Location, project.ProjectName, $"{project.ProjectName}Game")))
+            if (!File.Exists(Path.Combine(project.Location, project.ProjectName, $"{project.ProjectName}Game.cs")))
             {
-                ComponentProvider.Create<GameComponentTemplate>(
+                ComponentProvider.Create(
                     project,
                     $"{project.ProjectName}Game",
-                    project.ProjectName
+                    project.ProjectName,
+                    CoreComponent.GameComponent()
                 );
-                if (!File.Exists(Path.Combine(project.Location, project.ProjectName, "Scenes", "StartScene")) && (project.StartScene == null || project.StartScene == $"{project.ProjectName}.Scenes.StartScene"))
+                if (!File.Exists(Path.Combine(project.Location, project.ProjectName, "Scenes", "StartScene.cs")) && (project.StartScene == null || project.StartScene == $"{project.ProjectName}.Scenes.StartScene"))
                 {
-                    var scene = ComponentProvider.Create<SceneComponentTemplate>(
+                    var scene = ComponentProvider.Create(
                         project,
                         "StartScene",
-                        $"{project.ProjectName}.Scenes"
+                        $"{project.ProjectName}.Scenes",
+                        CoreComponent.SceneComponent()
                     );
 
                     TypeDCoreProjectModel.SetStartScene(project, scene.Component);

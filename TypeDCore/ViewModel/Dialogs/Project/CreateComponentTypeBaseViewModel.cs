@@ -22,13 +22,14 @@ namespace TypeDCore.ViewModel.Dialogs.Project
         public string ComponentBaseType { get; set; }
 
         // Constructors
-        public CreateComponentTypeBaseViewModel(TypeD.Models.Data.Project project, string @namespace, string componentBaseType)
+        public CreateComponentTypeBaseViewModel(FrameworkElement element, TypeD.Models.Data.Project project, string @namespace, Component componentBaseType) : base(element)
         {
             Project = project;
 
-            ComponentBaseType = componentBaseType;
+            ComponentBaseType = componentBaseType.FullName;
             ComponentNamespace = @namespace;
             ParentComponentFullName = ComponentBaseType;
+            ParentComponent = componentBaseType;
         }
 
         // Functions

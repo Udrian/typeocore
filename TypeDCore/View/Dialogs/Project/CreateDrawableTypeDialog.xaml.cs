@@ -1,4 +1,5 @@
 ﻿using System.Windows;
+using TypeDCore.Components;
 using TypeDCore.ViewModel.Dialogs.Project;
 
 namespace TypeDCore.View.Dialogs.Project
@@ -15,7 +16,7 @@ namespace TypeDCore.View.Dialogs.Project
         public CreateDrawableTypeDialog(TypeD.Models.Data.Project project, string @namespace)
         {
             InitializeComponent();
-            ViewModel = new CreateComponentTypeBaseViewModel(project, @namespace, typeof(TypeOEngine.Typedeaf.Core.Entities.Drawables.Drawable).FullName);
+            ViewModel = new CreateComponentTypeBaseViewModel(this, project, @namespace, CoreComponent.DrawableComponent());
             this.DataContext = ViewModel;
         }
 

@@ -1,21 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
 using TypeD;
-using TypeDCore.Commands.Data;
 using TypeD.Models.Data;
 using TypeD.Models.Data.Hooks;
+using TypeD.Models.Data.SettingContexts;
+using TypeD.Models.Interfaces;
 using TypeD.Models.Providers.Interfaces;
-using TypeD.View.TreeNodes;
 using TypeD.View;
+using TypeD.View.TreeNodes;
 using TypeDCore.Commands;
+using TypeDCore.Commands.Data;
+using TypeDCore.Components;
 using TypeDCore.Models;
 using TypeDCore.Models.Interfaces;
-using TypeOEngine.Typedeaf.Core;
-using TypeDCore.Components;
-using TypeD.Models.Interfaces;
-using TypeD.Models.Data.SettingContexts;
 using TypeDCore.View.Panels;
 using TypeDCore.View.Viewer;
+using TypeOEngine.Typedeaf.Core;
 
 namespace TypeDCore
 {
@@ -29,6 +29,7 @@ namespace TypeDCore
         ITypeDCoreRestoreModel TypeDCoreRestoreModel { get; set; }
         ISettingModel SettingModel { get; set; }
         IPanelModel PanelModel { get; set; }
+        IComponentModel ComponentModel { get; set; }
 
         // Commands
         CreateEntityTypeCommand CreateEntityTypeCommand { get; set; }
@@ -60,6 +61,7 @@ namespace TypeDCore
             // Models
             SettingModel = Resources.Get<ISettingModel>();
             PanelModel = Resources.Get<IPanelModel>();
+            ComponentModel = Resources.Get<IComponentModel>();
 
             // Commands
             CreateEntityTypeCommand = new CreateEntityTypeCommand(Resources);
@@ -90,6 +92,12 @@ namespace TypeDCore
 
             // Viewers
             PanelModel.AddViewer<ConsoleViewer>();
+
+            // Data
+            ComponentProvider.AddBaseTypeComponent(CoreComponent.EntityComponent());
+            ComponentProvider.AddBaseTypeComponent(CoreComponent.SceneComponent());
+            ComponentProvider.AddBaseTypeComponent(CoreComponent.DrawableComponent());
+            ComponentProvider.AddBaseTypeComponent(CoreComponent.GameComponent());
         }
 
         public override void Uninitializer()
@@ -115,20 +123,28 @@ namespace TypeDCore
 
             // Viewers
             PanelModel.RemoveViewer<ConsoleViewer>();
+
+            // Data
+            ComponentProvider.RemoveBaseTypeComponent(CoreComponent.EntityComponent());
+            ComponentProvider.RemoveBaseTypeComponent(CoreComponent.SceneComponent());
+            ComponentProvider.RemoveBaseTypeComponent(CoreComponent.DrawableComponent());
+            ComponentProvider.RemoveBaseTypeComponent(CoreComponent.GameComponent());
         }
 
         // Events
         void ProjectCreate(ProjectCreateHook hook)
         {
-            ComponentProvider.Create<GameComponentTemplate>(
+            ComponentProvider.Create(
                 hook.Project,
                 $"{hook.Project.ProjectName}Game",
-                hook.Project.ProjectName
+                hook.Project.ProjectName,
+                CoreComponent.GameComponent()
             );
-            var scene = ComponentProvider.Create<SceneComponentTemplate>(
+            var scene = ComponentProvider.Create(
                 hook.Project,
                 "StartScene",
-                $"{hook.Project.ProjectName}.Scenes"
+                $"{hook.Project.ProjectName}.Scenes",
+                CoreComponent.SceneComponent()
             );
 
             TypeDCoreProjectModel.SetStartScene(hook.Project, scene.Component);
@@ -297,7 +313,7 @@ namespace TypeDCore
             {
                 var component = hook.Node.Item as Component;
 
-                if(component.TypeOBaseType != typeof(Game))
+                if(!ComponentModel.IsOfType(component, typeof(Game)))
                 {
                     hook.Menu.Items.Add(
                         new MenuItem()
@@ -322,7 +338,7 @@ namespace TypeDCore
                         }
                     );
                 }
-                if (component.TypeOBaseType == typeof(Scene))
+                if (ComponentModel.IsOfType(component, typeof(Scene)))
                 {
                     hook.Menu.Items.Add(
                        new MenuItem()

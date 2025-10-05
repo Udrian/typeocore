@@ -3,7 +3,7 @@
     "version": "0.1.0",
     "externals": ["MathNet.Numerics.dll"],
     "dependencies": [
-        "TypeD-0.1.0;dev"
+        "Udrian@TypeD-3;dev"
     ],
     "type": "Module",
     "devModuleName": "TypeDCore",
