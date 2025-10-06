@@ -25,10 +25,14 @@ namespace TypeOEngine.Typedeaf.Core.Engine
 
         public void Cleanup()
         {
-            if(Window is TypeObject typeObject)
+            if(Window is TypeOObject typeObject)
                 typeObject?.DoCleanup();
-            //Canvas?.Cleanup();
-            //TODO: Cleanup all scenes?
+            foreach (var scene in Scenes)
+            {
+                scene.Value?.DoCleanup();
+            }
+
+            //TODO: Should we cleanup Canvas as well?
         }
 
         public Scene CreateScene(Type type)
@@ -55,7 +59,6 @@ namespace TypeOEngine.Typedeaf.Core.Engine
 
         private void CreateScene(Scene scene)
         {
-            Context.InitializeObject(scene);
             Scenes.Add(scene.GetType(), scene);
 
             if (Window == null)
@@ -86,8 +89,7 @@ namespace TypeOEngine.Typedeaf.Core.Engine
             CurrentScene = toScene;
             if (init)
             {
-                CurrentScene.InternalInitialize();
-                CurrentScene.Initialize();
+                Context.InitializeObject(CurrentScene);
             }
             fromScene?.OnExit(toScene);
             toScene?.OnEnter(fromScene);
@@ -109,8 +111,7 @@ namespace TypeOEngine.Typedeaf.Core.Engine
             CurrentScene = toScene;
             if(init)
             {
-                CurrentScene.InternalInitialize();
-                CurrentScene.Initialize();
+                Context.InitializeObject(CurrentScene);
             }
             fromScene?.OnExit(toScene);
             toScene?.OnEnter(fromScene);

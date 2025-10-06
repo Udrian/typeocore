@@ -46,13 +46,14 @@ namespace TypeDCore.Code.Game
                 return usings;
             });
 
-            AddFunction(new Function("public override void Initialize()", () => {
-                Writer.AddLine("InternalInitialize();");
+            AddFunction(new Function("protected override void Initialize()", () => {
+                Writer.AddLine("base.Initialize();");
                 Component defaultScene = ComponentProvider.Load(Project, Project.StartScene);
                 if (defaultScene != null)
                 {
                     Writer.AddLine($"Scenes.SetScene<{defaultScene.ClassName}>();");
                 }
+                Writer.AddLine("InternalInitialize();");
             }));
             AddFunction(new Function("public override void Update(double dt)", () => {
                 Writer.AddLine("Scenes.Update(dt);");
@@ -60,7 +61,7 @@ namespace TypeDCore.Code.Game
             AddFunction(new Function("public override void Draw()", () => {
                 Writer.AddLine("Scenes.Draw();");
             }));
-            AddFunction(new Function("public override void Cleanup()", () => {
+            AddFunction(new Function("protected override void Cleanup()", () => {
                 Writer.AddLine("Scenes.Cleanup();");
                 Writer.AddLine("InternalCleanup();");
             }));

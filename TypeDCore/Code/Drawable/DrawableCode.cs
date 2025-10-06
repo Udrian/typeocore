@@ -52,19 +52,19 @@ namespace TypeDCore.Code.Drawable
 
             if (IsBaseComponentType)
             {
-                AddFunction(new Function("public override void Initialize()", () => { }));
+                AddFunction(new Function("protected override void Initialize()", () => { }));
                 AddFunction(new Function("public override void Draw(ICanvas canvas)", () => { }));
-                AddFunction(new Function("public override void Cleanup()", () => { }));
+                AddFunction(new Function("protected override void Cleanup()", () => { }));
             }
             else
             {
-                AddFunction(new Function("public override void Initialize()", () => {
+                AddFunction(new Function("protected override void Initialize()", () => {
                     Writer.AddLine("base.Initialize();");
                 }));
                 AddFunction(new Function("public override void Draw(ICanvas canvas)", () => {
                     Writer.AddLine("base.Draw(canvas);");
                 }));
-                AddFunction(new Function("public override void Cleanup()", () => {
+                AddFunction(new Function("protected override void Cleanup()", () => {
                     Writer.AddLine("base.Cleanup();");
                 }));
             }

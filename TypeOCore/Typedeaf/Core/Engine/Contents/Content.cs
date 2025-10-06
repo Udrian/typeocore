@@ -5,7 +5,7 @@
         /// <summary>
         /// Abstract bath class for all contents, sound, texture, fonts etc.
         /// </summary>
-        public abstract class Content : TypeObject
+        public abstract class Content : TypeOObject
         {
             /// <summary>
             /// Path to the file that have been used to load the content

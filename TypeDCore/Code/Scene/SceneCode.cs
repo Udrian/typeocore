@@ -45,6 +45,7 @@ namespace TypeDCore.Code.Scene
             if(IsBaseComponentType)
             {
                 AddFunction(new Function("protected virtual void InternalInitialize()", () => { }));
+                AddFunction(new Function("protected override void Cleanup()", () => { }));
                 AddFunction(new Function("public override void OnEnter(Scene from)", () => { }));
                 AddFunction(new Function("public override void OnExit(Scene to)", () => { }));
             }
@@ -52,6 +53,9 @@ namespace TypeDCore.Code.Scene
             {
                 AddFunction(new Function("protected override void InternalInitialize()", () => {
                     Writer.AddLine("base.InternalInitialize();");
+                }));
+                AddFunction(new Function("protected override void Cleanup()", () => {
+                    Writer.AddLine("base.Cleanup();");
                 }));
                 AddFunction(new Function("public override void OnEnter(Scene from)", () => {
                     Writer.AddLine("base.OnEnter(from);");

@@ -71,7 +71,6 @@ namespace TypeOEngine.Typedeaf.Core
                 foreach(var hardware in Hardwares.Values)
                 {
                     InitializeObject(hardware);
-                    hardware.Initialize();
 
                     Logger.Log($"Hardware of type '{hardware.GetType().FullName}' loaded");
                 }
@@ -83,7 +82,6 @@ namespace TypeOEngine.Typedeaf.Core
                     {
                         var service = servicePair.Value;
                         InitializeObject(service);
-                        service.DoInitialize();
 
                         Logger.Log($"Service of type '{service.GetType().FullName}' loaded");
                     }
@@ -93,7 +91,6 @@ namespace TypeOEngine.Typedeaf.Core
                 foreach(var module in Modules)
                 {
                     InitializeObject(module);
-                    module.DoInitialize();
 
                     Logger.Log($"Module of type '{module.GetType().FullName}' loaded");
                 }
@@ -114,9 +111,6 @@ namespace TypeOEngine.Typedeaf.Core
 
                 //Initialize the game
                 InitializeObject(Game);
-                Game.InternalInitialize();
-                Game.Initialize();
-                Game.Initialized = true;
 
                 Logger.Log($"Game of type '{Game.GetType().FullName}' loaded");
 
@@ -157,7 +151,7 @@ namespace TypeOEngine.Typedeaf.Core
                 Logger.Log("Exiting game, initiating cleanup");
 
                 //Cleanup
-                Game.Cleanup();
+                Game.DoCleanup();
 
                 foreach(var serviceIdPair in Services)
                 {
@@ -169,7 +163,7 @@ namespace TypeOEngine.Typedeaf.Core
 
                 foreach(var hardware in Hardwares)
                 {
-                    hardware.Value.Cleanup();
+                    hardware.Value.DoCleanup();
                 }
 
                 foreach(var module in Modules)
@@ -262,7 +256,7 @@ namespace TypeOEngine.Typedeaf.Core
                     InitializeObject(hasEntities.Entities, obj);
                 }
 
-                if (obj is TypeObject typeObject)
+                if (obj is TypeOObject typeObject)
                 {
                     Logger.Log(LogLevel.Debug, $"´Calling Initialize on '{obj.GetType().FullName}'" + (from != null ? $" from '{from.GetType().FullName}'" : ""));
                     typeObject.DoInitialize();
@@ -350,7 +344,6 @@ namespace TypeOEngine.Typedeaf.Core
 
                 InitializeObject(drawable, obj);
                 option?.Create(drawable);
-                drawable.Initialize();
 
                 if (drawStack != null)
                 {
@@ -371,7 +364,6 @@ namespace TypeOEngine.Typedeaf.Core
 
                 InitializeObject(drawable, obj);
                 option?.Create(drawable);
-                drawable.Initialize();
 
                 if(drawStack != null)
                 {
@@ -387,7 +379,7 @@ namespace TypeOEngine.Typedeaf.Core
                 {
                     drawStack.Pop(drawable);
                 }
-                drawable.Cleanup();
+                drawable.DoCleanup();
             }
 
             internal L CreateLogic<L>(object obj, UpdateLoop updateLoop, LogicOption<L> option) where L : Logic, new()
@@ -401,7 +393,6 @@ namespace TypeOEngine.Typedeaf.Core
 
                 InitializeObject(logic, obj);
                 option?.Create(logic);
-                logic.Initialize();
 
                 if(updateLoop != null)
                 {
@@ -416,6 +407,7 @@ namespace TypeOEngine.Typedeaf.Core
                 if(updateLoop != null)
                 {
                     updateLoop.Pop(logic);
+                    logic.DoCleanup();
                 }
             }
 

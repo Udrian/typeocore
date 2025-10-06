@@ -13,11 +13,12 @@ namespace TypeDCore.View.Viewer
 
         private class FakeGame : Game
         {
-            public override void Initialize()
+            protected override void Initialize()
             {
+                base.Initialize();
             }
 
-            public override void Cleanup()
+            protected override void Cleanup()
             {
             }
 

@@ -32,11 +32,8 @@ namespace TypeDCore.Code.Scene
                 "TypeOEngine.Typedeaf.Core.Common"
             });
 
-            AddFunction(new Function("public override void Initialize()", () => {
-                if (!IsBaseComponentType)
-                {
-                    Writer.AddLine("base.Initialize();");
-                }
+            AddFunction(new Function("protected override void Initialize()", () => {
+                Writer.AddLine("base.Initialize();");
                 foreach (var child in Component.Children)
                 {
                     if(child.TypeOBaseType == typeof(TypeOEngine.Typedeaf.Core.Entities.Entity))

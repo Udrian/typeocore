@@ -25,11 +25,8 @@ namespace TypeDCore.Code.Entity
         /// the class is a base component type, additional internal initialization logic is added.</remarks>
         protected override void InitTypeDClass()
         {
-            AddFunction(new Function("public override void Initialize()", () => {
-                if (!IsBaseComponentType)
-                {
-                    Writer.AddLine("base.Initialize();");
-                }
+            AddFunction(new Function("protected override void Initialize()", () => {
+                Writer.AddLine("base.Initialize();");
                 foreach (var child in Component.Children)
                 {
                     if (child.TypeOBaseType == typeof(TypeOEngine.Typedeaf.Core.Entities.Entity))

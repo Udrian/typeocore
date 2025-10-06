@@ -15,6 +15,16 @@ internal class HookModelMock : IHookModel
     public void RemoveHook<T>(Action<T> action) where T : Hook, new() { }
     public void Shoot(string hook, object param) { }
     public void Shoot<T>(T hook) where T : Hook, new() { }
+
+    public T Shoot<T>() where T : Hook, new()
+    {
+        throw new NotImplementedException();
+    }
+
+    T IHookModel.Shoot<T>(T hook)
+    {
+        throw new NotImplementedException();
+    }
 }
 
 internal class ResourceModelMock : IResourceModel

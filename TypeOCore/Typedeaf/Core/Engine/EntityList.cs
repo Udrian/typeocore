@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using TypeOEngine.Typedeaf.Core.Collections;
+﻿using TypeOEngine.Typedeaf.Core.Collections;
 using TypeOEngine.Typedeaf.Core.Engine.Interfaces;
 using TypeOEngine.Typedeaf.Core.Entities;
 using TypeOEngine.Typedeaf.Core.Entities.Interfaces;
@@ -67,7 +64,7 @@ namespace TypeOEngine.Typedeaf.Core
                     }
 
                     Logger.Log(LogLevel.Debug, $"Removing Entity of type '{iType.FullName}'");
-                    deleteEntity.Cleanup();
+                    deleteEntity.DoCleanup();
                     Entities.Remove(deleteEntity);
                 }
 
@@ -115,8 +112,6 @@ namespace TypeOEngine.Typedeaf.Core
             {
                 Logger.Log(LogLevel.Debug, $"Creating Entity of type '{typeof(E).FullName}'");
                 Context.InitializeObject(entity, this);
-                entity.InternalInitialize();
-                entity.Initialize();
 
                 Entities.Add(entity);
                 var eType = typeof(E);

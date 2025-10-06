@@ -5,11 +5,17 @@
         /// <summary>
         /// Base class for Initializing and cleanup, will automatically call both Initialize and Cleanup on object when relevant. Do not use constructor in a TypeOObject class to access TypeO objects.
         /// </summary>
-        public abstract class TypeObject
+        public abstract class TypeOObject
         {
+            /// <summary>
+            /// Gets a value indicating whether the object has been successfully initialized.
+            /// </summary>
+            public bool Initialized { get; internal set; }
+
             internal void DoInitialize()
             {
                 Initialize();
+                Initialized = true;
             }
 
             /// <summary>
@@ -20,6 +26,7 @@
             internal void DoCleanup()
             {
                 Cleanup();
+                Initialized = false;
             }
 
             /// <summary>

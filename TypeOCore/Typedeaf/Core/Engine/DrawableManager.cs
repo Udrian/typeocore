@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using TypeOEngine.Typedeaf.Core.Engine.Interfaces;
+﻿using TypeOEngine.Typedeaf.Core.Engine.Interfaces;
 using TypeOEngine.Typedeaf.Core.Entities.Drawables;
 
 namespace TypeOEngine.Typedeaf.Core

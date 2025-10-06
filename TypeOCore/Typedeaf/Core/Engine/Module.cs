@@ -5,7 +5,7 @@
         /// <summary>
         /// Base class for Modules, this will be a Module without any Module Options tied to it
         /// </summary>
-        public abstract class Module : TypeObject
+        public abstract class Module : TypeOObject
         {
             /// <summary>
             /// Set to true to call LoadExtensions function during init.

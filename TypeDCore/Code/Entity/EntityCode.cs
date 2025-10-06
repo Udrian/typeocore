@@ -58,14 +58,14 @@ namespace TypeDCore.Code.Entity
             if(IsBaseComponentType)
             {
                 AddFunction(new Function("protected virtual void InternalInitialize()", () => { }));
-                AddFunction(new Function("public override void Cleanup()", () => { }));
+                AddFunction(new Function("protected override void Cleanup()", () => { }));
             }
             else
             {
                 AddFunction(new Function("protected override void InternalInitialize()", () => {
                     Writer.AddLine("base.InternalInitialize();");
                 }));
-                AddFunction(new Function("public override void Cleanup()", () => {
+                AddFunction(new Function("protected override void Cleanup()", () => {
                     Writer.AddLine("base.Cleanup();");
                 }));
             }
