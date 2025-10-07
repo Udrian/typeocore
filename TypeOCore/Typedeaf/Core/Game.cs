@@ -25,6 +25,11 @@ namespace TypeOEngine.Typedeaf.Core
         public string Name { get { return Context.Name; } }
 
         /// <summary>
+        /// Gets or sets a value indicating whether the game should run asynchronously.
+        /// </summary>
+        public bool RunSynchronously { get; set; }
+
+        /// <summary>
         /// Gets the manager responsible for handling a collection of drawable objects.
         /// </summary>
         public DrawableManager<Drawable> Drawables { get; private set; }
@@ -59,7 +64,10 @@ namespace TypeOEngine.Typedeaf.Core
         /// </summary>
         /// <remarks>This constructor is protected and intended to be used by derived classes to
         /// initialize the base state of a game.</remarks>
-        protected Game() { }
+        protected Game()
+        {
+            RunSynchronously = true;
+        }
 
         /// <summary>
         /// Initializes the core components of the application, including managers, loaders, and scenes.

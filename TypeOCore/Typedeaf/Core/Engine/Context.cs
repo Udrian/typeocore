@@ -115,58 +115,87 @@ namespace TypeOEngine.Typedeaf.Core
                 Logger.Log($"Game of type '{Game.GetType().FullName}' loaded");
 
                 Logger.Log($"Everything loaded successfully, spinning up game loop");
-                while(!ExitApplication)
+                if(Game.RunSynchronously)
                 {
-                    var now = DateTime.UtcNow;
-                    TimeSinceStart = (now - StartTime);
-                    var dt = (now - LastTick).TotalSeconds;
-                    LastTick = now;
-
-                    foreach(var module in Modules)
+                    while (!ExitApplication)
                     {
-                        if((module as IUpdatable)?.Pause == false)
-                            (module as IUpdatable)?.Update(dt);
+                        ProcessGame();
                     }
-
-                    foreach(var hardware in Hardwares.Values)
-                    {
-                        if((hardware as IUpdatable)?.Pause == false)
-                            (hardware as IUpdatable)?.Update(dt);
-                    }
-
-                    foreach(var serviceids in Services.Values)
-                    {
-                        foreach(var service in serviceids.Values)
-                        {
-                            if ((service as IUpdatable)?.Pause == false)
-                                (service as IUpdatable)?.Update(dt);
-                        }
-                    }
-
-                    if (ExitApplication) break;
-
-                    Game.Update(dt);
-                    Game.Draw();
+                    Cleanup();
+                    return;
                 }
+                
+            }
+
+            /// <summary>
+            /// Processes the game state by updating all modules, hardware components, services, and the game itself.
+            /// </summary>
+            /// <remarks>This method calculates the time elapsed since the last update and invokes the
+            /// <c>Update</c> method on all updatable modules, hardware components, and services that are not paused.
+            /// It then updates and renders the game. If <see cref="ExitApplication"/> is set to
+            /// <see langword="true"/>, the method  exits early without performing further updates.</remarks>
+            public void ProcessGame()
+            {
+                var now = DateTime.UtcNow;
+                TimeSinceStart = (now - StartTime);
+                var dt = (now - LastTick).TotalSeconds;
+                LastTick = now;
+
+                foreach (var module in Modules)
+                {
+                    if ((module as IUpdatable)?.Pause == false)
+                        (module as IUpdatable)?.Update(dt);
+                }
+
+                foreach (var hardware in Hardwares.Values)
+                {
+                    if ((hardware as IUpdatable)?.Pause == false)
+                        (hardware as IUpdatable)?.Update(dt);
+                }
+
+                foreach (var serviceids in Services.Values)
+                {
+                    foreach (var service in serviceids.Values)
+                    {
+                        if ((service as IUpdatable)?.Pause == false)
+                            (service as IUpdatable)?.Update(dt);
+                    }
+                }
+
+                if (ExitApplication) return;
+
+                Game.Update(dt);
+                Game.Draw();
+            }
+
+            /// <summary>
+            /// Performs cleanup operations for the game and its associated resources.
+            /// </summary>
+            /// <remarks>This method ensures that all game-related resources, including services,
+            /// hardware components, and modules, are properly cleaned up. It also logs the cleanup process and
+            /// finalizes the logger. Call this method before exiting the game to release resources and avoid potential
+            /// memory leaks.</remarks>
+            public void Cleanup()
+            {
                 Logger.Log("Exiting game, initiating cleanup");
 
                 //Cleanup
                 Game.DoCleanup();
 
-                foreach(var serviceIdPair in Services)
+                foreach (var serviceIdPair in Services)
                 {
-                    foreach(var servicePair in serviceIdPair.Value)
+                    foreach (var servicePair in serviceIdPair.Value)
                     {
                         servicePair.Value.DoCleanup();
                     }
                 }
 
-                foreach(var hardware in Hardwares)
+                foreach (var hardware in Hardwares)
                 {
                     hardware.Value.DoCleanup();
                 }
 
-                foreach(var module in Modules)
+                foreach (var module in Modules)
                 {
                     module.DoCleanup();
                 }
