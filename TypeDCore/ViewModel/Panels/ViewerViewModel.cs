@@ -1,4 +1,4 @@
-﻿using System.Windows.Controls;
+﻿using System.Windows;
 using TypeD.Models.Data;
 using TypeD.Models.Data.Hooks;
 using TypeD.Models.Data.SettingContexts;
@@ -19,6 +19,7 @@ namespace TypeDCore.ViewModel.Panels
         // Data
         ViewerPanel ViewerPanel { get; set; }
         Project Project { get; set; }
+        IViewer Viewer { get; set; }
 
         // Constructors
         public ViewerViewModel(Project project, ViewerPanel viewerPanel) : base(viewerPanel)
@@ -52,45 +53,30 @@ namespace TypeDCore.ViewModel.Panels
 
         void ComponentOpened(OpenComponentHook hook)
         {
-            var setting = SettingModel.GetContext<MainWindowSettingContext>();
+            if (Viewer == null)
+            {
+                var setting = SettingModel.GetContext<MainWindowSettingContext>();
 
-            IViewer viewer = PanelModel.CreateViewer(setting.ViewerType.Value);
-            if (viewer == null) return;
-            viewer.Init(hook.Project, hook.Component);
-
-            ViewerPanel.Tabs.Items.Add(new TabItem() {
-                Header = $"{hook.Component.ClassName}",
-                Content = viewer
-            });
+                Viewer = PanelModel.CreateViewer(setting.ViewerType.Value);
+                
+                ViewerPanel.Tabs.Children.Add(Viewer as UIElement);
+            }
         }
 
         void ComponentClosed(CloseComponentHook hook)
         {
-            TabItem foundItem = null;
-            foreach(var item in ViewerPanel.Tabs.Items)
+            if (Viewer != null)
             {
-                if(((item as TabItem)?.Content as IViewer)?.Component?.FullName == hook.Component.FullName)
-                {
-                    foundItem = item as TabItem;
-                    break;
-                }    
+                Viewer.Init(null, null);
             }
-            ViewerPanel.Tabs.Items.Remove(foundItem);
         }
 
         void ComponentFocus(ComponentFocusHook hook)
         {
-            TabItem foundItem = null;
-            foreach (var item in ViewerPanel.Tabs.Items)
+            if (Viewer != null)
             {
-                if (((item as TabItem)?.Content as IViewer)?.Component?.FullName == hook.Component?.FullName)
-                {
-                    foundItem = item as TabItem;
-                    break;
-                }
+                Viewer.Init(hook.Project, hook.Component);
             }
-            if (foundItem != null)
-                foundItem.IsSelected = true;
         }
     }
 }

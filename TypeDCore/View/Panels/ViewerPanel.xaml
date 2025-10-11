@@ -6,7 +6,7 @@
              xmlns:local="clr-namespace:TypeDCore.View.Panels"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800" Unloaded="ViewerPanelUnloaded">
-    <TabControl Name="Tabs" SelectionChanged="Tabs_SelectionChanged">
+    <Grid Name="Tabs" >
             
-    </TabControl>
+    </Grid>
 </UserControl>
