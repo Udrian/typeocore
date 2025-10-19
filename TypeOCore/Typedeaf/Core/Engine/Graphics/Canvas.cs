@@ -9,22 +9,23 @@ namespace TypeOEngine.Typedeaf.Core.Engine.Graphics
     {
         /// <inheritdoc/>
         public IWindow Window { get; set; }
+
         /// <inheritdoc/>
         public Rectangle Viewport { get; set; }
+
         /// <inheritdoc/>
-        public Matrix WorldMatrix { get; set; }
+        public Vec3 WorldTranslation { get; set; }
 
         /// <summary>
         /// Canvas constructor.
         /// </summary>
         /// <param name="window">Window that the Canvas is attached to</param>
         /// <param name="viewport">Canvas viewport</param>
-        /// <param name="worldMatrix">Canvas World Matrix</param>
-        public Canvas(IWindow window, Rectangle viewport, Matrix worldMatrix)
+        public Canvas(IWindow window, Rectangle viewport)
         {
             Window = window;
             Viewport = viewport;
-            WorldMatrix = worldMatrix;
+            WorldTranslation = Vec3.Zero;
         }
 
         /// <inheritdoc/>

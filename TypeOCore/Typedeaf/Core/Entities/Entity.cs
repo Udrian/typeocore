@@ -29,7 +29,7 @@ namespace TypeOEngine.Typedeaf.Core
             /// <summary>
             /// Gets the unique identifier for the entity.
             /// </summary>
-            public string ID { get; internal set; }
+            public virtual string ID { get; internal set; }
 
             /// <summary>
             /// Gets the parent entity of the current entity.

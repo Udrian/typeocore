@@ -21,9 +21,9 @@ namespace TypeOEngine.Typedeaf.Core
             public abstract Rectangle Viewport { get; set; }
 
             /// <summary>
-            /// Canvas world matrix.
+            /// Gets or sets the world-space translation of the Canvas.
             /// </summary>
-            public Matrix WorldMatrix { get; set; }
+            public Vec3 WorldTranslation { get; set; }
 
             /// <summary>
             /// Clears the Canvas.
