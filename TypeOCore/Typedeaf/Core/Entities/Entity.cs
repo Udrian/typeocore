@@ -80,6 +80,12 @@ namespace TypeOEngine.Typedeaf.Core
                 Context.InitializeObject(Logics, this);
             }
 
+            protected override void Cleanup()
+            {
+                Drawables?.DoCleanup();
+                Logics?.DoCleanup();
+            }
+
             /// <summary>
             /// Removes the current entity from its parent entity list and associated systems.
             /// </summary>

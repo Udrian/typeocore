@@ -4,10 +4,8 @@ namespace TypeOEngine.Typedeaf.Core
 {
     namespace Entities
     {
-        public abstract class Stub
+        public abstract class Stub : TypeOObject
         {
-            public abstract void Initialize();
-
             public abstract Entity CreateEntity(EntityList entityList);
         }
 

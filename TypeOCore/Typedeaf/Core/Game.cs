@@ -87,6 +87,14 @@ namespace TypeOEngine.Typedeaf.Core
             Context.InitializeObject(Scenes);
         }
 
+        protected override void Cleanup()
+        {
+            Drawables.DoCleanup();
+            Logics.DoCleanup();
+            ContentLoader.DoCleanup();
+            Scenes.DoCleanup();
+        }
+
         /// <summary>
         /// Updates the state of the object based on the elapsed time.
         /// </summary>

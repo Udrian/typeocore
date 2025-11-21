@@ -18,18 +18,13 @@
             /// Log a message with Info log level severity.
             /// </summary>
             /// <param name="log">Message to log.</param>
-            public void Log(string log)
-            {
-                Log(LogLevel.Info, log);
-            }
+            public void Log(string log);
 
             /// <summary>
             /// Sets the Logger options
             /// </summary>
             /// <param name="option">Option instance to set to the Logger</param>
             public void SetOption(ILoggerOption option);
-
-            public void Cleanup();
         }
     }
 }

@@ -24,7 +24,7 @@ namespace TypeOEngine.Typedeaf.Core
             public Dictionary<Type, Hardware> Hardwares { get; internal set; }
             public Dictionary<Type, Dictionary<string, Service>> Services { get; internal set; }
             public Dictionary<Type, Type> ContentBinding { get; internal set; }
-            public ILogger Logger { get; internal set; }
+            public Logger Logger { get; internal set; }
 
             internal Context(Game game, TypeO typeO, string name) : base()
             {
@@ -201,10 +201,10 @@ namespace TypeOEngine.Typedeaf.Core
                 }
 
                 Logger.Log("Bye bye\n\r\n\r");
-                Logger?.Cleanup();
+                Logger.DoCleanup();
             }
 
-            public void InitializeObject(object obj, object from = null)
+            public void InitializeObject(TypeOObject obj, TypeOObject from = null)
             {
                 Logger.Log(LogLevel.Debug, $"Initializing obj '{obj.GetType().FullName}'" + (from != null ? $" from '{from.GetType().FullName}'" : ""));
 
@@ -347,7 +347,7 @@ namespace TypeOEngine.Typedeaf.Core
                 }
             }
 
-            private void SetLogger(object obj)
+            private void SetLogger(TypeOObject obj)
             {
                 var type = obj.GetType();
                 var properties = type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
@@ -364,7 +364,7 @@ namespace TypeOEngine.Typedeaf.Core
                 }
             }
 
-            internal Drawable CreateDrawable(Type type, object obj, DrawStack drawStack, DrawableOption<Drawable> option)
+            internal Drawable CreateDrawable(Type type, TypeOObject obj, DrawStack drawStack, DrawableOption<Drawable> option)
             {
                 Logger.Log(LogLevel.Ludacris, $"Creating Drawable of type '{type.FullName}' into {obj.GetType().FullName}");
 
@@ -382,7 +382,7 @@ namespace TypeOEngine.Typedeaf.Core
                 return drawable;
             }
 
-            internal D CreateDrawable<D>(object obj, DrawStack drawStack, DrawableOption<D> option) where D : Drawable, new()
+            internal D CreateDrawable<D>(TypeOObject obj, DrawStack drawStack, DrawableOption<D> option) where D : Drawable, new()
             {
                 Logger.Log(LogLevel.Ludacris, $"Creating Drawable of type '{typeof(D).FullName}' into {obj.GetType().FullName}");
 
@@ -411,7 +411,7 @@ namespace TypeOEngine.Typedeaf.Core
                 drawable.DoCleanup();
             }
 
-            internal L CreateLogic<L>(object obj, UpdateLoop updateLoop, LogicOption<L> option) where L : Logic, new()
+            internal L CreateLogic<L>(TypeOObject obj, UpdateLoop updateLoop, LogicOption<L> option) where L : Logic, new()
             {
                 Logger.Log(LogLevel.Ludacris, $"Creating Logic of type '{typeof(L).FullName}' into {obj.GetType().FullName}");
 

@@ -14,20 +14,28 @@ namespace TypeOEngine.Typedeaf.Core
         /// needed. The manager also integrates with a draw stack to control the rendering order of
         /// drawables.</remarks>
         /// <typeparam name="T">The type of drawable objects managed by this instance. Must derive from <see cref="Drawable"/>.</typeparam>
-        public class DrawableManager<T> : IHasContext where T : Drawable
+        public class DrawableManager<T> : TypeOObject, IHasContext where T : Drawable
         {
             Context IHasContext.Context { get; set; }
             private Context Context { get => (this as IHasContext).Context; set => (this as IHasContext).Context = value; }
 
             internal List<T> Drawables { get; private set; }
             private DrawStack DrawStack { get; set; }
-            private object Parent { get; set; }
+            private TypeOObject Parent { get; set; }
 
-            internal DrawableManager(DrawStack drawStack, object parent)
+            internal DrawableManager(DrawStack drawStack, TypeOObject parent)
             {
                 Drawables = new List<T>();
                 DrawStack = drawStack;
                 Parent = parent;
+            }
+
+            protected override void Initialize()
+            {
+            }
+
+            protected override void Cleanup()
+            {
             }
 
             /// <summary>

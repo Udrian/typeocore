@@ -5,7 +5,7 @@ using TypeOEngine.Typedeaf.Core.Engine.Graphics.Interfaces;
 namespace TypeOEngine.Typedeaf.Core.Engine.Graphics
 {
     /// <inheritdoc/>
-    public abstract class Canvas : ICanvas
+    public abstract class Canvas : TypeOObject, ICanvas
     {
         /// <inheritdoc/>
         public IWindow Window { get; set; }

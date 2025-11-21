@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using TypeOEngine.Typedeaf.Core.Engine.Interfaces;
+﻿using TypeOEngine.Typedeaf.Core.Engine.Interfaces;
 
 namespace TypeOEngine.Typedeaf.Core
 {
@@ -10,7 +7,7 @@ namespace TypeOEngine.Typedeaf.Core
         /// <summary>
         /// Class for handling and loading content, such as images, music and fonts
         /// </summary>
-        public class ContentLoader : IHasContext
+        public class ContentLoader : TypeOObject, IHasContext
         {
             Context IHasContext.Context { get; set; }
             private Context Context { get => (this as IHasContext).Context; set => (this as IHasContext).Context = value; }
@@ -27,6 +24,14 @@ namespace TypeOEngine.Typedeaf.Core
             {
                 BasePath = Directory.GetCurrentDirectory();
                 ContentBinding = contentBinding;
+            }
+
+            protected override void Initialize()
+            {
+            }
+
+            protected override void Cleanup()
+            {
             }
 
             /// <summary>

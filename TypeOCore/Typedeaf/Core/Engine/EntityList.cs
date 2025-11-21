@@ -16,7 +16,7 @@ namespace TypeOEngine.Typedeaf.Core
         /// entities, querying entities by type or ID, and creating entities from stubs. This class is designed to work
         /// with the <see cref="Scene"/> and <see cref="Entity"/> systems, and it integrates with update and draw loops
         /// for entities that implement the appropriate interfaces.</remarks>
-        public class EntityList : IHasContext, IHasScene, IHasEntity
+        public class EntityList : TypeOObject, IHasContext, IHasScene, IHasEntity
         {
             Context IHasContext.Context { get; set; }
             private Context Context { get => (this as IHasContext).Context; set => (this as IHasContext).Context = value; }
@@ -55,6 +55,14 @@ namespace TypeOEngine.Typedeaf.Core
                 Stubs = new Dictionary<Type, Stub>();
 
                 RemoveQueue = new Queue<Entity>();
+            }
+
+            protected override void Initialize()
+            {
+            }
+
+            protected override void Cleanup()
+            {
             }
 
             /// <summary>
@@ -222,7 +230,6 @@ namespace TypeOEngine.Typedeaf.Core
                     var nStub = new S();
                     Logger.Log(LogLevel.Debug, $"Creating Stub of type '{typeof(S).FullName}'");
                     Context.InitializeObject(nStub, this);
-                    nStub.Initialize();
                     Stubs.Add(sType, nStub);
                 }
 

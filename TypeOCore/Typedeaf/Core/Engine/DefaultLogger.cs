@@ -8,7 +8,7 @@ namespace TypeOEngine.Typedeaf.Core
         /// <summary>
         /// Default Logger instance, will write to System.Console.WriteLine and System.Diagnostics.Debug.WriteLine. If SaveLogs option is set to True, then will also write to file on disk.
         /// </summary>
-        public class DefaultLogger : ILogger, IHasContext
+        public class DefaultLogger : Logger, IHasContext
         {
             private static readonly Mutex FileAccessMutex = new Mutex();
 
@@ -36,9 +36,18 @@ namespace TypeOEngine.Typedeaf.Core
             {
                 Logs = new List<string>();
             }
-            
+
+            protected override void Initialize()
+            {
+            }
+
+            protected override void Cleanup()
+            {
+                _ = WriteLogsToDisk();
+            }
+
             /// <inheritdoc/>
-            public void SetOption(ILoggerOption option)
+            public override void SetOption(ILoggerOption option)
             {
                 LogLevel = option.LogLevel;
                 if(option is DefaultLoggerOption defaultLoggerOption)
@@ -50,7 +59,7 @@ namespace TypeOEngine.Typedeaf.Core
             }
 
             /// <inheritdoc/>
-            public async void Log(LogLevel level, string log)
+            public override async void Log(LogLevel level, string log)
             {
                 if (LogLevel == LogLevel.None || LogLevel > level) { FatalExceptionThrow(level, log); return; }
 
@@ -146,11 +155,6 @@ namespace TypeOEngine.Typedeaf.Core
                     }
                     FileAccessMutex.ReleaseMutex();
                 });
-            }
-
-            public void Cleanup()
-            {
-                _ = WriteLogsToDisk();
             }
         }
     }

@@ -1,4 +1,5 @@
 ﻿using TypeOEngine.Typedeaf.Core.Engine.Interfaces;
+using TypeOEngine.Typedeaf.Core.Interfaces;
 
 namespace TypeOEngine.Typedeaf.Core
 {
@@ -12,20 +13,28 @@ namespace TypeOEngine.Typedeaf.Core
         /// <see cref="Logic"/> objects and integrates with an <see cref="UpdateLoop"/> to manage their updates if
         /// required. This class is typically used in scenarios where multiple logic components need to be managed in a
         /// structured and consistent manner.</remarks>
-        public class LogicManager : IHasContext
+        public class LogicManager : TypeOObject, IHasContext
         {
             Context IHasContext.Context { get; set; }
             private Context Context { get => (this as IHasContext).Context; set => (this as IHasContext).Context = value; }
 
             internal List<Logic> Logics { get; private set; }
             private UpdateLoop UpdateLoop { get; set; }
-            private object Parent { get; set; }
+            private TypeOObject Parent { get; set; }
 
-            internal LogicManager(UpdateLoop updateLoop, object parent)
+            internal LogicManager(UpdateLoop updateLoop, TypeOObject parent)
             {
                 Logics = new List<Logic>();
                 UpdateLoop = updateLoop;
                 Parent = parent;
+            }
+
+            protected override void Initialize()
+            {
+            }
+
+            protected override void Cleanup()
+            {
             }
 
             /// <summary>

@@ -4,7 +4,7 @@ using TypeOEngine.Typedeaf.Core.Engine.Interfaces;
 
 namespace TypeOEngine.Typedeaf.Core.Engine
 {
-    public class SceneList : IHasContext //TODO: Maybe change to a "GameContext class"
+    public class SceneList : TypeOObject, IHasContext //TODO: Maybe change to a "GameContext class"
     {
         Context IHasContext.Context { get; set; }
         protected Context Context { get => (this as IHasContext).Context; set => (this as IHasContext).Context = value; }
@@ -23,7 +23,11 @@ namespace TypeOEngine.Typedeaf.Core.Engine
             Scenes = new Dictionary<Type, Scene>();
         }
 
-        public void Cleanup()
+        protected override void Initialize()
+        {
+        }
+
+        protected override void Cleanup()
         {
             if(Window is TypeOObject typeObject)
                 typeObject?.DoCleanup();
