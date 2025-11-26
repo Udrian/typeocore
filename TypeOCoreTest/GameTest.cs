@@ -9,7 +9,11 @@ namespace TypeOCoreTest
 
         public class TestGame : Game
         {
-            public override void Initialize()
+            protected override void Initialize()
+            {
+            }
+
+            protected override void Cleanup()
             {
             }
 
@@ -19,10 +23,6 @@ namespace TypeOCoreTest
             }
 
             public override void Draw()
-            {
-            }
-
-            public override void Cleanup()
             {
             }
         }

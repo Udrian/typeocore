@@ -13,26 +13,26 @@ namespace TypeOCoreTest
         public string GameName { get; set; } = "test";
         public class TestGame : Game
         {
-            public override void Initialize() { }
+            protected override void Initialize() { base.Initialize(); }
+            protected override void Cleanup() { }
             public override void Update(double dt) { Exit(); }
             public override void Draw() { }
-            public override void Cleanup() { }
         }
         public class TestGameWithServiceHardware : Game
         {
             public TestServiceWithHardware TestServiceWithHardware { get; set; }
-            public override void Initialize() { }
+            protected override void Initialize() { base.Initialize(); }
+            protected override void Cleanup() { }
             public override void Update(double dt) { Exit(); }
             public override void Draw() { }
-            public override void Cleanup() { }
         }
         public class TestGameWithService : Game
         {
             public TestService TestService { get; set; }
-            public override void Initialize() { }
+            protected override void Initialize() { base.Initialize(); }
+            protected override void Cleanup() { }
             public override void Update(double dt) { Exit(); }
             public override void Draw() { }
-            public override void Cleanup() { }
         }
         public class TestService : Service
         {
@@ -49,8 +49,8 @@ namespace TypeOCoreTest
         public interface ITestHardware : IHardware { }
         public class TestHardware : Hardware, ITestHardware
         {
-            public override void Initialize() { }
-            public override void Cleanup() { }
+            protected override void Initialize() { }
+            protected override void Cleanup() { }
         }
         public abstract class BaseContent : Content { }
         public class SubContent : BaseContent
@@ -76,12 +76,16 @@ namespace TypeOCoreTest
             protected override void Cleanup() { }
             protected override void LoadExtensions(TypeO typeO) { }
         }
-        public class TestLogger : ILogger
+        public class TestLogger : Logger
         {
             public LogLevel LogLevel { get; set; }
-            public void Cleanup() { }
-            public void Log(LogLevel level, string log) { }
-            public void SetOption(ILoggerOption option) {}
+            public override void Log(LogLevel level, string log) { }
+
+            public override void SetOption(ILoggerOption option) { }
+
+            protected override void Cleanup() { }
+
+            protected override void Initialize() { }
         }
 
         [Fact]
