@@ -7,7 +7,7 @@
         "MathNet.Numerics-5.0.0;nuget",
         "Ookii.Dialogs.Wpf-5.0.1;nuget;dev"
     ],
-    "type": "Module",
+    "type": "module",
     "devModuleName": "TypeDCore",
     "testName": "TypeOCoreTest"
 }
