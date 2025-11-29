@@ -1,9 +1,11 @@
 {
     "name": "TypeOCore",
     "version": "0.1.0",
-    "externals": ["MathNet.Numerics.dll"],
+    "externals": ["Mock/Content/Lato-Black.ttf;test", "Mock/Content/texture.png;test"],
     "dependencies": [
-        "Udrian@TypeD-0.1.0.dev;dev"
+        "Udrian@TypeD-0.1.0.dev;dev",
+        "MathNet.Numerics-5.0.0;nuget",
+        "Ookii.Dialogs.Wpf-5.0.1;nuget;dev"
     ],
     "type": "Module",
     "devModuleName": "TypeDCore",
