@@ -1,4 +1,4 @@
-﻿using System.Windows;
+﻿using Avalonia.Controls;
 using TypeD.Models.Data;
 using TypeD.Models.Data.Hooks;
 using TypeD.Models.Data.SettingContexts;
@@ -59,7 +59,7 @@ namespace TypeDCore.ViewModel.Panels
 
                 Viewer = PanelModel.CreateViewer(setting.ViewerType.Value);
                 
-                ViewerPanel.Tabs.Children.Add(Viewer as UIElement);
+                ViewerPanel.Tabs.Children.Add(Viewer as Control);
             }
         }
 

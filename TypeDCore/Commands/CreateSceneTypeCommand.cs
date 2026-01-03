@@ -1,8 +1,10 @@
-﻿using TypeD.Commands;
+﻿using TypeD.ViewModel;
+using TypeD.Commands;
 using TypeD.Models.Interfaces;
 using TypeDCore.Commands.Data;
 using TypeDCore.Models.Interfaces;
 using TypeDCore.View.Dialogs.Project;
+using System.Threading.Tasks;
 
 namespace TypeDCore.Commands
 {
@@ -17,10 +19,10 @@ namespace TypeDCore.Commands
             TypeDCoreProjectModel = ResourceModel.Get<ITypeDCoreProjectModel>();
         }
 
-        public override void Execute(CreateComponentCommandData parameter)
+        public override async void Execute(CreateComponentCommandData parameter)
         {
             var dialog = new CreateSceneTypeDialog(parameter.Project, parameter.Namespace);
-            if(dialog.ShowDialog() == true)
+            if(await dialog.ShowDialog<bool>(ViewModelBase.MainWindow) == true)
             {
                 TypeDCoreProjectModel.CreateScene(parameter.Project, dialog.ViewModel.ComponentName, dialog.ViewModel.ComponentNamespace, dialog.ViewModel.ParentComponent);
             }

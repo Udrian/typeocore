@@ -1,7 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using System.Linq;
-using System.Windows;
-using System.Windows.Controls;
+using Avalonia.Controls;
 using TypeD.Helpers;
 using TypeD.Models.Data;
 using TypeD.Models.Data.Hooks;
@@ -51,7 +50,7 @@ namespace TypeDCore.ViewModel.Panels
         public ObservableCollection<Node> Nodes { get; set; }
 
         // Constructors
-        public ComponentViewModel(FrameworkElement element, Project project) : base(element)
+        public ComponentViewModel(Control element, Project project) : base(element)
         {
             LoadedProject = project;
             HookModel = ResourceModel.Get<IHookModel>();

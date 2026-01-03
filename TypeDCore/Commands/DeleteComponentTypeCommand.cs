@@ -1,7 +1,6 @@
 ﻿using TypeDCore.Commands.Data;
 using TypeD.Models.Providers.Interfaces;
 using TypeD.Commands;
-using System.Windows;
 using TypeD.Models.Interfaces;
 
 namespace TypeDCore.Commands
@@ -19,8 +18,8 @@ namespace TypeDCore.Commands
 
         public override void Execute(ComponentCommandData parameter)
         {
-            var result = MessageBox.Show($"Do you want to delete '{parameter.Component.FullName}'?", "Deleting", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-            if (result == MessageBoxResult.Yes)
+            //var result = MessageBox.Show($"Do you want to delete '{parameter.Component.FullName}'?", "Deleting", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            //if (result == MessageBoxResult.Yes)
             {
                 ComponentProvider.Delete(parameter.Project, parameter.Component);
             }

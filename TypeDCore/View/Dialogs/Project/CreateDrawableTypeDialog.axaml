@@ -1,14 +1,14 @@
-﻿<Window x:Class="TypeDCore.View.Dialogs.Project.CreateSceneTypeDialog"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+﻿<Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         xmlns:local="clr-namespace:TypeDCore.View.Dialogs.Project"
-        mc:Ignorable="d"
-        Title="Create new Scene" Height="450" Width="800">
+        x:Class="TypeDCore.View.Dialogs.Project.CreateDrawableTypeDialog"
+        Title="Create new Drawable">
     <Grid>
         <DockPanel Margin="25,25,25,25">
-            <TextBlock DockPanel.Dock="Top" FontSize="32"><Run Text="Create new Scene Type"/></TextBlock>
+            <TextBlock DockPanel.Dock="Top" FontSize="32"><Run Text="Create new Drawable Type"/></TextBlock>
             <Separator DockPanel.Dock="Top" Margin="0,0,0,25"/>
 
             <StackPanel DockPanel.Dock="Right" VerticalAlignment="Bottom">
@@ -18,7 +18,7 @@
             <StackPanel Orientation="Vertical" Margin="0, 0, 10, 0">
                 <Label FontSize="16" Content="_Name:" Target="{Binding ElementName=txtName}" />
                 <TextBox x:Name="txtName" Margin="5,0,75,0" Text="{Binding ComponentName}" />
-
+                
                 <Label FontSize="16" Content="N_amespace:" Target="{Binding ElementName=txtNamespace}" />
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -35,8 +35,8 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="75"/>
                     </Grid.ColumnDefinitions>
-                    <TextBox Name="txtParentComponent" Margin="5,0,0,0" IsEnabled="False" Text="{Binding ParentComponentFullName}"/>
-                    <Button Name="btnOpenInherit" Content="_..." Width="25" Grid.Column="1" Margin="5,0,0,0" HorizontalAlignment="Left" Click="btnOpenInherit_Click"/>
+                    <TextBox Name="txtParentComponent" Margin="5,2,0,-2" IsEnabled="False" Text="{Binding ParentComponentFullName}"/>
+                    <Button Name="btnOpenInherit" Content="_..." Width="25" Grid.Column="1" Margin="5,2,0,-2" HorizontalAlignment="Left" Click="btnOpenInherit_Click"/>
                 </Grid>
             </StackPanel>
         </DockPanel>

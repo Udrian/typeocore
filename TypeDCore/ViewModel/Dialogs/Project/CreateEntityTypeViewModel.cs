@@ -1,4 +1,4 @@
-﻿using System.Windows;
+﻿using Avalonia.Controls;
 using TypeD.Models.Data;
 using TypeOEngine.Typedeaf.Core.Entities.Interfaces;
 using TypeOEngine.Typedeaf.Core.Interfaces;
@@ -16,7 +16,7 @@ namespace TypeDCore.ViewModel.Dialogs.Project
         public bool ComponentDrawableEnabled { get; set; }
 
         // Constructors
-        public CreateEntityTypeViewModel(FrameworkElement element, TypeD.Models.Data.Project project, string @namespace, Component componentBaseType) : base(element, project, @namespace, componentBaseType)
+        public CreateEntityTypeViewModel(Control element, TypeD.Models.Data.Project project, string @namespace, Component componentBaseType) : base(element, project, @namespace, componentBaseType)
         {
             ComponentUpdatableEnabled = true;
             ComponentDrawableEnabled = true;

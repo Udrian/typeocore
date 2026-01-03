@@ -1,23 +1,21 @@
-﻿<UserControl x:Class="TypeDCore.View.Panels.ComponentBrowserPanel"
-             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:TypeDCore.ViewModel.Panels"
+             mc:Ignorable="d" d:DesignHeight="450" d:DesignWidth="800"
              xmlns:local="clr-namespace:TypeDCore.View.Panels"
-             xmlns:viewModel="clr-namespace:TypeDCore.ViewModel.Panels"
-             mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800"
+             x:Class="TypeDCore.View.Panels.ComponentBrowserPanel"
+             x:DataType="vm:ComponentBrowserViewModel"
              MinWidth="100">
     <TreeView Name="TreeView" ItemsSource="{Binding Nodes}">
-        <TreeView.ItemContainerStyle>
-            <Style TargetType="{x:Type TreeViewItem}">
-                <EventSetter Event="TreeViewItem.PreviewMouseRightButtonDown" Handler="TreeViewItem_PreviewMouseRightButtonDown"/>
-                <EventSetter Event="TreeViewItem.MouseDoubleClick" Handler="TreeViewItem_MouseDoubleClickEvent"/>
-            </Style>
-        </TreeView.ItemContainerStyle>
+        <!--<Style Selector="TreeViewItem">
+            <EventSetter Event="TreeViewItem.PointerPressed" Handler="TreeViewItem_PreviewMouseRightButtonDown"/>
+            <EventSetter Event="TreeViewItem.DoubleTapped" Handler="TreeViewItem_MouseDoubleClickEvent"/>
+        </Style>-->
 
         <TreeView.ItemTemplate>
-            <HierarchicalDataTemplate ItemsSource="{Binding Nodes}">
+            <TreeDataTemplate ItemsSource="{Binding Nodes}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="auto"/>
@@ -27,7 +25,7 @@
                     <Image Grid.Column="0" Source="{Binding IconPath}" Width="8" Height="8"/>
                     <TextBlock Grid.Column="2" Text="{Binding Name}"/>
                 </Grid>
-            </HierarchicalDataTemplate>
+            </TreeDataTemplate>
         </TreeView.ItemTemplate>
         
         <TreeView.ContextMenu>

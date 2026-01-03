@@ -1,4 +1,4 @@
-﻿using System.Windows;
+﻿using Avalonia.Controls;
 using TypeD.Models.Data;
 using TypeD.ViewModel;
 
@@ -11,7 +11,7 @@ namespace TypeDCore.ViewModel.Dialogs.Project
         public string Name { get; set; }
 
         // Constructors
-        public RenameComponentTypeViewModel(FrameworkElement element, Component component) : base(element)
+        public RenameComponentTypeViewModel(Control element, Component component) : base(element)
         {
             OldName = Name = component.ClassName;
         }

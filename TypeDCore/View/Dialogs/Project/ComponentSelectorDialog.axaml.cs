@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using Avalonia.Controls;
+using Avalonia.Interactivity;
 using TypeD.Models.Data;
 using TypeDCore.ViewModel.Dialogs.Project;
 
@@ -24,11 +25,10 @@ namespace TypeDCore.View.Dialogs.Project
         {
             if (lbComponents.SelectedItem is not Component component) return;
             ViewModel.SelectedComponent = component;
-            DialogResult = true;
-            Close();
+            Close(true);
         }
 
-        private void tbFilter_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        private void tbFilter_TextChanged(object sender, TextChangedEventArgs e)
         {
             ViewModel.NameFilter.Filters = tbFilter.Text;
             ViewModel.UpdateFilter();

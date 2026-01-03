@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Windows;
+using Avalonia.Controls;
 using TypeD.Helpers;
 using TypeD.Models.Interfaces;
 using TypeD.ViewModel;
@@ -12,7 +12,7 @@ namespace TypeDCore.ViewModel.Panels
         ILogModel LogModel { get; set; }
 
         // Constructors
-        public OutputViewModel(FrameworkElement element) : base(element)
+        public OutputViewModel(Control element) : base(element)
         {
             LogModel = ResourceModel.Get<ILogModel>();
             LogModel.AttachLogOutput("OutputView", (message) =>

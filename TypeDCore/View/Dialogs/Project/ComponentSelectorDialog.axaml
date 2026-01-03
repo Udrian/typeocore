@@ -1,17 +1,20 @@
-﻿<Window x:Class="TypeDCore.View.Dialogs.Project.ComponentSelectorDialog"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+﻿<Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:TypeDCore.View.Dialogs.Project"
+        xmlns:vm="using:TypeDCore.ViewModel.Dialogs.Project"
         mc:Ignorable="d"
-        Title="Select Component" Height="450" Width="800">
+        xmlns:local="clr-namespace:TypeDCore.View.Dialogs.Project"
+        x:Class="TypeDCore.View.Dialogs.Project.ComponentSelectorDialog"
+        x:DataType="vm:ComponentSelectorViewModel"
+        Title="Select Component"
+        Width="800" Height="450">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
             <RowDefinition Height="auto"/>
         </Grid.RowDefinitions>
-        <ListBox x:Name="lbComponents" Grid.Row="0" ItemsSource="{Binding FilteredComponents}" HorizontalContentAlignment="Stretch" MouseDoubleClick="lbComponents_MouseDoubleClick">
+        <ListBox x:Name="lbComponents" Grid.Row="0" ItemsSource="{Binding FilteredComponents}" DoubleTapped="lbComponents_MouseDoubleClick"> <!--HorizontalContentAlignment="Stretch"-->
             <ListBox.ItemTemplate>
                 <DataTemplate>
                     <Grid>

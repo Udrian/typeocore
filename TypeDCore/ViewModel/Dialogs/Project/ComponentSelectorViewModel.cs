@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Windows;
+using Avalonia.Controls;
 using TypeD.Helpers;
 using TypeD.Models.Data;
 using TypeD.Models.Interfaces;
@@ -28,7 +28,7 @@ namespace TypeDCore.ViewModel.Dialogs.Project
         public FilterHelper NameFilter { get; set; }
 
         // Constructors
-        public ComponentSelectorViewModel(FrameworkElement element, TypeD.Models.Data.Project project) : base(element)
+        public ComponentSelectorViewModel(Control element, TypeD.Models.Data.Project project) : base(element)
         {
             TypeFilter = new FilterHelper();
             NameFilter = new FilterHelper();

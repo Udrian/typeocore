@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Windows;
-using System.Windows.Controls;
+using Avalonia.Controls;
+using Avalonia.Threading;
 using TypeD.Helpers;
 using TypeD.Models.Data;
 using TypeD.Models.Data.Hooks;
@@ -43,7 +43,7 @@ namespace TypeDCore.ViewModel.Panels
         public OpenComponentCommand OpenComponentCommand { get; set; }
 
         // Constructors
-        public ComponentBrowserViewModel(FrameworkElement element, Project loadedProject, TreeView treeView) : base(element)
+        public ComponentBrowserViewModel(Control element, Project loadedProject, TreeView treeView) : base(element)
         {
             HookModel = ResourceModel.Get<IHookModel>();
             LoadedProject = loadedProject;
@@ -94,7 +94,7 @@ namespace TypeDCore.ViewModel.Panels
 
         private void BuildTree(ComponentTreeBuiltHook hook)
         {
-            TreeView.Dispatcher.Invoke(() =>
+            Dispatcher.UIThread.Invoke(() =>
             {
                 var treeNodes = TreeToNodeList(LoadedProject.ComponentTree.Nodes);
                 Buildtree(treeNodes, Nodes);

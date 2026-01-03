@@ -4,8 +4,7 @@
     "externals": ["Mock/Content/Lato-Black.ttf;test", "Mock/Content/texture.png;test"],
     "dependencies": [
         "Udrian@TypeD-0.1.0.dev;dev",
-        "MathNet.Numerics-5.0.0;nuget",
-        "Ookii.Dialogs.Wpf-5.0.1;nuget;dev"
+        "MathNet.Numerics-5.0.0;nuget"
     ],
     "type": "module",
     "devModuleName": "TypeDCore",

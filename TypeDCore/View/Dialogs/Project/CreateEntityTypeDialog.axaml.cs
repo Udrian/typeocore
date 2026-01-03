@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using Avalonia.Controls;
+using Avalonia.Interactivity;
 using TypeDCore.Components;
 using TypeDCore.ViewModel.Dialogs.Project;
 
@@ -25,9 +26,8 @@ namespace TypeDCore.View.Dialogs.Project
         {
             if (!ViewModel.Validate())
                 return;
-
-            DialogResult = true;
-            Close();
+                
+            Close(true);
         }
 
         private void btnOpenNamespace_Click(object sender, RoutedEventArgs e)

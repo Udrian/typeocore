@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Text;
+using Avalonia.Threading;
 using TypeD.Models.Data;
 using TypeD.ViewModel;
 using TypeDCore.View.Viewer;
@@ -69,7 +70,7 @@ namespace TypeDCore.ViewModel.Viewer
 
         private void Write(object sender, string e)
         {
-            ConsoleViewer.Dispatcher.Invoke(() =>
+            Dispatcher.UIThread.Invoke(() =>
             {
                 ConsoleViewer.Output.Text += e;
             });

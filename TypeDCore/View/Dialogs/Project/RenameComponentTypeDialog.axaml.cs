@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using Avalonia.Controls;
+using Avalonia.Interactivity;
 using TypeD.Models.Data;
 using TypeDCore.ViewModel.Dialogs.Project;
 
@@ -21,14 +22,12 @@ namespace TypeDCore.View.Dialogs.Project
 
         private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
-            DialogResult = false;
-            Close();
+            Close(false);
         }
 
         private void SaveButton_Click(object sender, RoutedEventArgs e)
         {
-            DialogResult = ViewModel.Name != ViewModel.OldName;
-            Close();
+            Close(ViewModel.Name != ViewModel.OldName);
         }
     }
 }

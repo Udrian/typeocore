@@ -1,8 +1,7 @@
-﻿using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Media3D;
+﻿using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Interactivity;
+using Avalonia.Input;
 using TypeD.Models.Data;
 using TypeDCore.ViewModel.Panels;
 
@@ -30,10 +29,10 @@ namespace TypeDCore.View.Panels
             ViewModel.ContextMenuOpened(sender as ContextMenu, TreeView.SelectedItem as ComponentBrowserViewModel.Node);
         }
 
-        private void TreeViewItem_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
+        private void TreeViewItem_PreviewMouseRightButtonDown(object sender, PointerPressedEventArgs e)
         {
-            TreeViewItem treeViewItem = VisualUpwardSearch<TreeViewItem>(e.OriginalSource as DependencyObject);
-
+            TreeViewItem treeViewItem = VisualUpwardSearch<TreeViewItem>(sender as AvaloniaObject);
+            
             if (treeViewItem != null)
             {
                 treeViewItem.IsSelected = true;
@@ -41,29 +40,29 @@ namespace TypeDCore.View.Panels
             }
         }
 
-        private void TreeViewItem_MouseDoubleClickEvent(object sender, MouseButtonEventArgs e)
+        private void TreeViewItem_MouseDoubleClickEvent(object sender, PointerPressedEventArgs e)
         {
             if(((TreeViewItem)sender).Header == TreeView.SelectedItem)
                 ViewModel.DoubleClickItem(TreeView.SelectedItem as ComponentBrowserViewModel.Node);
         }
 
-        static T VisualUpwardSearch<T>(DependencyObject source) where T : DependencyObject
+        static T VisualUpwardSearch<T>(AvaloniaObject source) where T : AvaloniaObject
         {
-            DependencyObject returnVal = source;
+            AvaloniaObject returnVal = source;
 
-            while (returnVal != null && !(returnVal is T))
-            {
-                DependencyObject tempReturnVal = null;
-                if (returnVal is Visual || returnVal is Visual3D)
-                {
-                    tempReturnVal = VisualTreeHelper.GetParent(returnVal);
-                }
-                if (tempReturnVal == null)
-                {
-                    returnVal = LogicalTreeHelper.GetParent(returnVal);
-                }
-                else returnVal = tempReturnVal;
-            }
+            //while (returnVal != null && !(returnVal is T))
+            //{
+            //    AvaloniaObject tempReturnVal = null;
+            //    if (returnVal is Visual || returnVal is Visual3D)
+            //    {
+            //        tempReturnVal = VisualTreeHelper.GetParent(returnVal);
+            //    }
+            //    if (tempReturnVal == null)
+            //    {
+            //        returnVal = LogicalTreeHelper.GetParent(returnVal);
+            //    }
+            //    else returnVal = tempReturnVal;
+            //}
 
             return returnVal as T;
         }

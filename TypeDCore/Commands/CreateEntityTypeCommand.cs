@@ -1,4 +1,5 @@
 ﻿using TypeD.Commands;
+using TypeD.ViewModel;
 using TypeD.Models.Interfaces;
 using TypeDCore.Commands.Data;
 using TypeDCore.Models.Data.DTO;
@@ -6,6 +7,7 @@ using TypeDCore.Models.Data.Hooks;
 using TypeDCore.Models.Interfaces;
 using TypeDCore.View.Dialogs.Project;
 using TypeOEngine.Typedeaf.Core.Entities;
+using System.Threading.Tasks;
 
 namespace TypeDCore.Commands
 {
@@ -22,10 +24,10 @@ namespace TypeDCore.Commands
             HookModel = ResourceModel.Get<IHookModel>();
         }
 
-        public override void Execute(CreateComponentCommandData parameter)
+        public override async void Execute(CreateComponentCommandData parameter)
         {
             var dialog = new CreateEntityTypeDialog(parameter.Project, parameter.Namespace);
-            if(dialog.ShowDialog() == true)
+            if(await dialog.ShowDialog<bool>(ViewModelBase.MainWindow) == true)
             {
                 if (!HookModel.Shoot(new CreateComponentHook(new CreateComponentDTO()
                 {

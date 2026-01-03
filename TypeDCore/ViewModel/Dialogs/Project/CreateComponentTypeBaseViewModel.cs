@@ -1,7 +1,8 @@
-﻿using Ookii.Dialogs.Wpf;
-using System.IO;
+﻿using System.IO;
 using System.Linq;
-using System.Windows;
+using System.Threading.Tasks;
+using Avalonia.Controls;
+using Avalonia.Platform.Storage;
 using TypeD.Models.Data;
 using TypeD.ViewModel;
 using TypeDCore.View.Dialogs.Project;
@@ -22,7 +23,7 @@ namespace TypeDCore.ViewModel.Dialogs.Project
         public string ComponentBaseType { get; set; }
 
         // Constructors
-        public CreateComponentTypeBaseViewModel(FrameworkElement element, TypeD.Models.Data.Project project, string @namespace, Component componentBaseType) : base(element)
+        public CreateComponentTypeBaseViewModel(Control element, TypeD.Models.Data.Project project, string @namespace, Component componentBaseType) : base(element)
         {
             Project = project;
 
@@ -41,37 +42,43 @@ namespace TypeDCore.ViewModel.Dialogs.Project
                             (char.IsLetter(ComponentName.FirstOrDefault()) || ComponentName.StartsWith("_"));
             if (!isValid)
             {
-                MessageBox.Show($"Invalid name '{ComponentName}'");
+                //MessageBox.Show($"Invalid name '{ComponentName}'");
                 return false;
             }
 
             if (File.Exists(@$"{Project.ProjectTypeOPath}\components\{Project.ProjectName}\{ComponentNamespace.Replace(".", "\\")}\{ComponentName}.component"))
             {
-                MessageBox.Show($"'{ComponentNamespace}.{ComponentName}' already exists");
+                //MessageBox.Show($"'{ComponentNamespace}.{ComponentName}' already exists");
                 return false;
             }
 
             return true;
         }
 
-        public void OpenNamespace()
+        public async void OpenNamespace()
         {
-            var folderBrowserDialog = new VistaFolderBrowserDialog();
-            folderBrowserDialog.SelectedPath = @$"{Project.ProjectSourcePath}\{ComponentNamespace.Replace(".", "\\")}";
-            if (folderBrowserDialog.ShowDialog() == true)
+            var files = await MainWindow.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
             {
-                ComponentNamespace = folderBrowserDialog.SelectedPath.Replace("\\", ".").Substring(@$"{Project.ProjectSourcePath}\".Length);
+                Title = "Open Location Folder",
+                SuggestedStartLocation = await MainWindow.StorageProvider.TryGetFolderFromPathAsync(@$"{Project.ProjectSourcePath}\{ComponentNamespace.Replace(".", "\\")}"),
+                AllowMultiple = false
+
+            });
+
+            if (files.Count >= 1)
+            {
+                ComponentNamespace = files[0].Path.AbsolutePath.Replace("\\", ".").Substring(@$"{Project.ProjectSourcePath}\".Length);
                 OnPropertyChanged(nameof(ComponentNamespace));
             }
         }
 
-        public void OpenComponents()
+        public async Task OpenComponents()
         {
             var dialog = new ComponentSelectorDialog(Project);
             dialog.ViewModel.TypeFilter.Filters = $"{ComponentBaseType};";
             dialog.ViewModel.UpdateFilter();
 
-            if (dialog.ShowDialog() == true && dialog.ViewModel.SelectedComponent != null)
+            if (await dialog.ShowDialog<bool>(ViewModelBase.MainWindow) == true && dialog.ViewModel.SelectedComponent != null)
             {
                 OnParentComponentSet(dialog.ViewModel.SelectedComponent);
                 OnPropertyChanged(nameof(ParentComponentFullName));

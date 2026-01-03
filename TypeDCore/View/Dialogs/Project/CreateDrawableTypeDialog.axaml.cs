@@ -1,22 +1,23 @@
-﻿using System.Windows;
+﻿using Avalonia.Controls;
+using Avalonia.Interactivity;
 using TypeDCore.Components;
 using TypeDCore.ViewModel.Dialogs.Project;
 
 namespace TypeDCore.View.Dialogs.Project
 {
     /// <summary>
-    /// Interaction logic for CreateSceneDialog.xaml
+    /// Interaction logic for CreateDrawable2dDialog.xaml
     /// </summary>
-    public partial class CreateSceneTypeDialog : Window
+    public partial class CreateDrawableTypeDialog : Window
     {
         // ViewModel
         internal CreateComponentTypeBaseViewModel ViewModel { get; set; }
 
         // Constructors
-        public CreateSceneTypeDialog(TypeD.Models.Data.Project project, string @namespace)
+        public CreateDrawableTypeDialog(TypeD.Models.Data.Project project, string @namespace)
         {
             InitializeComponent();
-            ViewModel = new CreateComponentTypeBaseViewModel(this, project, @namespace, CoreComponent.SceneComponent());
+            ViewModel = new CreateComponentTypeBaseViewModel(this, project, @namespace, CoreComponent.DrawableComponent());
             this.DataContext = ViewModel;
         }
 
@@ -25,9 +26,8 @@ namespace TypeDCore.View.Dialogs.Project
         {
             if (!ViewModel.Validate())
                 return;
-
-            DialogResult = true;
-            Close();
+            
+            Close(true);
         }
 
         private void btnOpenNamespace_Click(object sender, RoutedEventArgs e)

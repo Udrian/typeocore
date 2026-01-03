@@ -1,4 +1,5 @@
-﻿using System.Windows.Controls;
+﻿using Avalonia.Controls;
+using Avalonia.Interactivity;
 using TypeD.Models.Data;
 using TypeDCore.ViewModel.Panels;
 
@@ -18,7 +19,7 @@ namespace TypeDCore.View.Panels
             DataContext = ViewerViewModel = new ViewerViewModel(project, this);
         }
 
-        private void ViewerPanelUnloaded(object sender, System.Windows.RoutedEventArgs e)
+        private void ViewerPanelUnloaded(object sender, RoutedEventArgs e)
         {
             ViewerViewModel.Unload();
         }

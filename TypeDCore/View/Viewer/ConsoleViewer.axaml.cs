@@ -1,4 +1,5 @@
-﻿using System.Windows.Controls;
+﻿using Avalonia.Controls;
+using Avalonia.Interactivity;
 using TypeD.Models.Data;
 using TypeD.View.Viewer;
 using TypeDCore.ViewModel.Viewer;
@@ -31,7 +32,7 @@ namespace TypeDCore.View.Viewer
         }
 
         // Events
-        private void ConsoleViewerUnloaded(object sender, System.Windows.RoutedEventArgs e)
+        private void ConsoleViewerUnloaded(object sender, RoutedEventArgs e)
         {
             ConsoleViewModel.Unload();
         }

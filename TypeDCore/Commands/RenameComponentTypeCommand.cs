@@ -1,4 +1,6 @@
-﻿using TypeD.Commands;
+﻿using System.Threading.Tasks;
+using TypeD.Commands;
+using TypeD.ViewModel;
 using TypeD.Models.Interfaces;
 using TypeD.Models.Providers.Interfaces;
 using TypeDCore.Commands.Data;
@@ -17,10 +19,10 @@ namespace TypeDCore.Commands
             ComponentProvider = ResourceModel.Get<IComponentProvider>();
         }
 
-        public override void Execute(ComponentCommandData parameter)
+        public override async void Execute(ComponentCommandData parameter)
         {
             var dialog = new RenameComponentTypeDialog(parameter.Component);
-            if (dialog.ShowDialog() == true)
+            if (await dialog.ShowDialog<bool>(ViewModelBase.MainWindow) == true)
             {
                 ComponentProvider.Rename(parameter.Project, parameter.Component, dialog.ViewModel.Name);
             }

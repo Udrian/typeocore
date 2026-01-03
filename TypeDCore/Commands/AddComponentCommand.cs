@@ -1,4 +1,5 @@
 ﻿using TypeD.Commands;
+using TypeD.ViewModel;
 using TypeD.Models.Interfaces;
 using TypeDCore.Commands.Data;
 using TypeDCore.View.Dialogs.Project;
@@ -17,7 +18,7 @@ namespace TypeDCore.Commands
             ComponentModel = ResourceModel.Get<IComponentModel>();
         }
 
-        public override void Execute(AddComponentCommandData parameter)
+        public override async void Execute(AddComponentCommandData parameter)
         {
             var dialog = new ComponentSelectorDialog(parameter.Project);
             dialog.ViewModel.NameFilter.Exclude = $"{parameter.ToComponent.FullName};";
@@ -26,7 +27,7 @@ namespace TypeDCore.Commands
             parameter.ToComponent.Template.ChildrenFilter(dialog.ViewModel.TypeFilter);
 
             dialog.ViewModel.UpdateFilter();
-            if(dialog.ShowDialog() == true)
+            if(await dialog.ShowDialog<bool>(ViewModelBase.MainWindow) == true)
             {
                 ComponentModel.Add(parameter.Project, parameter.ToComponent, dialog.ViewModel.SelectedComponent);
             }

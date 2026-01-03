@@ -1,4 +1,6 @@
-﻿using TypeD.Commands;
+﻿using System.Threading.Tasks;
+using TypeD.Commands;
+using TypeD.ViewModel;
 using TypeD.Models.Interfaces;
 using TypeDCore.Commands.Data;
 using TypeDCore.View.Dialogs.Project;
@@ -15,12 +17,12 @@ namespace TypeDCore.Commands
             ComponentModel = ResourceModel.Get<IComponentModel>();
         }
 
-        public override void Execute(OpenComponentCommandData parameter)
+        public override async void Execute(OpenComponentCommandData parameter)
         {
             if(parameter.Component == null)
             {
                 var componentSelectorDialog = new ComponentSelectorDialog(parameter.Project);
-                componentSelectorDialog.ShowDialog();
+                await componentSelectorDialog.ShowDialog(ViewModelBase.MainWindow);
                 parameter.Component = componentSelectorDialog.ViewModel.SelectedComponent;
             }
 
