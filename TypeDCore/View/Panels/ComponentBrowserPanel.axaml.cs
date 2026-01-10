@@ -1,7 +1,9 @@
 ﻿using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Interactivity;
 using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.VisualTree;
+using System.Linq;
 using TypeD.Models.Data;
 using TypeDCore.ViewModel.Panels;
 
@@ -29,42 +31,19 @@ namespace TypeDCore.View.Panels
             ViewModel.ContextMenuOpened(sender as ContextMenu, TreeView.SelectedItem as ComponentBrowserViewModel.Node);
         }
 
-        private void TreeViewItem_PreviewMouseRightButtonDown(object sender, PointerPressedEventArgs e)
+        private void TreeViewItem_MouseDoubleClickEvent(object sender, TappedEventArgs e)
         {
-            TreeViewItem treeViewItem = VisualUpwardSearch<TreeViewItem>(sender as AvaloniaObject);
-            
-            if (treeViewItem != null)
+            var item = ((Visual)e.Source!).GetSelfAndVisualAncestors()
+            .OfType<TreeViewItem>()
+            .FirstOrDefault();
+
+            if (item is not null)
             {
-                treeViewItem.IsSelected = true;
-                e.Handled = true;
+               if (item.DataContext is ComponentBrowserViewModel.Node node)
+               {
+                    ViewModel.DoubleClickItem(node);
+               }
             }
-        }
-
-        private void TreeViewItem_MouseDoubleClickEvent(object sender, PointerPressedEventArgs e)
-        {
-            if(((TreeViewItem)sender).Header == TreeView.SelectedItem)
-                ViewModel.DoubleClickItem(TreeView.SelectedItem as ComponentBrowserViewModel.Node);
-        }
-
-        static T VisualUpwardSearch<T>(AvaloniaObject source) where T : AvaloniaObject
-        {
-            AvaloniaObject returnVal = source;
-
-            //while (returnVal != null && !(returnVal is T))
-            //{
-            //    AvaloniaObject tempReturnVal = null;
-            //    if (returnVal is Visual || returnVal is Visual3D)
-            //    {
-            //        tempReturnVal = VisualTreeHelper.GetParent(returnVal);
-            //    }
-            //    if (tempReturnVal == null)
-            //    {
-            //        returnVal = LogicalTreeHelper.GetParent(returnVal);
-            //    }
-            //    else returnVal = tempReturnVal;
-            //}
-
-            return returnVal as T;
         }
     }
 }

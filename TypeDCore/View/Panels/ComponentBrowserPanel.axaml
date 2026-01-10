@@ -8,12 +8,7 @@
              x:Class="TypeDCore.View.Panels.ComponentBrowserPanel"
              x:DataType="vm:ComponentBrowserViewModel"
              MinWidth="100">
-    <TreeView Name="TreeView" ItemsSource="{Binding Nodes}">
-        <!--<Style Selector="TreeViewItem">
-            <EventSetter Event="TreeViewItem.PointerPressed" Handler="TreeViewItem_PreviewMouseRightButtonDown"/>
-            <EventSetter Event="TreeViewItem.DoubleTapped" Handler="TreeViewItem_MouseDoubleClickEvent"/>
-        </Style>-->
-
+    <TreeView Name="TreeView" ItemsSource="{Binding Nodes}" DoubleTapped="TreeViewItem_MouseDoubleClickEvent">
         <TreeView.ItemTemplate>
             <TreeDataTemplate ItemsSource="{Binding Nodes}">
                 <Grid>
