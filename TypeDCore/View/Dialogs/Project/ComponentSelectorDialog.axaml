@@ -14,7 +14,7 @@
             <RowDefinition Height="*"/>
             <RowDefinition Height="auto"/>
         </Grid.RowDefinitions>
-        <ListBox x:Name="lbComponents" Grid.Row="0" ItemsSource="{Binding FilteredComponents}" DoubleTapped="lbComponents_MouseDoubleClick"> <!--HorizontalContentAlignment="Stretch"-->
+        <ListBox x:Name="lbComponents" Grid.Row="0" ItemsSource="{Binding FilteredComponents}" DoubleTapped="lbComponents_MouseDoubleClick">
             <ListBox.ItemTemplate>
                 <DataTemplate>
                     <Grid>
