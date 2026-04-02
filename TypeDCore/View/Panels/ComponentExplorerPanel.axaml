@@ -5,8 +5,8 @@
              xmlns:vm="using:TypeDCore.ViewModel.Panels"
              mc:Ignorable="d" d:DesignHeight="450" d:DesignWidth="800"
              xmlns:local="clr-namespace:TypeDCore.View.Panels"
-             x:Class="TypeDCore.View.Panels.ComponentPanel"
-             x:DataType="vm:ComponentViewModel">
+             x:Class="TypeDCore.View.Panels.ComponentExplorerPanel"
+             x:DataType="vm:ComponentExplorerViewModel">
     <TreeView Name="ComponentsTree" ItemsSource="{Binding Nodes}">
         <TreeView.ItemTemplate>
             <TreeDataTemplate ItemsSource="{Binding Nodes}">

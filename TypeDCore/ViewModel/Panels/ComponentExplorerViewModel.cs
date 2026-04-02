@@ -9,7 +9,7 @@ using TypeD.ViewModel;
 
 namespace TypeDCore.ViewModel.Panels
 {
-    internal class ComponentViewModel : ViewModelBase
+    internal class ComponentExplorerViewModel : ViewModelBase
     {
         // Definitions
         public class Node : ViewModelBase
@@ -50,7 +50,7 @@ namespace TypeDCore.ViewModel.Panels
         public ObservableCollection<Node> Nodes { get; set; }
 
         // Constructors
-        public ComponentViewModel(Control element, Project project) : base(element)
+        public ComponentExplorerViewModel(Control element, Project project) : base(element)
         {
             LoadedProject = project;
             HookModel = ResourceModel.Get<IHookModel>();
