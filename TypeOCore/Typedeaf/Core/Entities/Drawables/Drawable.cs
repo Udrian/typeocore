@@ -1,6 +1,7 @@
 ﻿using TypeOEngine.Typedeaf.Core.Engine;
 using TypeOEngine.Typedeaf.Core.Engine.Graphics.Interfaces;
 using TypeOEngine.Typedeaf.Core.Entities.Interfaces;
+using TypeOEngine.Typedeaf.Core.Attributes;
 
 namespace TypeOEngine.Typedeaf.Core
 {
@@ -19,11 +20,13 @@ namespace TypeOEngine.Typedeaf.Core
             /// <summary>
             /// Gets or sets a value indicating whether the item is hidden.
             /// </summary>
+            [TypeOProperty("Gets or sets a value indicating whether the item is hidden.")]
             public bool Hidden { get; set; }
 
             /// <summary>
             /// Gets or sets the draw order of the object.
             /// </summary>
+            [TypeOProperty("Gets or sets the draw order of the object.")]
             public int DrawOrder { get; set; }
 
             /// <summary>

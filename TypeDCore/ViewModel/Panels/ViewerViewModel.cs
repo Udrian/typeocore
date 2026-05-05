@@ -73,7 +73,7 @@ namespace TypeDCore.ViewModel.Panels
 
         void ComponentFocus(ComponentFocusHook hook)
         {
-            if (Viewer != null)
+            if (Viewer != null && hook.Root)
             {
                 Viewer.Init(hook.Project, hook.Component);
             }

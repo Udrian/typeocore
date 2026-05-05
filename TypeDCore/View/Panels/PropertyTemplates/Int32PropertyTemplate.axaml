@@ -1,0 +1,10 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:local="clr-namespace:TypeDCore.View.Panels.PropertyTemplates">
+    <DataTemplate x:Key="Int32PropertyTemplate">
+        <local:NumericTextBox Text="{Binding Value}"
+                              Classes="PropertyInput"
+                              AllowNegative="True"
+                              AllowDecimals="False" />
+    </DataTemplate>
+</ResourceDictionary>

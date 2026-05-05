@@ -1,6 +1,6 @@
-﻿using System.Collections.ObjectModel;
+﻿using Avalonia.Controls;
+using System.Collections.ObjectModel;
 using System.Linq;
-using Avalonia.Controls;
 using TypeD.Helpers;
 using TypeD.Models.Data;
 using TypeD.Models.Data.Hooks;
@@ -14,7 +14,7 @@ namespace TypeDCore.ViewModel.Panels
         // Definitions
         public class Node : ViewModelBase
         {
-            public Component Component { get; set; }
+            public Component Component { get; private set; }
 
             public string Title { get => Component.ClassName; }
             public ObservableCollection<Node> Nodes { get => new ObservableCollection<Node>(Component.Children.Select(c => new Node(c))); }
@@ -44,7 +44,6 @@ namespace TypeDCore.ViewModel.Panels
                 {
                     Nodes.Add(new Node(_component));
                 }
-                OnPropertyChanged();
             }
         }
         public ObservableCollection<Node> Nodes { get; set; }
@@ -58,7 +57,8 @@ namespace TypeDCore.ViewModel.Panels
 
             HookModel.AddHook<ComponentFocusHook>((hook) =>
             {
-                Component = hook.Component;
+                if(hook.Root)
+                    Component = hook.Component;
             });
 
             HookModel.AddHook<CloseComponentHook>((hook) =>
@@ -87,6 +87,11 @@ namespace TypeDCore.ViewModel.Panels
             {
                 ViewHelper.InitMenu(contextMenu, menu, this);
             }
+        }
+
+        public void SelectionChanged(Component component)
+        {
+            HookModel.Shoot(new ComponentFocusHook() { Project = LoadedProject, Component = component, Root = false });
         }
     }
 }

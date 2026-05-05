@@ -11,7 +11,7 @@ namespace TypeDCore.Code.Drawable
     /// <remarks>This class is responsible for generating code related to drawable components, including
     /// initialization, drawing, and cleanup methods. It extends the <see cref="ComponentTypeCode"/> base class and
     /// provides functionality specific to drawable entities.</remarks>
-    public class DrawableCode : ComponentTypeCode
+    public partial class DrawableCode : ComponentTypeCode
     {
         // Properties
         /// <summary>
@@ -28,7 +28,6 @@ namespace TypeDCore.Code.Drawable
         /// <param name="component">The <see cref="Component"/> associated with this instance. Cannot be <see langword="null"/>.</param>
         public DrawableCode(Component component) : base(component)
         {
-            PartialClass = false;
         }
 
         // Functions
@@ -43,8 +42,6 @@ namespace TypeDCore.Code.Drawable
         /// implementations.</remarks>
         protected override void InitClass()
         {
-            PartialClass = false;
-
             AddUsings(new List<string>()
             {
                 "TypeOEngine.Typedeaf.Core.Engine.Graphics.Interfaces"
@@ -52,14 +49,14 @@ namespace TypeDCore.Code.Drawable
 
             if (IsBaseComponentType)
             {
-                AddFunction(new Function("protected override void Initialize()", () => { }));
+                AddFunction(new Function("protected virtual void InternalInitialize()", () => { }));
                 AddFunction(new Function("public override void Draw(ICanvas canvas)", () => { }));
                 AddFunction(new Function("protected override void Cleanup()", () => { }));
             }
             else
             {
-                AddFunction(new Function("protected override void Initialize()", () => {
-                    Writer.AddLine("base.Initialize();");
+                AddFunction(new Function("protected override void InternalInitialize()", () => {
+                    Writer.AddLine("base.InternalInitialize();");
                 }));
                 AddFunction(new Function("public override void Draw(ICanvas canvas)", () => {
                     Writer.AddLine("base.Draw(canvas);");
@@ -68,27 +65,6 @@ namespace TypeDCore.Code.Drawable
                     Writer.AddLine("base.Cleanup();");
                 }));
             }
-        }
-
-        /// <summary>
-        /// Initializes the Type D class with any required setup or configuration.
-        /// </summary>
-        /// <remarks>This method is called as part of the initialization process for derived classes.
-        /// Override this method in a subclass to provide specific initialization logic for TypeD.</remarks>
-        protected override void InitTypeDClass()
-        {
-        }
-
-        /// <summary>
-        /// Generates the output file by writing the necessary content to the target file.
-        /// </summary>
-        /// <remarks>This method clears the current content of the target file and writes new content to
-        /// it. The target file is specified by the <see cref="Codalyzer.BaseFile"/> property.</remarks>
-        public override void Generate()
-        {
-            Writer.TargetFile = BaseFile;
-            Writer.Clear();
-            WriteFile();
         }
     }
 }

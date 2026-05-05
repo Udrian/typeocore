@@ -89,6 +89,7 @@ namespace TypeDCore
             PanelModel.AttachPanel("typed_componentexplorer", "Component Explorer", new ComponentExplorerPanel(project));
             PanelModel.AttachPanel("typed_output", "Output", new OutputPanel());
             PanelModel.AttachPanel("typed_componentbrowser", "Component Browser", new ComponentBrowserPanel(project));
+            PanelModel.AttachPanel("typed_properties", "Properties", new PropertiesPanel(project));
 
             // Viewers
             PanelModel.AddViewer<ConsoleViewer>();
