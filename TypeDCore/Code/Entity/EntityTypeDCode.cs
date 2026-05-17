@@ -27,27 +27,22 @@ namespace TypeDCore.Code.Entity
         {
             AddFunction(new Function("protected override void Initialize()", () => {
                 Writer.AddLine("base.Initialize();");
-                foreach (var child in Component.Children)
-                {
-                    if (child.TypeOBaseType == typeof(TypeOEngine.Typedeaf.Core.Entities.Entity))
-                        Writer.AddLine($"Entities.Create<{child.FullName}>();");
-                    else if (child.TypeOBaseType == typeof(TypeOEngine.Typedeaf.Core.Entities.Drawables.Drawable))
-                        Writer.AddLine($"Drawables.Create<{child.FullName}>();");
-                }
+                Writer.NewLine();
+                TypeDInitializeCode();
                 if (IsBaseComponentType)
                 {
                     Writer.AddLine("InternalInitialize();");
                 }
             }));
 
-            if (Updatable && (ParentComponent == null || !ParentComponent.Interfaces.Contains(typeof(IUpdatable))))
+            if (Updatable && (BaseInheritedComponent == null || !BaseInheritedComponent.Interfaces.Contains(typeof(IUpdatable))))
             {
                 AddUsing("TypeOEngine.Typedeaf.Core.Interfaces");
                 AddInterface(typeof(IUpdatable));
                 AddProperty(new Property("public bool Pause"));
             }
 
-            if (Drawable && (ParentComponent == null || !ParentComponent.Interfaces.Contains(typeof(IDrawable))))
+            if (Drawable && (BaseInheritedComponent == null || !BaseInheritedComponent.Interfaces.Contains(typeof(IDrawable))))
             {
                 AddUsing("TypeOEngine.Typedeaf.Core.Entities.Interfaces");
                 AddInterface(typeof(IDrawable));

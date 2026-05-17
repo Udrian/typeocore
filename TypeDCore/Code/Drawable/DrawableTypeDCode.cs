@@ -8,12 +8,7 @@ namespace TypeDCore.Code.Drawable
         protected override void InitTypeDClass()
         {
             AddFunction(new Function("protected override void Initialize()", () => {
-                foreach (var property in Component.Properties)
-                {
-                    if(property.Value == null || string.IsNullOrEmpty(property.Name))
-                        continue;
-                    Writer.AddLine($"{property.Name} = {property.Value.ToString()};");
-                }
+                TypeDInitializeCode();
                 if (IsBaseComponentType)
                 {
                     Writer.AddLine("InternalInitialize();");

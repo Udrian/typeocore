@@ -20,13 +20,13 @@ namespace TypeOEngine.Typedeaf.Core
             /// <summary>
             /// Gets or sets a value indicating whether the item is hidden.
             /// </summary>
-            [TypeOProperty("Gets or sets a value indicating whether the item is hidden.")]
+            [TypeOProperty("Gets or sets a value indicating whether the item is hidden.", false)]
             public bool Hidden { get; set; }
 
             /// <summary>
             /// Gets or sets the draw order of the object.
             /// </summary>
-            [TypeOProperty("Gets or sets the draw order of the object.")]
+            [TypeOProperty("Gets or sets the draw order of the object.", 0)]
             public int DrawOrder { get; set; }
 
             /// <summary>
@@ -39,7 +39,7 @@ namespace TypeOEngine.Typedeaf.Core
             /// <summary>
             /// Draws the object onto the specified canvas.
             /// </summary>
-            /// <param name="canvas">The canvas on which the object will be drawn. Cannot be null.</param>
+            /// <param name="canvas">The canvas on which the object will be drawn. Cannot be null.</param>-
             public abstract void Draw(ICanvas canvas);
         }
     }

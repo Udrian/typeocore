@@ -1,0 +1,26 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:local="clr-namespace:TypeDCore.View.Panels.PropertyTemplates">
+    <DataTemplate x:Key="Vec2PropertyTemplate">
+        <Grid Classes="PropertyInput">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="15" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="15" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Label Grid.Column="0" Content="X:" />
+            <local:NumericTextBox Grid.Column="1"
+                                  Text="{Binding ValueX}"
+                                  AllowNegative="True"
+                                  AllowDecimals="True" />
+
+            <Label Grid.Column="2" Content="Y:" />
+            <local:NumericTextBox Grid.Column="3"
+                                  Text="{Binding ValueY}"
+                                  AllowNegative="True"
+                                  AllowDecimals="True" />
+        </Grid>
+    </DataTemplate>
+</ResourceDictionary>

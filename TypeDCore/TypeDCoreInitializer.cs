@@ -1,5 +1,7 @@
-﻿using System;
+﻿using Dock.Settings;
+using System;
 using System.Collections.Generic;
+using System.Reflection;
 using TypeD;
 using TypeD.Models.Data;
 using TypeD.Models.Data.Hooks;
@@ -16,11 +18,15 @@ using TypeDCore.Models.Interfaces;
 using TypeDCore.View.Panels;
 using TypeDCore.View.Viewer;
 using TypeOEngine.Typedeaf.Core;
+using TypeOEngine.Typedeaf.Core.Attributes;
 
 namespace TypeDCore
 {
     internal class TypeDCoreInitializer : TypeDModuleInitializer
     {
+        // Project
+        Project Project { get; set; }
+
         // Providers
         IComponentProvider ComponentProvider { get; set; }
 
@@ -46,6 +52,8 @@ namespace TypeDCore
         // Functions
         public override void Initializer(Project project)
         {
+            Project = project;
+
             // Internal Models
             TypeDCoreProjectModel = new TypeDCoreProjectModel();
             TypeDCoreRestoreModel = new TypeDCoreRestoreModel();
@@ -81,6 +89,7 @@ namespace TypeDCore
             Hooks.AddHook<ComponentTypeBrowserContextMenuOpenedHook>(ComponentTypeBrowserContextMenuOpened);
             Hooks.AddHook<ComponentContextMenuHook>(ComponentContextMenuOpened);
             Hooks.AddHook<OptionsHook>(OptionsWindowOpened);
+            Hooks.AddHook<ExtractPropertiesHook>(ExtractProperties);
 
             // Settings
 
@@ -119,6 +128,7 @@ namespace TypeDCore
             Hooks.RemoveHook<ComponentTypeBrowserContextMenuOpenedHook>();
             Hooks.RemoveHook<ComponentContextMenuHook>();
             Hooks.RemoveHook<OptionsHook>();
+            Hooks.RemoveHook<ExtractPropertiesHook>();
 
             // Settings
 
@@ -534,6 +544,28 @@ namespace TypeDCore
                     }
                 })
             });
+        }
+
+        public void ExtractProperties(ExtractPropertiesHook hook)
+        {
+            var componentType = ComponentModel.GetType(hook.Component);
+            if(componentType == null)
+                return;
+            foreach (var property in componentType.GetProperties())
+            {
+                var typeOPropertyAttribute = property.GetCustomAttribute<TypeOPropertyAttribute>(true);
+                if (typeOPropertyAttribute != null)
+                {
+                    hook.Properties.Add(new Property()
+                    {
+                        Name = property.Name,
+                        Description = typeOPropertyAttribute.Description,
+                        Type = property.PropertyType,
+                        Value = typeOPropertyAttribute.DefaultValue ?? Activator.CreateInstance(property.PropertyType),
+                        FromComponent = property.DeclaringType.FullName == componentType.FullName ? hook.Component : ComponentProvider.Load(Project, property.DeclaringType.FullName)
+                    });
+                }
+            }
         }
     }
 }

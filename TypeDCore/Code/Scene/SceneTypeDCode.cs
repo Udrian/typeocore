@@ -34,11 +34,8 @@ namespace TypeDCore.Code.Scene
 
             AddFunction(new Function("protected override void Initialize()", () => {
                 Writer.AddLine("base.Initialize();");
-                foreach (var child in Component.Children)
-                {
-                    if(child.TypeOBaseType == typeof(TypeOEngine.Typedeaf.Core.Entities.Entity))
-                        Writer.AddLine($"Entities.Create<{child.FullName}>();");
-                }
+                Writer.NewLine();
+                TypeDInitializeCode();
                 if (IsBaseComponentType)
                 {
                     Writer.AddLine("InternalInitialize();");

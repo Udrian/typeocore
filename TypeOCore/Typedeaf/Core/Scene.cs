@@ -1,4 +1,5 @@
-﻿using TypeOEngine.Typedeaf.Core.Engine;
+﻿using TypeOEngine.Typedeaf.Core.Attributes;
+using TypeOEngine.Typedeaf.Core.Engine;
 using TypeOEngine.Typedeaf.Core.Engine.Contents;
 using TypeOEngine.Typedeaf.Core.Engine.Graphics.Interfaces;
 using TypeOEngine.Typedeaf.Core.Engine.Interfaces;
@@ -68,13 +69,15 @@ namespace TypeOEngine.Typedeaf.Core
         public LogicManager Logics { get; private set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether the operation is paused.
+        /// Gets or sets a value indicating whether the scene is paused.
         /// </summary>
+        [TypeOProperty("Gets or sets a value indicating whether the scene is paused.")]
         public bool Pause         { get; set; } = false;
 
         /// <summary>
-        /// Gets or sets a value indicating whether the item should be hidden.
+        /// Gets or sets a value indicating whether the scene should be hidden.
         /// </summary>
+        [TypeOProperty("Gets or sets a value indicating whether the scene should be hidden.")]
         public bool Hide          { get; set; } = false;
 
         /// <summary>

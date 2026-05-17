@@ -48,6 +48,8 @@ namespace TypeDCore.Code.Game
 
             AddFunction(new Function("protected override void Initialize()", () => {
                 Writer.AddLine("base.Initialize();");
+                Writer.NewLine();
+                TypeDInitializeCode();
                 Writer.AddLine("InternalInitialize();");
                 Component defaultScene = ComponentProvider.Load(Project, Project.StartScene);
                 if (defaultScene != null)

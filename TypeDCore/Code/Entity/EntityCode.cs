@@ -70,7 +70,7 @@ namespace TypeDCore.Code.Entity
                 }));
             }
 
-            if (Updatable && (ParentComponent == null || !ParentComponent.Interfaces.Contains(typeof(IUpdatable))))
+            if (Updatable && (BaseInheritedComponent == null || !BaseInheritedComponent.Interfaces.Contains(typeof(IUpdatable))))
             {
                 AddFunction(new Function("public virtual void Update(double dt)", () => { }));
             }
@@ -81,7 +81,7 @@ namespace TypeDCore.Code.Entity
                 }));
             }
 
-            if (Drawable && (ParentComponent == null || !ParentComponent.Interfaces.Contains(typeof(IDrawable))))
+            if (Drawable && (BaseInheritedComponent == null || !BaseInheritedComponent.Interfaces.Contains(typeof(IDrawable))))
             {
                 AddUsing("TypeOEngine.Typedeaf.Core.Engine.Graphics.Interfaces");
                 AddFunction(new Function("public virtual void Draw(ICanvas canvas)", () => { }));
