@@ -27,11 +27,6 @@ namespace TypeOEngine.Typedeaf.Core
             internal Context Context { get => (this as IHasContext).Context; set => (this as IHasContext).Context = value; }
 
             /// <summary>
-            /// Gets the unique identifier for the entity.
-            /// </summary>
-            public virtual string ID { get; internal set; }
-
-            /// <summary>
             /// Gets the parent entity of the current entity.
             /// </summary>
             public Entity Parent { get; internal set; }
@@ -94,13 +89,13 @@ namespace TypeOEngine.Typedeaf.Core
             /// removal from the parent entity list.</remarks>
             public virtual void Remove()
             {
-                foreach (var drawable in Drawables.Drawables)
+                for(int i = Drawables.Drawables.Count - 1; i >= 0; i--)
                 {
-                    DrawStack.Pop(drawable);
+                    Drawables.Destroy(Drawables.Drawables[i]);
                 }
-                foreach (var logic in Logics.Logics)
+                for(int i = Logics.Logics.Count - 1; i >= 0; i--)
                 {
-                    UpdateLoop.Pop(logic);
+                    Logics.Destroy(Logics.Logics[i]);
                 }
                 DrawStack.Pop(this as IDrawable);
                 UpdateLoop.Pop(this as IUpdatable);

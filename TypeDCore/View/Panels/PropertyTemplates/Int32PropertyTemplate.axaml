@@ -5,6 +5,7 @@
         <local:NumericTextBox Text="{Binding Value}"
                               Classes="PropertyInput"
                               AllowNegative="True"
-                              AllowDecimals="False" />
+                              AllowDecimals="False"
+                              IsReadOnly="{Binding ReadOnly}"/>
     </DataTemplate>
 </ResourceDictionary>

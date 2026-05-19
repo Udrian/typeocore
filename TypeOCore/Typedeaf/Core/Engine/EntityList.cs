@@ -37,7 +37,6 @@ namespace TypeOEngine.Typedeaf.Core
             private DelayedList<IHasEntities> HasEntities { get; set; }
 
             private Dictionary<Type, IEnumerable<Entity>> EntityLists { get; set; }
-            private Dictionary<string, Entity> EntityIDs { get; set; }
 
             private Dictionary<Type, Stub> Stubs { get; set; }
 
@@ -46,14 +45,9 @@ namespace TypeOEngine.Typedeaf.Core
             internal EntityList()
             {
                 Entities = new DelayedList<Entity>();
-
                 HasEntities = new DelayedList<IHasEntities>();
-
                 EntityLists = new Dictionary<Type, IEnumerable<Entity>>();
-                EntityIDs = new Dictionary<string, Entity>();
-
                 Stubs = new Dictionary<Type, Stub>();
-
                 RemoveQueue = new Queue<Entity>();
             }
 
@@ -99,6 +93,7 @@ namespace TypeOEngine.Typedeaf.Core
                     Logger.Log(LogLevel.Debug, $"Removing Entity of type '{iType.FullName}'");
                     deleteEntity.DoCleanup();
                     Entities.Remove(deleteEntity);
+                    Context.DestroyObject(deleteEntity);
                 }
 
                 //TODO: Look over this, remove IHasEntities and make Drawstack and UpdateLoop to IUpdatable and IDrawable and create from Entity
@@ -137,7 +132,7 @@ namespace TypeOEngine.Typedeaf.Core
             /// to <see langword="true"/>.</param>
             /// <returns>The newly created <see cref="Entity"/> instance, initialized with the current context and optionally
             /// added to the update loop and draw stack.</returns>
-            public Entity Create(Type type, bool pushToUpdateLoop = true, bool pushToDrawStack = true) //TODO: Split out, Should be able to push automatically to draw stack and update stack
+            public Entity Create(Type type, string id = null, bool pushToUpdateLoop = true, bool pushToDrawStack = true) //TODO: Split out, Should be able to push automatically to draw stack and update stack
             {
                 var entity = Activator.CreateInstance(type) as Entity;
                 {
@@ -148,7 +143,7 @@ namespace TypeOEngine.Typedeaf.Core
                     entity.ContentLoader = Scene?.ContentLoader ?? Entity?.ContentLoader; //TODO: Change this to be from same interface
                 };
 
-                return Create(entity, pushToUpdateLoop, pushToDrawStack);
+                return Create(entity, id, pushToUpdateLoop, pushToDrawStack);
             }
 
             /// <summary>
@@ -163,7 +158,7 @@ namespace TypeOEngine.Typedeaf.Core
             /// <param name="pushToDrawStack">Indicates whether the created entity should be automatically added to the draw stack. The default value
             /// is <see langword="true"/>.</param>
             /// <returns>A new instance of the specified entity type, initialized with the current context.</returns>
-            public E Create<E>(bool pushToUpdateLoop = true, bool pushToDrawStack = true) where E : Entity, new() //TODO: Split out, Should be able to push automatically to draw stack and update stack
+            public E Create<E>(string id = null, bool pushToUpdateLoop = true, bool pushToDrawStack = true) where E : Entity, new() //TODO: Split out, Should be able to push automatically to draw stack and update stack
             {
                 var entity = new E
                 {
@@ -174,11 +169,12 @@ namespace TypeOEngine.Typedeaf.Core
                     ContentLoader = Scene?.ContentLoader ?? Entity?.ContentLoader //TODO: Change this to be from same interface
                 };
 
-                return Create(entity, pushToUpdateLoop, pushToDrawStack);
+                return Create(entity, id, pushToUpdateLoop, pushToDrawStack);
             }
 
-            private E Create<E>(E entity, bool pushToUpdateLoop = true, bool pushToDrawStack = true) where E : Entity //TODO: Split out, Should be able to push automatically to draw stack and update stack
+            private E Create<E>(E entity, string id = null, bool pushToUpdateLoop = true, bool pushToDrawStack = true) where E : Entity //TODO: Split out, Should be able to push automatically to draw stack and update stack
             {
+                entity.ID = id;
                 Logger.Log(LogLevel.Debug, $"Creating Entity of type '{typeof(E).FullName}'");
                 Context.InitializeObject(entity, this);
 
@@ -188,12 +184,6 @@ namespace TypeOEngine.Typedeaf.Core
                 {
                     EntityLists[eType] = Entities.Where(e => e is E).Cast<E>().ToList();
                 }
-
-                if (string.IsNullOrEmpty(entity.ID))
-                {
-                    entity.ID = Guid.NewGuid().ToString();
-                }
-                EntityIDs.Add(entity.ID, entity);
 
                 if (pushToUpdateLoop && entity.UpdateLoop != null && entity is IUpdatable updatable)
                 {
@@ -298,12 +288,7 @@ namespace TypeOEngine.Typedeaf.Core
             /// specified type.</returns>
             public E GetEntityByID<E>(string id) where E : Entity
             {
-                if(!EntityIDs.ContainsKey(id))
-                    return null;
-                var entity = EntityIDs[id] as E;
-                if(entity == null)
-                    Logger.Log(LogLevel.Warning, $"Entity with id '{id}' is not of type '{typeof(E).FullName}'");
-                return entity;
+                return Context.GetTypeOObjectByID<E>(id);
             }
         }
     }

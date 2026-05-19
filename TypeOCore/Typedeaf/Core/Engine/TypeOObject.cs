@@ -1,4 +1,6 @@
-﻿namespace TypeOEngine.Typedeaf.Core
+﻿using TypeOEngine.Typedeaf.Core.Attributes;
+
+namespace TypeOEngine.Typedeaf.Core
 {
     namespace Engine
     {
@@ -7,6 +9,18 @@
         /// </summary>
         public abstract class TypeOObject
         {
+            /// <summary>
+            /// Gets the unique identifier.
+            /// </summary>
+            [TypeOProperty("Gets the unique identifier.", "")]
+            public string ID { get; internal set; }
+
+            /// <summary>
+            /// Gets or sets the human readable name of the object.
+            /// </summary>
+            [TypeOProperty("Gets or sets the human readable name of the object.", "")]
+            public virtual string Name { get; set; }
+
             /// <summary>
             /// Gets a value indicating whether the object has been successfully initialized.
             /// </summary>

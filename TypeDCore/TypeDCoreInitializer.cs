@@ -562,7 +562,8 @@ namespace TypeDCore
                         Description = typeOPropertyAttribute.Description,
                         Type = property.PropertyType,
                         Value = typeOPropertyAttribute.DefaultValue ?? Activator.CreateInstance(property.PropertyType),
-                        FromComponent = property.DeclaringType.FullName == componentType.FullName ? hook.Component : ComponentProvider.Load(Project, property.DeclaringType.FullName)
+                        FromComponent = property.DeclaringType.FullName == componentType.FullName ? hook.Component : ComponentProvider.Load(Project, property.DeclaringType.FullName),
+                        ReadOnly = (property.CanWrite && property.GetSetMethod(true).IsPublic) ? false : true
                     });
                 }
             }

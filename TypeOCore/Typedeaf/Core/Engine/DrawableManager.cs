@@ -46,9 +46,9 @@ namespace TypeOEngine.Typedeaf.Core
             /// <param name="pushToDrawStack">A value indicating whether the created drawable should be added to the draw stack.  <see
             /// langword="true"/> to add it to the draw stack; otherwise, <see langword="false"/>.</param>
             /// <returns>The created drawable instance.</returns>
-            public Drawable Create(Type type, DrawableOption<Drawable> option = null, bool pushToDrawStack = true)
+            public Drawable Create(Type type, string id = null, DrawableOption<Drawable> option = null, bool pushToDrawStack = true)
             {
-                var drawable = Context.CreateDrawable(type, Parent, pushToDrawStack ? DrawStack : null, option);
+                var drawable = Context.CreateDrawable(type, Parent, pushToDrawStack ? DrawStack : null, option, id);
                 Drawables.Add(drawable as T);
 
                 return drawable;
@@ -64,9 +64,9 @@ namespace TypeOEngine.Typedeaf.Core
             /// <param name="pushToDrawStack">A value indicating whether the created drawable should be added to the draw stack. Defaults to <see
             /// langword="true"/>.</param>
             /// <returns>The newly created drawable object of type <typeparamref name="D"/>.</returns>
-            public D Create<D>(DrawableOption<D> option = null, bool pushToDrawStack = true) where D : T, new()
+            public D Create<D>(string id = null, DrawableOption<D> option = null, bool pushToDrawStack = true) where D : T, new()
             {
-                var drawable = Context.CreateDrawable(Parent, pushToDrawStack ? DrawStack : null, option);
+                var drawable = Context.CreateDrawable(Parent, pushToDrawStack ? DrawStack : null, option, id);
                 Drawables.Add(drawable);
 
                 return drawable;

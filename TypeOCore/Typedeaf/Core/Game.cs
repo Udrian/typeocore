@@ -22,7 +22,7 @@ namespace TypeOEngine.Typedeaf.Core
         /// <summary>
         /// Gets the name associated with the current context.
         /// </summary>
-        public string Name { get { return Context.Name; } }
+        public override string Name { get { return Context.Name; } }
 
         /// <summary>
         /// Gets or sets a value indicating whether the game should run asynchronously.

@@ -80,7 +80,7 @@ namespace TypeDCore.ViewModel.Panels
 
             public Type Type { get => Property.Type; }
             public string Description { get => Property.Description; }
-
+            public bool ReadOnly { get => Property.ReadOnly; }
             public Action<PropertyNode> ValueChanged;
 
             public PropertyNode(Component component, Property property, Action<PropertyNode> value_changed)

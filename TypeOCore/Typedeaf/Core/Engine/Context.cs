@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using MathNet.Numerics.Statistics.Mcmc;
+using System.Reflection;
 using TypeOEngine.Typedeaf.Core.Engine.Hardwares;
 using TypeOEngine.Typedeaf.Core.Engine.Hardwares.Interfaces;
 using TypeOEngine.Typedeaf.Core.Engine.Interfaces;
@@ -24,6 +25,7 @@ namespace TypeOEngine.Typedeaf.Core
             public Dictionary<Type, Hardware> Hardwares { get; internal set; }
             public Dictionary<Type, Dictionary<string, Service>> Services { get; internal set; }
             public Dictionary<Type, Type> ContentBinding { get; internal set; }
+            private Dictionary<string, TypeOObject> IDToTypeOObjectMap { get; set; }
             public Logger Logger { get; internal set; }
 
             internal Context(Game game, TypeO typeO, string name) : base()
@@ -36,6 +38,7 @@ namespace TypeOEngine.Typedeaf.Core
                 Hardwares = new Dictionary<Type, Hardware>();
                 Services = new Dictionary<Type, Dictionary<string, Service>>();
                 ContentBinding = new Dictionary<Type, Type>();
+                IDToTypeOObjectMap = new Dictionary<string, TypeOObject>();
             }
 
             private bool ExitApplication = false;
@@ -213,7 +216,13 @@ namespace TypeOEngine.Typedeaf.Core
                 SetServices(obj);
                 SetLogger(obj);
 
-                if(obj is IHasGame)
+                if (string.IsNullOrEmpty(obj.ID))
+                {
+                    obj.ID = Guid.NewGuid().ToString();
+                }
+                IDToTypeOObjectMap.Add(obj.ID, obj);
+
+                if (obj is IHasGame)
                 {
                     Logger.Log(LogLevel.Ludacris, $"Injecting Game of type '{Game.GetType().FullName}' into {obj.GetType().FullName}");
                     (obj as IHasGame).Game = Game;
@@ -292,6 +301,11 @@ namespace TypeOEngine.Typedeaf.Core
                 }
             }
 
+            public void DestroyObject(TypeOObject obj)
+            {
+                IDToTypeOObjectMap.Remove(obj.ID);
+            }
+
             private void SetHardwares(object obj)
             {
                 var type = obj.GetType();
@@ -364,12 +378,13 @@ namespace TypeOEngine.Typedeaf.Core
                 }
             }
 
-            internal Drawable CreateDrawable(Type type, TypeOObject obj, DrawStack drawStack, DrawableOption<Drawable> option)
+            internal Drawable CreateDrawable(Type type, TypeOObject obj, DrawStack drawStack, DrawableOption<Drawable> option, string id = null)
             {
                 Logger.Log(LogLevel.Ludacris, $"Creating Drawable of type '{type.FullName}' into {obj.GetType().FullName}");
 
                 var drawable = Activator.CreateInstance(type) as Drawable;
                 drawable.Entity = obj as Entity;
+                drawable.ID = id;
 
                 InitializeObject(drawable, obj);
                 option?.Create(drawable);
@@ -382,12 +397,13 @@ namespace TypeOEngine.Typedeaf.Core
                 return drawable;
             }
 
-            internal D CreateDrawable<D>(TypeOObject obj, DrawStack drawStack, DrawableOption<D> option) where D : Drawable, new()
+            internal D CreateDrawable<D>(TypeOObject obj, DrawStack drawStack, DrawableOption<D> option, string id = null) where D : Drawable, new()
             {
                 Logger.Log(LogLevel.Ludacris, $"Creating Drawable of type '{typeof(D).FullName}' into {obj.GetType().FullName}");
 
                 var drawable = new D()
                 {
+                    ID = id,
                     Entity = obj as Entity
                 };
 
@@ -402,13 +418,14 @@ namespace TypeOEngine.Typedeaf.Core
                 return drawable;
             }
 
-            internal static void DestroyDrawable(Drawable drawable, DrawStack drawStack)
+            internal void DestroyDrawable(Drawable drawable, DrawStack drawStack)
             {
                 if(drawStack != null)
                 {
                     drawStack.Pop(drawable);
                 }
                 drawable.DoCleanup();
+                DestroyObject(drawable);
             }
 
             internal L CreateLogic<L>(TypeOObject obj, UpdateLoop updateLoop, LogicOption<L> option) where L : Logic, new()
@@ -431,13 +448,14 @@ namespace TypeOEngine.Typedeaf.Core
                 return logic;
             }
 
-            internal static void DestroyLogic(Logic logic, UpdateLoop updateLoop)
+            internal void DestroyLogic(Logic logic, UpdateLoop updateLoop)
             {
                 if(updateLoop != null)
                 {
                     updateLoop.Pop(logic);
                     logic.DoCleanup();
                 }
+                DestroyObject(logic);
             }
 
             public void AddService<S>(string id = "") where S : Service, new()
@@ -476,6 +494,20 @@ namespace TypeOEngine.Typedeaf.Core
                 }
 
                 return Services[ServiceType][id] as S;
+            }
+
+            public O GetTypeOObjectByID<O>(string id) where O : TypeOObject
+            {
+                if (!IDToTypeOObjectMap.ContainsKey(id))
+                {
+                    Logger.Log(LogLevel.Warning, $"TypeOObject with id '{id}' does not exist");
+                    return null;
+                }
+
+                var typeOObject = IDToTypeOObjectMap[id] as O;
+                if (typeOObject == null)
+                    Logger.Log(LogLevel.Warning, $"TypeOObject with id '{id}' is not of type '{typeof(O).FullName}'");
+                return typeOObject;
             }
         }
     }
