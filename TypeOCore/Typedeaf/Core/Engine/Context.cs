@@ -51,15 +51,15 @@ namespace TypeOEngine.Typedeaf.Core
             {
                 StartTime = DateTime.UtcNow;
 
-                foreach(var module in Modules)
+                foreach (var module in Modules)
                 {
-                    if(module.WillLoadExtensions)
+                    if (module.WillLoadExtensions)
                     {
                         module.DoLoadExtensions(TypeO);
                     }
                 }
 
-                if(Logger == null)
+                if (Logger == null)
                 {
                     TypeO.SetLogger();
                 }
@@ -71,7 +71,7 @@ namespace TypeOEngine.Typedeaf.Core
                 Logger.Log($"Logger of type '{Logger.GetType().FullName}' loaded");
 
                 //Initialize Hardware
-                foreach(var hardware in Hardwares.Values)
+                foreach (var hardware in Hardwares.Values)
                 {
                     InitializeObject(hardware);
 
@@ -79,9 +79,9 @@ namespace TypeOEngine.Typedeaf.Core
                 }
 
                 //Create Services
-                foreach(var serviceIdPair in Services)
+                foreach (var serviceIdPair in Services)
                 {
-                    foreach(var servicePair in serviceIdPair.Value)
+                    foreach (var servicePair in serviceIdPair.Value)
                     {
                         var service = servicePair.Value;
                         InitializeObject(service);
@@ -91,7 +91,7 @@ namespace TypeOEngine.Typedeaf.Core
                 }
 
                 //Set modules Hardware and initialize
-                foreach(var module in Modules)
+                foreach (var module in Modules)
                 {
                     InitializeObject(module);
 
@@ -99,12 +99,12 @@ namespace TypeOEngine.Typedeaf.Core
                 }
 
                 //Setup content binding
-                foreach(var binding in ContentBinding)
+                foreach (var binding in ContentBinding)
                 {
                     var bindingTo = binding.Value;
                     var bindingFrom = binding.Key;
 
-                    if(!bindingTo.IsSubclassOf(bindingFrom))
+                    if (!bindingTo.IsSubclassOf(bindingFrom))
                     {
                         var message = $"Content Binding from '{bindingFrom.Name}' must be of a base type to '{bindingTo.Name}'";
                         Logger.Log(LogLevel.Fatal, message);
@@ -118,7 +118,7 @@ namespace TypeOEngine.Typedeaf.Core
                 Logger.Log($"Game of type '{Game.GetType().FullName}' loaded");
 
                 Logger.Log($"Everything loaded successfully, spinning up game loop");
-                if(Game.RunSynchronously)
+                if (Game.RunSynchronously)
                 {
                     while (!ExitApplication)
                     {
@@ -127,7 +127,7 @@ namespace TypeOEngine.Typedeaf.Core
                     Cleanup();
                     return;
                 }
-                
+
             }
 
             /// <summary>
@@ -228,11 +228,11 @@ namespace TypeOEngine.Typedeaf.Core
                     (obj as IHasGame).Game = Game;
                 }
 
-                if((obj is IHasData))
+                if ((obj is IHasData))
                 {
                     var hasData = (obj as IHasData);
 
-                    if(obj is Logic && from is IHasData)
+                    if (obj is Logic && from is IHasData)
                     {
                         (obj as IHasData).EntityData = (from as IHasData).EntityData;
                         Logger.Log(LogLevel.Ludacris, $"Injecting EntityData of type '{(obj as IHasData).EntityData.GetType().FullName}' from '{from.GetType().FullName}' into {obj.GetType().FullName}");
@@ -240,7 +240,7 @@ namespace TypeOEngine.Typedeaf.Core
                     else
                     {
                         hasData.CreateData();
-                        if(hasData.EntityData != null)
+                        if (hasData.EntityData != null)
                         {
                             Logger.Log(LogLevel.Ludacris, $"Creating EntityData of type '{(obj as IHasData).EntityData.GetType().FullName}' into {obj.GetType().FullName}");
                             hasData.EntityData.Initialize();
@@ -251,15 +251,15 @@ namespace TypeOEngine.Typedeaf.Core
                         }
                     }
 
-                    if((obj as IHasData).EntityData == null)
+                    if ((obj as IHasData).EntityData == null)
                     {
                         Logger.Log(LogLevel.Warning, $"EntityData is null in {obj.GetType().FullName}");
                     }
                 }
 
-                if(obj is IHasScene)
+                if (obj is IHasScene)
                 {
-                    if(from is Scene)
+                    if (from is Scene)
                     {
                         (obj as IHasScene).Scene = from as Scene;
                     }
@@ -268,24 +268,24 @@ namespace TypeOEngine.Typedeaf.Core
                         (obj as IHasScene).Scene = (from as IHasScene)?.Scene;
                     }
                     Logger.Log(LogLevel.Ludacris, $"Injecting Scene of type '{(obj as IHasScene).Scene?.GetType().FullName}' from '{from.GetType().FullName}' into {obj.GetType().FullName}");
-                    if((obj as IHasScene).Scene == null)
+                    if ((obj as IHasScene).Scene == null)
                     {
                         Logger.Log(LogLevel.Warning, $"Scene is null in {obj.GetType().FullName}");
                     }
                 }
 
-                if(obj is IHasEntity)
+                if (obj is IHasEntity)
                 {
                     (obj as IHasEntity).Entity = from as Entity;
                     Logger.Log(LogLevel.Ludacris, $"Injecting Entity of type '{(obj as IHasEntity).Entity?.GetType().FullName}' from '{from.GetType().FullName}' into {obj.GetType().FullName}");
 
-                    if((obj as IHasEntity).Entity == null)
+                    if ((obj as IHasEntity).Entity == null)
                     {
                         Logger.Log(LogLevel.Warning, $"Entity is null in {obj.GetType().FullName}");
                     }
                 }
 
-                if(obj is IHasEntities)
+                if (obj is IHasEntities)
                 {
                     var hasEntities = obj as IHasEntities;
 
@@ -311,13 +311,13 @@ namespace TypeOEngine.Typedeaf.Core
                 var type = obj.GetType();
                 //TODO: Should set hardware from a attribute
                 var properties = type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-                foreach(var property in properties)
+                foreach (var property in properties)
                 {
-                    if(property.PropertyType.GetInterface(nameof(IHardware)) == null)
+                    if (property.PropertyType.GetInterface(nameof(IHardware)) == null)
                     {
                         continue;
                     }
-                    if(!Hardwares.ContainsKey(property.PropertyType))
+                    if (!Hardwares.ContainsKey(property.PropertyType))
                     {
                         var message = $"Hardware type '{property.PropertyType.Name}' is not loaded for '{obj.GetType().Name}'";
                         Logger.Log(LogLevel.Fatal, message);
@@ -334,13 +334,13 @@ namespace TypeOEngine.Typedeaf.Core
                 var type = obj.GetType();
                 //TODO: Should set Service from a attribute
                 var properties = type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-                foreach(var property in properties)
+                foreach (var property in properties)
                 {
-                    if(!property.PropertyType.IsSubclassOf(typeof(Service)))
+                    if (!property.PropertyType.IsSubclassOf(typeof(Service)))
                     {
                         continue;
                     }
-                    if(!Services.ContainsKey(property.PropertyType))
+                    if (!Services.ContainsKey(property.PropertyType))
                     {
                         var message = $"Service type '{property.PropertyType.Name}' is not loaded for '{obj.GetType().Name}'";
                         Logger.Log(LogLevel.Fatal, message);
@@ -349,7 +349,7 @@ namespace TypeOEngine.Typedeaf.Core
 
                     var serviceId = property.GetCustomAttribute<ServiceId>() ?? new ServiceId();
 
-                    if(!Services[property.PropertyType].ContainsKey(serviceId.Id))
+                    if (!Services[property.PropertyType].ContainsKey(serviceId.Id))
                     {
                         var message = $"Service type '{property.PropertyType.Name}' with ID '{serviceId.Id}' is not loaded for '{obj.GetType().Name}'";
                         Logger.Log(LogLevel.Fatal, message);
@@ -365,9 +365,9 @@ namespace TypeOEngine.Typedeaf.Core
             {
                 var type = obj.GetType();
                 var properties = type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-                foreach(var property in properties)
+                foreach (var property in properties)
                 {
-                    if(property.PropertyType != typeof(ILogger))
+                    if (property.PropertyType != typeof(ILogger))
                     {
                         continue;
                     }
@@ -410,7 +410,7 @@ namespace TypeOEngine.Typedeaf.Core
                 InitializeObject(drawable, obj);
                 option?.Create(drawable);
 
-                if(drawStack != null)
+                if (drawStack != null)
                 {
                     drawStack.Push(drawable);
                 }
@@ -420,7 +420,7 @@ namespace TypeOEngine.Typedeaf.Core
 
             internal void DestroyDrawable(Drawable drawable, DrawStack drawStack)
             {
-                if(drawStack != null)
+                if (drawStack != null)
                 {
                     drawStack.Pop(drawable);
                 }
@@ -440,7 +440,7 @@ namespace TypeOEngine.Typedeaf.Core
                 InitializeObject(logic, obj);
                 option?.Create(logic);
 
-                if(updateLoop != null)
+                if (updateLoop != null)
                 {
                     updateLoop.Push(logic);
                 }
@@ -450,7 +450,7 @@ namespace TypeOEngine.Typedeaf.Core
 
             internal void DestroyLogic(Logic logic, UpdateLoop updateLoop)
             {
-                if(updateLoop != null)
+                if (updateLoop != null)
                 {
                     updateLoop.Pop(logic);
                     logic.DoCleanup();
@@ -464,12 +464,12 @@ namespace TypeOEngine.Typedeaf.Core
                 var service = new S();
                 var ServiceType = typeof(S);
 
-                if(!Services.ContainsKey(ServiceType))
+                if (!Services.ContainsKey(ServiceType))
                 {
                     Services.Add(ServiceType, new Dictionary<string, Service>());
                 }
 
-                if(Services[ServiceType].ContainsKey(id))
+                if (Services[ServiceType].ContainsKey(id))
                 {
                     var message = $"Service of type '{ServiceType.Name}' already have key Id '{id}'";
                     Logger.Log(LogLevel.Fatal, message);
@@ -482,12 +482,12 @@ namespace TypeOEngine.Typedeaf.Core
             public S GetService<S>(string id = "") where S : Service, new()
             {
                 var ServiceType = typeof(S);
-                if(!Services.ContainsKey(ServiceType))
+                if (!Services.ContainsKey(ServiceType))
                 {
                     Logger.Log(LogLevel.Warning, $"Service of type '{ServiceType.Name}' does not exist");
                     return null;
                 }
-                if(!Services[ServiceType].ContainsKey(id))
+                if (!Services[ServiceType].ContainsKey(id))
                 {
                     Logger.Log(LogLevel.Warning, $"Service of type '{ServiceType.Name}' does not exist with id '{id}'");
                     return null;
@@ -508,6 +508,11 @@ namespace TypeOEngine.Typedeaf.Core
                 if (typeOObject == null)
                     Logger.Log(LogLevel.Warning, $"TypeOObject with id '{id}' is not of type '{typeof(O).FullName}'");
                 return typeOObject;
+            }
+
+            public List<TypeOObject> ListAllTypeOObjects()
+            {
+                return IDToTypeOObjectMap.Values.ToList();
             }
         }
     }

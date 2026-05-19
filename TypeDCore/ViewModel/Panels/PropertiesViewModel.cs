@@ -13,6 +13,7 @@ using TypeD.ViewModel;
 using TypeDCore.View.Panels;
 using TypeD.Models.Data.SaveContexts;
 using TypeOEngine.Typedeaf.Core.Common;
+using System.Linq;
 
 namespace TypeDCore.ViewModel.Panels
 {
@@ -316,6 +317,12 @@ namespace TypeDCore.ViewModel.Panels
                     var propertyNodeType = TypeToPropertyNode.ContainsKey(property.Type) ? TypeToPropertyNode[property.Type] : typeof(PropertyNode);
                     PropertyNodes.Add((PropertyNode)Activator.CreateInstance(propertyNodeType, Component, property, (Action<PropertyNode>)(node =>
                     {
+                        HookModel.Shoot(new PropertyChangedHook {
+                            Component = node.Component,
+                            Property = node.Property,
+                            ID = node.Component.Properties.FirstOrDefault(p => p.Name == "ID")?.Value as string
+                        });
+
                         Component componentToSave = node.Component.ParentComponent ?? node.Component;
                         var context = SaveModel.GetSaveContext<ComponentSaveContext>(Project);
                         if(!context.Components.Contains(componentToSave))

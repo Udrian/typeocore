@@ -1,4 +1,7 @@
 ﻿using Avalonia.Controls;
+using CommunityToolkit.Mvvm.ComponentModel;
+using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using TypeD.Helpers;
@@ -9,19 +12,36 @@ using TypeD.ViewModel;
 
 namespace TypeDCore.ViewModel.Panels
 {
-    internal class ComponentExplorerViewModel : ViewModelBase
+    internal static class FlattenExtension
+    {
+        public static IEnumerable<T> Flatten<T>(this IEnumerable<T> e, Func<T, IEnumerable<T>> f)
+        {
+            return e.SelectMany(c => f(c).Flatten(f)).Concat(e);
+        }
+    }
+
+    internal partial class ComponentExplorerViewModel : ViewModelBase
     {
         // Definitions
-        public class Node : ViewModelBase
+        public partial class Node : ViewModelBase
         {
             public Component Component { get; private set; }
 
-            public string Title { get => Component.ClassName; }
-            public ObservableCollection<Node> Nodes { get => new ObservableCollection<Node>(Component.Children.Select(c => new Node(c))); }
+            [ObservableProperty]
+            private string _title;
+            public void UpdateTitle() {
+                var nameProperty = Component.Properties.FirstOrDefault(p => p.Name == "Name");
+                Title = string.IsNullOrEmpty(nameProperty?.Value as string) ? Component.ClassName : nameProperty.Value as string;
+            }
 
-            public Node(Component component)
+            [ObservableProperty]
+            private ObservableCollection<Node> _nodes;
+
+            public Node(Component component) : base()
             {
                 Component = component;
+                Nodes = new ObservableCollection<Node>(Component.Children.Select(c => new Node(c)));
+                UpdateTitle();
             }
         }
 
@@ -66,6 +86,27 @@ namespace TypeDCore.ViewModel.Panels
                 if(Component.FullName == hook.Component.FullName)
                 {
                     Component = null;
+                }
+            });
+
+            HookModel.AddHook<ComponentAddedHook>((hook) =>
+            {
+                var node = Nodes.Flatten(n => n.Nodes).FirstOrDefault(n => n.Component.FullName == hook.Parent.FullName);
+                if (node != null)
+                {
+                    node.Nodes.Add(new Node(hook.Child));
+                }
+            });
+
+            HookModel.AddHook<PropertyChangedHook>((hook) =>
+            {
+                if (hook.Property.Name == "Name")
+                {
+                    var node = Nodes.Flatten(n => n.Nodes).FirstOrDefault(n => n.Component.FullName == hook.Component.FullName);
+                    if (node != null)
+                    {
+                        node.UpdateTitle();
+                    }
                 }
             });
         }
