@@ -48,7 +48,7 @@ namespace TypeDCore.ViewModel.Panels
         {
             if (viewer == null)
                 return;
-            HookModel.Shoot(new ComponentFocusHook() { Project = Project, Component = viewer.Component});
+            HookModel.Shoot(new ComponentFocusHook() { Project = Project, Component = viewer.Component });
         }
 
         void ComponentOpened(OpenComponentHook hook)

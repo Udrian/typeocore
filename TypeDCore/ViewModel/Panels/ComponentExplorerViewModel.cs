@@ -1,7 +1,5 @@
 ﻿using Avalonia.Controls;
 using CommunityToolkit.Mvvm.ComponentModel;
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using TypeD.Helpers;
@@ -12,14 +10,6 @@ using TypeD.ViewModel;
 
 namespace TypeDCore.ViewModel.Panels
 {
-    internal static class FlattenExtension
-    {
-        public static IEnumerable<T> Flatten<T>(this IEnumerable<T> e, Func<T, IEnumerable<T>> f)
-        {
-            return e.SelectMany(c => f(c).Flatten(f)).Concat(e);
-        }
-    }
-
     internal partial class ComponentExplorerViewModel : ViewModelBase
     {
         // Definitions
