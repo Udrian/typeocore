@@ -1,5 +1,4 @@
-﻿using Dock.Settings;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
 using TypeD;
@@ -14,6 +13,7 @@ using TypeDCore.Commands;
 using TypeDCore.Commands.Data;
 using TypeDCore.Components;
 using TypeDCore.Models;
+using TypeDCore.Models.Data;
 using TypeDCore.Models.Interfaces;
 using TypeDCore.View.Panels;
 using TypeDCore.View.Viewer;
@@ -29,6 +29,7 @@ namespace TypeDCore
 
         // Providers
         IComponentProvider ComponentProvider { get; set; }
+        IContentProvider ContentProvider { get; set; }
 
         // Models
         ITypeDCoreProjectModel TypeDCoreProjectModel { get; set; }
@@ -65,7 +66,7 @@ namespace TypeDCore
 
             // Providers
             ComponentProvider = Resources.Get<IComponentProvider>();
-
+            ContentProvider = Resources.Get<IContentProvider>();
             // Models
             SettingModel = Resources.Get<ISettingModel>();
             PanelModel = Resources.Get<IPanelModel>();
@@ -99,6 +100,7 @@ namespace TypeDCore
             PanelModel.AttachPanel("typed_output", "Output", new OutputPanel());
             PanelModel.AttachPanel("typed_componentbrowser", "Component Browser", new ComponentBrowserPanel(project));
             PanelModel.AttachPanel("typed_properties", "Properties", new PropertiesPanel(project));
+            PanelModel.AttachPanel("typed_content", "Content", new ContentPanel(project));
 
             // Viewers
             PanelModel.AddViewer<ConsoleViewer>();
@@ -108,15 +110,18 @@ namespace TypeDCore
             ComponentProvider.AddBaseTypeComponent(CoreComponent.SceneComponent());
             ComponentProvider.AddBaseTypeComponent(CoreComponent.DrawableComponent());
             ComponentProvider.AddBaseTypeComponent(CoreComponent.GameComponent());
+
+            ContentProvider.AddSupportedContentType<Texture2dContent>("png");
         }
 
         public override void Uninitializer()
         {
             // Panels
             PanelModel.DetachPanel("typed_viewer");
-            PanelModel.DetachPanel("typed_component");
+            PanelModel.DetachPanel("typed_componentexplorer");
             PanelModel.DetachPanel("typed_output");
-            PanelModel.DetachPanel("typed_componenttypebrowser");
+            PanelModel.DetachPanel("typed_componentbrowser");
+            PanelModel.DetachPanel("typed_properties");
 
             // Internal Models
             Resources.Remove("TypeDCoreProjectModel");
@@ -140,6 +145,8 @@ namespace TypeDCore
             ComponentProvider.RemoveBaseTypeComponent(CoreComponent.SceneComponent());
             ComponentProvider.RemoveBaseTypeComponent(CoreComponent.DrawableComponent());
             ComponentProvider.RemoveBaseTypeComponent(CoreComponent.GameComponent());
+
+            ContentProvider.RemoveSupportedContentType<Texture2dContent>("png");
         }
 
         // Events

@@ -1,0 +1,46 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:TypeDCore.ViewModel.Panels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             xmlns:local="clr-namespace:TypeDCore.View.Panels"
+             x:Class="TypeDCore.ContentPanel"
+             x:DataType="vm:ContentPanelViewModel"
+             Loaded="OnLoaded">
+    <Grid RowDefinitions="Auto, *" Margin="8">
+        <StackPanel Orientation="Horizontal" Spacing="8">
+            <TextBox Width="300" Watermark="Search..." Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+            <Button Content="Clear" Command="{Binding ClearSearchCommand}"/>
+        </StackPanel>
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,8,0,0">
+            <ItemsControl ItemsSource="{Binding FilteredItems}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Width="160" Height="140" Margin="6" BorderBrush="#FFCCCCCC" BorderThickness="1" CornerRadius="4">
+                            <StackPanel>
+                                <Image Source="{Binding Thumbnail}" Stretch="Uniform" Height="100">
+                                    <ToolTip.Tip>
+                                        <Border Background="White" Padding="4" BorderBrush="#FFCCCCCC" BorderThickness="1">
+                                            <ScrollViewer MaxWidth="800" MaxHeight="600" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                                                <Image Source="{Binding Thumbnail}" Stretch="None" />
+                                            </ScrollViewer>
+                                        </Border>
+                                    </ToolTip.Tip>
+                                </Image>
+                                <TextBlock Text="{Binding Title}" Margin="6,4,6,0" TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+    </Grid>
+</UserControl>
