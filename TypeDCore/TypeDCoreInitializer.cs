@@ -433,9 +433,10 @@ namespace TypeDCore
 
         void ComponentContextMenuOpened(ComponentContextMenuHook hook)
         {
-            if(hook.OpenedComponent == null)
+            if (hook.OpenedComponent == null)
             {
-                hook.Menu.Items.Add(
+                hook.Menu.Items.AddRange(new List<MenuItem>()
+                {
                     new MenuItem()
                     {
                         Name = "_Open Component",
@@ -443,9 +444,40 @@ namespace TypeDCore
                         Click = (param) => {
                             OpenComponentCommand.Execute(new OpenComponentCommandData() { Project = param as Project });
                         }
+                    },
+                    new MenuItem()
+                    {
+                        Name = "_Create Component",
+                        Items = new List<MenuItem>()
+                        {
+                            new MenuItem() {
+                                Name = "_Entity",
+                                ClickParameter = "LoadedProject",
+                                Click = (param) => {
+                                    var @namespace = "Entities";
+                                    CreateEntityTypeCommand.Execute(new CreateComponentCommandData(param as Project, @namespace));
+                                }
+                            },
+                            new MenuItem() {
+                                Name = "_Scene",
+                                ClickParameter = "LoadedProject",
+                                Click = (param) => {
+                                    var @namespace = "Scenes";
+                                    CreateSceneTypeCommand.Execute(new CreateComponentCommandData(param as Project, @namespace));
+                                }
+                            },
+                            new MenuItem() {
+                                Name = "_Drawable",
+                                ClickParameter = "LoadedProject",
+                                Click = (param) => {
+                                    var @namespace = "Drawables";
+                                    CreateDrawableTypeCommand.Execute(new CreateComponentCommandData(param as Project, @namespace));
+                                }
+                            }
+                        }
                     }
-                );
-
+                });
+            
                 return;
             }
 
