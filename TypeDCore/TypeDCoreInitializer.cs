@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using TypeD;
 using TypeD.Models.Data;
@@ -46,6 +47,7 @@ namespace TypeDCore
         RenameComponentTypeCommand RenameComponentTypeCommand { get; set; }
         SetStartSceneCommand SetStartSceneCommand { get; set; }
         AddComponentCommand AddComponentCommand { get; set; }
+        RemoveComponentCommand RemoveComponentCommand { get; set; }
         OpenComponentCommand OpenComponentCommand { get; set; }
         CloseComponentCommand CloseComponentCommand { get; set; }
         OpenInExternalCommand OpenInExternalCommand { get; set; }
@@ -80,6 +82,7 @@ namespace TypeDCore
             RenameComponentTypeCommand = new RenameComponentTypeCommand(Resources);
             SetStartSceneCommand = new SetStartSceneCommand(Resources);
             AddComponentCommand = new AddComponentCommand(Resources);
+            RemoveComponentCommand = new RemoveComponentCommand(Resources);
             OpenComponentCommand = new OpenComponentCommand(Resources);
             CloseComponentCommand = new CloseComponentCommand(Resources);
             OpenInExternalCommand = new OpenInExternalCommand(Resources);
@@ -477,7 +480,7 @@ namespace TypeDCore
                         }
                     }
                 });
-            
+
                 return;
             }
 
@@ -488,10 +491,25 @@ namespace TypeDCore
                     ClickParameter = "LoadedProject",
                     Click = (param) =>
                     {
-                        AddComponentCommand.Execute(new AddComponentCommandData() { ToComponent = hook.SelectedComponent ?? hook.OpenedComponent, Project = param as Project});
+                        AddComponentCommand.Execute(new AddComponentCommandData() { ToComponent = hook.SelectedComponent ?? hook.OpenedComponent, Project = param as Project });
                     }
                 }
             );
+
+            if(hook.SelectedComponent != hook.OpenedComponent)
+            {
+                hook.Menu.Items.Add(
+                    new MenuItem()
+                    {
+                        Name = "_Remove Component",
+                        ClickParameter = "LoadedProject",
+                        Click = (param) =>
+                        {
+                            RemoveComponentCommand.Execute(new RemoveComponentCommandData() { Component = hook.SelectedComponent, Project = param as Project });
+                        }
+                    }
+                );
+            }
 
             hook.Menu.Items.AddRange(new List<MenuItem>()
             {
@@ -593,6 +611,20 @@ namespace TypeDCore
             foreach (var property in componentType.GetProperties())
             {
                 var typeOPropertyAttribute = property.GetCustomAttribute<TypeOPropertyAttribute>(true);
+
+                if(typeOPropertyAttribute == null)
+                {
+                    var interfaces = property.DeclaringType.GetInterfaces();
+                    foreach(var interfaze in interfaces)
+                    {
+                        var interfaceProp = interfaze.GetProperty(property.Name);
+                        if (interfaceProp == null) continue;
+                        typeOPropertyAttribute = interfaceProp.GetCustomAttribute<TypeOPropertyAttribute>(true);
+                        if(typeOPropertyAttribute != null)
+                            break;
+                    }
+                }
+
                 if (typeOPropertyAttribute != null)
                 {
                     hook.Properties.Add(new Property()

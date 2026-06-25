@@ -73,7 +73,7 @@ namespace TypeDCore.ViewModel.Panels
 
             HookModel.AddHook<CloseComponentHook>((hook) =>
             {
-                if(Component.FullName == hook.Component.FullName)
+                if(Component.ID == hook.Component.ID)
                 {
                     Component = null;
                 }
@@ -81,10 +81,23 @@ namespace TypeDCore.ViewModel.Panels
 
             HookModel.AddHook<ComponentAddedHook>((hook) =>
             {
-                var node = Nodes.Flatten(n => n.Nodes).FirstOrDefault(n => n.Component.FullName == hook.Parent.FullName);
+                var node = Nodes.Flatten(n => n.Nodes).FirstOrDefault(n => n.Component.ID == hook.Parent.ID);
                 if (node != null)
                 {
                     node.Nodes.Add(new Node(hook.Child));
+                }
+            });
+            
+            HookModel.AddHook<ComponentRemovedHook>((hook) =>
+            {
+                var node = Nodes.Flatten(n => n.Nodes).FirstOrDefault(n => n.Component.ID == hook.Child.ParentComponent.ID);
+                if (node != null)
+                {
+                    var childNode = node.Nodes.FirstOrDefault(n => n.Component.ID == hook.Child.ID);
+                    if (childNode != null)
+                    {
+                        node.Nodes.Remove(childNode);
+                    }
                 }
             });
 
@@ -92,7 +105,7 @@ namespace TypeDCore.ViewModel.Panels
             {
                 if (hook.Property.Name == "Name")
                 {
-                    var node = Nodes.Flatten(n => n.Nodes).FirstOrDefault(n => n.Component.FullName == hook.Component.FullName);
+                    var node = Nodes.Flatten(n => n.Nodes).FirstOrDefault(n => n.Component.ID == hook.Component.ID);
                     if (node != null)
                     {
                         node.UpdateTitle();

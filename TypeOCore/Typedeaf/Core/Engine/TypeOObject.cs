@@ -5,7 +5,7 @@ namespace TypeOEngine.Typedeaf.Core
     namespace Engine
     {
         /// <summary>
-        /// Base class for Initializing and cleanup, will automatically call both Initialize and Cleanup on object when relevant. Do not use constructor in a TypeOObject class to access TypeO objects.
+        /// Base class for each component in the game. Handles initialization and cleanup, will automatically call both Initialize and Cleanup on object when relevant. Do not use constructor in a TypeOObject class to access TypeO objects.
         /// </summary>
         public abstract class TypeOObject
         {
