@@ -1,10 +1,24 @@
-﻿using TypeOEngine.Typedeaf.Core.Engine.Interfaces;
+﻿using MathNet.Numerics.Differentiation;
+using TypeOEngine.Typedeaf.Core.Engine.Interfaces;
 using TypeOEngine.Typedeaf.Core.Interfaces;
 
 namespace TypeOEngine.Typedeaf.Core
 {
     namespace Engine
     {
+        public class LogicState
+        {
+            internal LogicManager Parent { get; set; }
+            internal Func<LogicManager, bool> WhenAction { get; set; }
+            internal Action<LogicManager> DoAction { get; set; }
+
+            public LogicManager Do(Action<LogicManager> action)
+            {
+                DoAction = action;
+                return Parent;
+            }
+        }
+
         /// <summary>
         /// Manages the lifecycle of <see cref="Logic"/> instances, including their creation, retrieval, and destruction.
         /// </summary>
@@ -13,19 +27,23 @@ namespace TypeOEngine.Typedeaf.Core
         /// <see cref="Logic"/> objects and integrates with an <see cref="UpdateLoop"/> to manage their updates if
         /// required. This class is typically used in scenarios where multiple logic components need to be managed in a
         /// structured and consistent manner.</remarks>
-        public class LogicManager : TypeOObject, IHasContext
+        public class LogicManager : TypeOObject, IHasContext, IUpdatable
         {
             Context IHasContext.Context { get; set; }
             private Context Context { get => (this as IHasContext).Context; set => (this as IHasContext).Context = value; }
 
             internal List<Logic> Logics { get; private set; }
+            private List<LogicState> States { get; set; }
             private UpdateLoop UpdateLoop { get; set; }
             private TypeOObject Parent { get; set; }
+            public bool Pause { get; set; }
 
             internal LogicManager(UpdateLoop updateLoop, TypeOObject parent)
             {
                 Logics = new List<Logic>();
+                States = new List<LogicState>();
                 UpdateLoop = updateLoop;
+                UpdateLoop?.Push(this);
                 Parent = parent;
             }
 
@@ -103,6 +121,28 @@ namespace TypeOEngine.Typedeaf.Core
             public IEnumerable<L> Get<L>() where L : Logic
             {
                 return Logics.FindAll(logic => logic is L).Cast<L>();
+            }
+
+            public LogicState When(Func<LogicManager, bool> action)
+            {
+                LogicState state = new LogicState()
+                {
+                    Parent = this,
+                    WhenAction = action,
+                };
+                States.Add(state);
+                return state;
+            }
+
+            public void Update(double dt)
+            {
+                foreach (var state in States)
+                {
+                    if (state.WhenAction(this))
+                    {
+                        state.DoAction(this);
+                    }
+                }
             }
         }
     }
