@@ -41,6 +41,48 @@ namespace TypeOEngine.Typedeaf.Core
                 IDToTypeOObjectMap = new Dictionary<string, TypeOObject>();
             }
 
+            internal Entity CreateEntity(Type type, EntityList parentList, bool pushToUpdateLoop = true, bool pushToDrawStack = true, string id = null)
+            {
+                Logger.Log(LogLevel.Ludacris, $"Creating Entity of type '{type.FullName}' into {parentList.GetType().FullName}");
+
+                var entity = Activator.CreateInstance(type) as Entity;
+
+                return CreateEntity(entity, parentList, id, pushToUpdateLoop, pushToDrawStack);
+            }
+
+            internal E CreateEntity<E>(EntityList parentList, bool pushToUpdateLoop = true, bool pushToDrawStack = true, string id = null) where E : Entity, new()
+            {
+                Logger.Log(LogLevel.Ludacris, $"Creating Entity of type '{typeof(E).FullName}' into {parentList.GetType().FullName}");
+
+                var entity = new E();
+
+                return CreateEntity(entity, parentList, id, pushToUpdateLoop, pushToDrawStack) as E;
+            }
+
+            private Entity CreateEntity(Entity entity, EntityList parentList, string id = null, bool pushToUpdateLoop = true, bool pushToDrawStack = true)
+            {
+                entity.Parent = parentList.Entity;
+                entity.ParentEntityList = parentList;
+                entity.DrawStack = parentList.Scene?.DrawStack ?? parentList.Entity?.DrawStack;
+                entity.UpdateLoop = parentList.Scene?.UpdateLoop ?? parentList.Entity?.UpdateLoop;
+                entity.ContentLoader = parentList.Scene?.ContentLoader ?? parentList.Entity?.ContentLoader;
+                entity.ID = id;
+
+                InitializeObject(entity, parentList);
+
+                if (pushToUpdateLoop && entity.UpdateLoop != null && entity is IUpdatable updatable)
+                {
+                    entity.UpdateLoop.Push(updatable);
+                }
+
+                if (pushToDrawStack && entity.DrawStack != null && entity is IDrawable drawable)
+                {
+                    entity.DrawStack.Push(drawable);
+                }
+
+                return entity;
+            }
+
             private bool ExitApplication = false;
             public void Exit()
             {

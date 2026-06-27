@@ -1,5 +1,6 @@
 ﻿using TypeOEngine.Typedeaf.Core.Engine;
 using TypeOEngine.Typedeaf.Core.Engine.Contents;
+using TypeOEngine.Typedeaf.Core.Engine.Graphics;
 using TypeOEngine.Typedeaf.Core.Engine.Graphics.Interfaces;
 using TypeOEngine.Typedeaf.Core.Engine.Interfaces;
 using TypeOEngine.Typedeaf.Core.Entities.Drawables;
@@ -93,6 +94,12 @@ namespace TypeOEngine.Typedeaf.Core
             Logics.DoCleanup();
             ContentLoader.DoCleanup();
             Scenes.DoCleanup();
+
+            if (MainCanvas is TypeOObject canvasObj)
+            {
+                canvasObj.DoCleanup();
+                Context.DestroyObject(canvasObj);
+            }
         }
 
         /// <summary>

@@ -134,14 +134,7 @@ namespace TypeOEngine.Typedeaf.Core
             /// added to the update loop and draw stack.</returns>
             public Entity Create(Type type, string id = null, bool pushToUpdateLoop = true, bool pushToDrawStack = true) //TODO: Split out, Should be able to push automatically to draw stack and update stack
             {
-                var entity = Activator.CreateInstance(type) as Entity;
-                {
-                    entity.Parent = Entity;
-                    entity.ParentEntityList = this;
-                    entity.DrawStack = Scene?.DrawStack ?? Entity?.DrawStack; //TODO: Change this to be from same interface
-                    entity.UpdateLoop = Scene?.UpdateLoop ?? Entity?.UpdateLoop; //TODO: Change this to be from same interface
-                    entity.ContentLoader = Scene?.ContentLoader ?? Entity?.ContentLoader; //TODO: Change this to be from same interface
-                };
+                var entity = Context.CreateEntity(type, this, pushToUpdateLoop, pushToDrawStack, id);
 
                 return Create(entity, id, pushToUpdateLoop, pushToDrawStack);
             }
@@ -160,39 +153,19 @@ namespace TypeOEngine.Typedeaf.Core
             /// <returns>A new instance of the specified entity type, initialized with the current context.</returns>
             public E Create<E>(string id = null, bool pushToUpdateLoop = true, bool pushToDrawStack = true) where E : Entity, new() //TODO: Split out, Should be able to push automatically to draw stack and update stack
             {
-                var entity = new E
-                {
-                    Parent = Entity,
-                    ParentEntityList = this,
-                    DrawStack = Scene?.DrawStack ?? Entity?.DrawStack, //TODO: Change this to be from same interface
-                    UpdateLoop = Scene?.UpdateLoop ?? Entity?.UpdateLoop, //TODO: Change this to be from same interface
-                    ContentLoader = Scene?.ContentLoader ?? Entity?.ContentLoader //TODO: Change this to be from same interface
-                };
+                var entity = Context.CreateEntity<E>(this, pushToUpdateLoop, pushToDrawStack, id);
 
-                return Create(entity, id, pushToUpdateLoop, pushToDrawStack);
+                return Create(entity, id, pushToUpdateLoop, pushToDrawStack) as E;
             }
 
-            private E Create<E>(E entity, string id = null, bool pushToUpdateLoop = true, bool pushToDrawStack = true) where E : Entity //TODO: Split out, Should be able to push automatically to draw stack and update stack
+            private Entity Create(Entity entity, string id = null, bool pushToUpdateLoop = true, bool pushToDrawStack = true) //TODO: Split out, Should be able to push automatically to draw stack and update stack
             {
-                entity.ID = id;
-                Logger.Log(LogLevel.Debug, $"Creating Entity of type '{typeof(E).FullName}'");
-                Context.InitializeObject(entity, this);
-
+                // This helper assumes the entity has already been initialized by Context.CreateEntity
                 Entities.Add(entity);
-                var eType = typeof(E);
+                var eType = entity.GetType();
                 if (EntityLists.ContainsKey(eType))
                 {
-                    EntityLists[eType] = Entities.Where(e => e is E).Cast<E>().ToList();
-                }
-
-                if (pushToUpdateLoop && entity.UpdateLoop != null && entity is IUpdatable updatable)
-                {
-                    entity.UpdateLoop.Push(updatable);
-                }
-
-                if (pushToDrawStack && entity.DrawStack != null && entity is IDrawable drawable)
-                {
-                    entity.DrawStack.Push(drawable);
+                    EntityLists[eType] = Entities.Where(e => e.GetType().IsSubclassOf(eType) || e.GetType() == eType).ToList();
                 }
 
                 if (entity is IHasEntities hasEntities)
