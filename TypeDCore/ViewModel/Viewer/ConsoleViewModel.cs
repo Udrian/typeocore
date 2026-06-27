@@ -36,12 +36,14 @@ namespace TypeDCore.ViewModel.Viewer
         ConsoleWriter NewTextWriter { get; set; }
 
         // Data
+        private Project Project { get; set; }
         ConsoleViewer ConsoleViewer { get; set; }
         public Component Component { get; set; }
 
         // Constructors
-        public ConsoleViewModel(ConsoleViewer consoleViewer) : base(consoleViewer)
+        public ConsoleViewModel(Project project, ConsoleViewer consoleViewer) : base(consoleViewer)
         {
+            Project = project;
             ConsoleViewer = consoleViewer;
 
             OldTextWriter = Console.Out;
@@ -50,13 +52,18 @@ namespace TypeDCore.ViewModel.Viewer
             Console.SetOut(NewTextWriter);
         }
 
-        public void Init(Project project, Component component)
+        public void Init()
+        {
+
+        }
+
+        public void Load(Component component)
         {
             Component = component;
 
             if (Component.TypeOBaseType == typeof(Drawable))
             {
-                DrawableViewer = new DrawableViewer(project, Component);
+                DrawableViewer = new DrawableViewer(Project, Component);
             }
         }
 

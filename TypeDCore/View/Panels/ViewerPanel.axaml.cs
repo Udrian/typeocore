@@ -23,5 +23,10 @@ namespace TypeDCore.View.Panels
         {
             ViewerViewModel.Unload();
         }
+
+        private void ViewerPanelLoaded(object sender, RoutedEventArgs e)
+        {
+            ViewerViewModel.Load();
+        }
     }
 }

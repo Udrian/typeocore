@@ -5,7 +5,8 @@
              mc:Ignorable="d" d:DesignHeight="450" d:DesignWidth="800"
              xmlns:local="clr-namespace:TypeDCore.View.Panels"
              x:Class="TypeDCore.View.Panels.ViewerPanel"
-             Unloaded="ViewerPanelUnloaded">
+             Unloaded="ViewerPanelUnloaded"
+             Loaded="ViewerPanelLoaded">
     <Grid Name="Tabs" >
             
     </Grid>

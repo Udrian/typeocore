@@ -37,37 +37,40 @@ namespace TypeDCore.ViewModel.Panels
         }
 
         // Functions
-        public void Unload()
-        {
-            HookModel.RemoveHook<OpenComponentHook>(ComponentOpened);
-            HookModel.RemoveHook<CloseComponentHook>(ComponentClosed);
-            HookModel.RemoveHook<ComponentFocusHook>(ComponentFocus);
-        }
-
-        public void TabSelectionChanged(IViewer viewer)
-        {
-            if (viewer == null)
-                return;
-            HookModel.Shoot(new ComponentFocusHook() { Project = Project, Component = viewer.Component });
-        }
-
-        void ComponentOpened(OpenComponentHook hook)
+        public void Load()
         {
             if (Viewer == null)
             {
                 var setting = SettingModel.GetContext<MainWindowSettingContext>();
 
-                Viewer = PanelModel.CreateViewer(setting.ViewerType.Value);
-                
+                Viewer = PanelModel.CreateViewer(Project, setting.ViewerType.Value);
                 ViewerPanel.Tabs.Children.Add(Viewer as Control);
+
+                Viewer.Init();
             }
+        }
+
+        public void Unload()
+        {
+            HookModel.RemoveHook<OpenComponentHook>(ComponentOpened);
+            HookModel.RemoveHook<CloseComponentHook>(ComponentClosed);
+            HookModel.RemoveHook<ComponentFocusHook>(ComponentFocus);
+
+            if (Viewer != null)
+            {
+                Viewer.Unload();
+            }
+        }
+
+        void ComponentOpened(OpenComponentHook hook)
+        {
         }
 
         void ComponentClosed(CloseComponentHook hook)
         {
             if (Viewer != null)
             {
-                Viewer.Init(null, null);
+                Viewer.Unload();
             }
         }
 
@@ -75,7 +78,7 @@ namespace TypeDCore.ViewModel.Panels
         {
             if (Viewer != null && hook.Root)
             {
-                Viewer.Init(hook.Project, hook.Component);
+                Viewer.Load(hook.Component);
             }
         }
     }

@@ -11,6 +11,8 @@ namespace TypeDCore.View.Viewer
     /// </summary>
     public partial class ConsoleViewer : UserControl, IViewer
     {
+        public Project Project { get; set; }
+
         // ViewModel
         ConsoleViewModel ConsoleViewModel { get; set; }
 
@@ -22,13 +24,23 @@ namespace TypeDCore.View.Viewer
         {
             InitializeComponent();
 
-            DataContext = ConsoleViewModel = new ConsoleViewModel(this);
+            DataContext = ConsoleViewModel = new ConsoleViewModel(Project, this);
         }
 
         // Functions
-        public void Init(Project project, Component component)
+        public void Init()
         {
-            ConsoleViewModel.Init(project, component);
+            ConsoleViewModel.Init();
+        }
+
+        public void Load(Component component)
+        {
+            ConsoleViewModel.Load(component);
+        }
+
+        public void Unload()
+        {
+            ConsoleViewModel.Unload();
         }
 
         // Events
