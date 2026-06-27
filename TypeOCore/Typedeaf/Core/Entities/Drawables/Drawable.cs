@@ -17,16 +17,8 @@ namespace TypeOEngine.Typedeaf.Core
         {
             public Entity Entity { get; internal set; } //TODO: Change to a anchor
 
-            /// <summary>
-            /// Gets or sets a value indicating whether the item is hidden.
-            /// </summary>
-            [TypeOProperty("Gets or sets a value indicating whether the item is hidden.", false)]
             public bool Hidden { get; set; }
 
-            /// <summary>
-            /// Gets or sets the draw order of the object.
-            /// </summary>
-            [TypeOProperty("Gets or sets the draw order of the object.", 0)]
             public int DrawOrder { get; set; }
 
             /// <summary>
