@@ -262,7 +262,7 @@ namespace TypeOEngine.Typedeaf.Core
                 {
                     obj.ID = Guid.NewGuid().ToString();
                 }
-                IDToTypeOObjectMap.Add(obj.ID, obj);
+                IDToTypeOObjectMap.Add((obj is IHasParent parent ? parent.FullParentPath : string.Empty) + obj.ID, obj);
 
                 if (obj is IHasGame)
                 {
@@ -345,7 +345,7 @@ namespace TypeOEngine.Typedeaf.Core
 
             public void DestroyObject(TypeOObject obj)
             {
-                IDToTypeOObjectMap.Remove(obj.ID);
+                IDToTypeOObjectMap.Remove((obj is IHasParent parent ? parent.FullParentPath : string.Empty) + obj.ID);
             }
 
             private void SetHardwares(object obj)
@@ -425,7 +425,7 @@ namespace TypeOEngine.Typedeaf.Core
                 Logger.Log(LogLevel.Ludacris, $"Creating Drawable of type '{type.FullName}' into {obj.GetType().FullName}");
 
                 var drawable = Activator.CreateInstance(type) as Drawable;
-                drawable.Entity = obj as Entity;
+                drawable.Parent = obj as Entity;
                 drawable.ID = id;
 
                 InitializeObject(drawable, obj);
@@ -446,7 +446,7 @@ namespace TypeOEngine.Typedeaf.Core
                 var drawable = new D()
                 {
                     ID = id,
-                    Entity = obj as Entity
+                    Parent = obj as Entity
                 };
 
                 InitializeObject(drawable, obj);

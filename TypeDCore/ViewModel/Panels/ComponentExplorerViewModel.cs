@@ -20,8 +20,7 @@ namespace TypeDCore.ViewModel.Panels
             [ObservableProperty]
             private string _title;
             public void UpdateTitle() {
-                var nameProperty = Component.Properties.FirstOrDefault(p => p.Name == "Name");
-                Title = string.IsNullOrEmpty(nameProperty?.Value as string) ? Component.ClassName : nameProperty.Value as string;
+                Title = Component.Name;
             }
 
             [ObservableProperty]
@@ -73,7 +72,7 @@ namespace TypeDCore.ViewModel.Panels
 
             HookModel.AddHook<CloseComponentHook>((hook) =>
             {
-                if(Component.ID == hook.Component.ID)
+                if (ReferenceEquals(Component, hook.Component))
                 {
                     Component = null;
                 }
@@ -81,7 +80,7 @@ namespace TypeDCore.ViewModel.Panels
 
             HookModel.AddHook<ComponentAddedHook>((hook) =>
             {
-                var node = Nodes.Flatten(n => n.Nodes).FirstOrDefault(n => n.Component.ID == hook.Parent.ID);
+                var node = Nodes.Flatten(n => n.Nodes).FirstOrDefault(n => ReferenceEquals(n.Component, hook.Parent));
                 if (node != null)
                 {
                     node.Nodes.Add(new Node(hook.Child));
@@ -90,10 +89,10 @@ namespace TypeDCore.ViewModel.Panels
             
             HookModel.AddHook<ComponentRemovedHook>((hook) =>
             {
-                var node = Nodes.Flatten(n => n.Nodes).FirstOrDefault(n => n.Component.ID == hook.Child.ParentComponent.ID);
+                var node = Nodes.Flatten(n => n.Nodes).FirstOrDefault(n => ReferenceEquals(n.Component, hook.Parent));
                 if (node != null)
                 {
-                    var childNode = node.Nodes.FirstOrDefault(n => n.Component.ID == hook.Child.ID);
+                    var childNode = node.Nodes.FirstOrDefault(n => ReferenceEquals(n.Component, hook.Child));
                     if (childNode != null)
                     {
                         node.Nodes.Remove(childNode);
@@ -105,7 +104,7 @@ namespace TypeDCore.ViewModel.Panels
             {
                 if (hook.Property.Name == "Name")
                 {
-                    var node = Nodes.Flatten(n => n.Nodes).FirstOrDefault(n => n.Component.ID == hook.Component.ID);
+                    var node = Nodes.Flatten(n => n.Nodes).FirstOrDefault(n => ReferenceEquals(n.Component, hook.Component));
                     if (node != null)
                     {
                         node.UpdateTitle();

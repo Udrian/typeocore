@@ -80,6 +80,8 @@ namespace TypeOEngine.Typedeaf.Core
                         if(HasEntities[j] == deleteEntity)
                         {
                             HasEntities.RemoveAt(j);
+                            deleteEntity.Entities.Clear();
+                            deleteEntity.Entities.Update(0);
                             break;
                         }
                     }
@@ -115,6 +117,9 @@ namespace TypeOEngine.Typedeaf.Core
             /// individually. After calling this method, the collection will be processed and actually deleted later in the next update loop.</remarks>
             public void Clear()
             {
+                Entities.Process();
+                HasEntities.Process();
+
                 foreach(var entity in Entities)
                 {
                     entity.Remove();

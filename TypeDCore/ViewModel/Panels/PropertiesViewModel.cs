@@ -319,11 +319,15 @@ namespace TypeDCore.ViewModel.Panels
                     {
                         HookModel.Shoot(new PropertyChangedHook {
                             Component = node.Component,
-                            Property = node.Property,
-                            ID = node.Component.Properties.FirstOrDefault(p => p.Name == "ID")?.Value as string
+                            Property = node.Property
                         });
 
-                        Component componentToSave = node.Component.ParentComponent ?? node.Component;
+                        Component componentToSave = node.Component;
+                        while (componentToSave.ParentComponent != null)
+                        {
+                            componentToSave = componentToSave.ParentComponent;
+                        }
+
                         var context = SaveModel.GetSaveContext<ComponentSaveContext>(Project);
                         if(!context.Components.Contains(componentToSave))
                         {

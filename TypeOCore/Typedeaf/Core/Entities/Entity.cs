@@ -21,10 +21,15 @@ namespace TypeOEngine.Typedeaf.Core
         /// behavior as needed. The <see cref="Initialize"/> method sets up the drawable and logic managers, while the 
         /// <see cref="Remove"/> method handles cleanup and removal of the entity from its parent list and  associated
         /// systems.</remarks>
-        public abstract class Entity : TypeOObject, IHasContext
+        public abstract class Entity : TypeOObject, IHasContext, IHasEntities, IHasParent<Entity>
         {
             Context IHasContext.Context { get; set; }
             internal Context Context { get => (this as IHasContext).Context; set => (this as IHasContext).Context = value; }
+
+            /// <summary>
+            /// Gets or sets the collection of child entities owned by this entity.
+            /// </summary>
+            public EntityList Entities { get; set; }
 
             /// <summary>
             /// Gets the parent entity of the current entity.
@@ -79,6 +84,8 @@ namespace TypeOEngine.Typedeaf.Core
             {
                 Drawables?.DoCleanup();
                 Logics?.DoCleanup();
+                Entities?.Clear();
+                Entities?.Update(0);
             }
 
             /// <summary>
@@ -89,6 +96,11 @@ namespace TypeOEngine.Typedeaf.Core
             /// removal from the parent entity list.</remarks>
             public virtual void Remove()
             {
+                if (WillBeDeleted)
+                {
+                    return;
+                }
+
                 for(int i = Drawables.Drawables.Count - 1; i >= 0; i--)
                 {
                     Drawables.Destroy(Drawables.Drawables[i]);

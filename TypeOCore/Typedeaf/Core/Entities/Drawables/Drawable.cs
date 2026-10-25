@@ -1,7 +1,8 @@
-﻿using TypeOEngine.Typedeaf.Core.Engine;
+﻿using TypeOEngine.Typedeaf.Core.Attributes;
+using TypeOEngine.Typedeaf.Core.Engine;
 using TypeOEngine.Typedeaf.Core.Engine.Graphics.Interfaces;
+using TypeOEngine.Typedeaf.Core.Engine.Interfaces;
 using TypeOEngine.Typedeaf.Core.Entities.Interfaces;
-using TypeOEngine.Typedeaf.Core.Attributes;
 
 namespace TypeOEngine.Typedeaf.Core
 {
@@ -13,9 +14,9 @@ namespace TypeOEngine.Typedeaf.Core
         /// <remarks>The <see cref="Drawable"/> class provides a foundation for drawable entities, 
         /// including properties to control visibility and draw order. Derived classes must implement the
         /// <see cref="Draw(ICanvas)"/> method to define the specific drawing behavior.</remarks>
-        public abstract class Drawable : TypeOObject, IDrawable
+        public abstract class Drawable : TypeOObject, IDrawable, IHasParent<Entity>
         {
-            public Entity Entity { get; internal set; } //TODO: Change to a anchor
+            public Entity Parent { get; internal set; }
 
             public bool Hidden { get; set; }
 

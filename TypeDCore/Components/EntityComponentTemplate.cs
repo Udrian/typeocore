@@ -1,6 +1,7 @@
 ﻿using TypeD.Components;
 using TypeD.Helpers;
 using TypeDCore.Code.Entity;
+using TypeOEngine.Typedeaf.Core.Entities;
 using TypeOEngine.Typedeaf.Core.Entities.Drawables;
 
 namespace TypeDCore.Components
@@ -23,6 +24,7 @@ namespace TypeDCore.Components
         public override void ChildrenFilter(FilterHelper filter)
         {
             filter.Filters += $"{typeof(Drawable).FullName};";
+            filter.Filters += $"{typeof(Entity).FullName};";
         }
     }
 }

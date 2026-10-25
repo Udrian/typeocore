@@ -21,7 +21,14 @@ namespace TypeDCore.Commands
         public override async void Execute(AddComponentCommandData parameter)
         {
             var dialog = new ComponentSelectorDialog(parameter.Project);
-            dialog.ViewModel.NameFilter.Exclude = $"{parameter.ToComponent.FullName};";
+
+            var excludeComponent = parameter.ToComponent;
+            while(excludeComponent.ParentComponent != null)
+            {
+                excludeComponent = excludeComponent.ParentComponent;
+            }
+
+            dialog.ViewModel.NameFilter.Exclude = $"{excludeComponent.FullName};";
             dialog.ViewModel.TypeFilter.Exclude = $"{typeof(Game).FullName};{typeof(TypeOEngine.Typedeaf.Core.Scene).FullName};";
 
             parameter.ToComponent.Template.ChildrenFilter(dialog.ViewModel.TypeFilter);
