@@ -1,4 +1,6 @@
-﻿using Avalonia.Controls;
+﻿using System;
+using Avalonia.Controls;
+using Avalonia.Threading;
 using TypeD.Models.Data;
 using TypeD.Models.Data.Hooks;
 using TypeD.Models.Data.SettingContexts;
@@ -20,6 +22,8 @@ namespace TypeDCore.ViewModel.Panels
         ViewerPanel ViewerPanel { get; set; }
         Project Project { get; set; }
         IViewer Viewer { get; set; }
+        Component ComponentToReload { get; set; }
+        bool IsBuildInProgress { get; set; }
 
         // Constructors
         public ViewerViewModel(Project project, ViewerPanel viewerPanel) : base(viewerPanel)
@@ -34,6 +38,7 @@ namespace TypeDCore.ViewModel.Panels
             HookModel.AddHook<OpenComponentHook>(ComponentOpened);
             HookModel.AddHook<CloseComponentHook>(ComponentClosed);
             HookModel.AddHook<ComponentFocusHook>(ComponentFocus);
+            HookModel.AddHook<BuildStatusChangedHook>(BuildStatusChanged);
         }
 
         // Functions
@@ -55,6 +60,7 @@ namespace TypeDCore.ViewModel.Panels
             HookModel.RemoveHook<OpenComponentHook>(ComponentOpened);
             HookModel.RemoveHook<CloseComponentHook>(ComponentClosed);
             HookModel.RemoveHook<ComponentFocusHook>(ComponentFocus);
+            HookModel.RemoveHook<BuildStatusChangedHook>(BuildStatusChanged);
 
             if (Viewer != null)
             {
@@ -68,6 +74,9 @@ namespace TypeDCore.ViewModel.Panels
 
         void ComponentClosed(CloseComponentHook hook)
         {
+            if (ComponentToReload != null && ComponentToReload.FullName == hook.Component.FullName)
+                ComponentToReload = null;
+
             if (Viewer != null)
             {
                 Viewer.Unload();
@@ -76,10 +85,57 @@ namespace TypeDCore.ViewModel.Panels
 
         void ComponentFocus(ComponentFocusHook hook)
         {
-            if (Viewer != null && hook.Root)
+            if (!hook.Root)
+                return;
+
+            if (IsBuildInProgress)
+            {
+                ComponentToReload = hook.Component;
+                return;
+            }
+
+            if (Viewer != null)
             {
                 Viewer.Load(hook.Component);
             }
+        }
+
+        void BuildStatusChanged(BuildStatusChangedHook hook)
+        {
+            if (hook.Project != Project)
+                return;
+
+            if (hook.IsBuilding)
+            {
+                Action beginBuild = () =>
+                {
+                    IsBuildInProgress = true;
+                    if (Viewer?.Component is Component component)
+                        ComponentToReload = component;
+                };
+
+                if (Dispatcher.UIThread.CheckAccess())
+                    beginBuild();
+                else
+                    Dispatcher.UIThread.InvokeAsync(beginBuild).GetAwaiter().GetResult();
+                return;
+            }
+
+            if (!hook.IsComplete)
+                return;
+
+            Dispatcher.UIThread.Post(() =>
+            {
+                IsBuildInProgress = false;
+                var component = ComponentToReload;
+                ComponentToReload = null;
+
+                if (!hook.Succeeded || component == null || Viewer == null)
+                    return;
+
+                Viewer.Unload();
+                Viewer.Load(component);
+            });
         }
     }
 }

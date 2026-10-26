@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using TypeD.Models.Data;
 using TypeOEngine.Typedeaf.Core;
@@ -10,9 +12,13 @@ namespace TypeDCore.View.Viewer
     public class DrawableViewer
     {
         readonly TypeO FakeTypeO;
+        private readonly Task GameTask;
+        private int IsClosed;
 
         private class FakeGame : Game
         {
+            private readonly object DrawablesLock = new();
+
             protected override void Initialize()
             {
                 base.Initialize();
@@ -20,18 +26,34 @@ namespace TypeDCore.View.Viewer
 
             protected override void Cleanup()
             {
+                lock (DrawablesLock)
+                {
+                    Drawables.Clear();
+                }
+                base.Cleanup();
             }
 
             public override void Draw()
             {
-                foreach(var drawable in Drawables.Get<Drawable>())
+                lock (DrawablesLock)
                 {
-                    drawable.Draw(null);
+                    foreach (var drawable in Drawables.Get<Drawable>())
+                    {
+                        drawable.Draw(null);
+                    }
                 }
             }
 
             public override void Update(double dt)
             {
+            }
+
+            public void LoadDrawable(Type drawableType)
+            {
+                lock (DrawablesLock)
+                {
+                    Drawables.Create(drawableType);
+                }
             }
         }
 
@@ -44,6 +66,7 @@ namespace TypeDCore.View.Viewer
             if (typeInfo == null) return;
 
             FakeTypeO = TypeO.Create<FakeGame>("Drawable Viewer") as TypeO;
+            Game = FakeTypeO.Context.Game as FakeGame;
             if (modules != null)
             {
                 foreach (var module in modules)
@@ -51,23 +74,37 @@ namespace TypeDCore.View.Viewer
                     FakeTypeO.LoadModule(module);
                 }
             }
-            var task = new Task(() =>
+            GameTask = Task.Run(FakeTypeO.Start);
+            if (!SpinWait.SpinUntil(() => Game.Initialized || GameTask.IsCompleted, TimeSpan.FromSeconds(30)))
             {
-                FakeTypeO.Start();
-            });
-            task.Start();
-
-            while(!(FakeTypeO?.Context?.Game?.Initialized == true))
-            {
-                Task.Delay(100);
+                Game.Exit();
+                GameTask.GetAwaiter().GetResult();
+                throw new TimeoutException("The drawable viewer game did not initialize within 30 seconds.");
             }
-            Game = FakeTypeO.Context.Game as FakeGame;
-            Game.Drawables.Create(typeInfo);
+
+            if (GameTask.IsFaulted)
+                GameTask.GetAwaiter().GetResult();
+            if (!Game.Initialized)
+                throw new InvalidOperationException("The drawable viewer game exited before initialization completed.");
+
+            try
+            {
+                Game.LoadDrawable(typeInfo);
+            }
+            catch
+            {
+                Close();
+                throw;
+            }
         }
 
         public void Close()
         {
-            Game.Exit();
+            if (Interlocked.Exchange(ref IsClosed, 1) != 0)
+                return;
+
+            Game?.Exit();
+            GameTask?.GetAwaiter().GetResult();
         }
     }
 }
