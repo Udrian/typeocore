@@ -591,7 +591,7 @@ namespace TypeDCore
                 new SettingItem("External Editor", "Command to run when opening files in external editor, can insert value {path} that points to the file", mainWindowSettingContext.ExternalEditor, (value) => {
                     mainWindowSettingContext.ExternalEditor.Value = value as string;
                     SettingModel.SetContext(mainWindowSettingContext);
-                }),
+                }, "General"),
                 new SettingItem("Viewer", "Sets the Type Fullname for the Viewer to use for Components", mainWindowSettingContext.ViewerType, (value) => {
                     var viewerType = value as string;
                     if(PanelModel.ListViewers().Contains(viewerType))
@@ -599,7 +599,7 @@ namespace TypeDCore
                         mainWindowSettingContext.ViewerType.Value = viewerType;
                         SettingModel.SetContext(mainWindowSettingContext);
                     }
-                })
+                }, "Viewer")
             });
         }
 
