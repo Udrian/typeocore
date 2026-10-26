@@ -6,8 +6,11 @@
              mc:Ignorable="d" d:DesignHeight="450" d:DesignWidth="800"
              xmlns:local="clr-namespace:TypeDCore.View.Panels"
              x:Class="TypeDCore.View.Panels.ComponentExplorerPanel"
-             x:DataType="vm:ComponentExplorerViewModel">
-    <TreeView Name="ComponentsTree" ItemsSource="{Binding Nodes}" SelectionChanged="ComponentsTree_SelectionChanged">
+             x:DataType="vm:ComponentExplorerViewModel"
+             Loaded="Panel_Loaded" Unloaded="Panel_Unloaded">
+    <TreeView Name="ComponentsTree" ItemsSource="{Binding Nodes}"
+              SelectionChanged="ComponentsTree_SelectionChanged"
+              KeyDown="ComponentsTree_KeyDown">
         <TreeView.ItemTemplate>
             <TreeDataTemplate ItemsSource="{Binding Nodes}">
                 <TextBlock Text="{Binding Title}"/>

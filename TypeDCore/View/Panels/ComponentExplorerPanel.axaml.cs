@@ -1,4 +1,5 @@
 ﻿using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using System.Linq;
 using TypeD.Models.Data;
@@ -33,6 +34,31 @@ namespace TypeDCore.View.Panels
             {
                 ViewModel.SelectionChanged(selectedItem.Component);
             }
+        }
+
+        private void ComponentsTree_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (ComponentsTree.SelectedItem is not ComponentExplorerViewModel.Node selectedItem)
+                return;
+
+            var shortcut = TypeD.Models.Data.EditorShortcut.FromKey(
+                e.Key.ToString(),
+                e.KeyModifiers.HasFlag(KeyModifiers.Control),
+                e.KeyModifiers.HasFlag(KeyModifiers.Shift),
+                e.KeyModifiers.HasFlag(KeyModifiers.Alt),
+                e.KeyModifiers.HasFlag(KeyModifiers.Meta));
+
+            e.Handled = ViewModel.TryExecuteShortcut(shortcut, selectedItem.Component);
+        }
+
+        private void Panel_Loaded(object sender, RoutedEventArgs e)
+        {
+            ViewModel.RegisterCommands();
+        }
+
+        private void Panel_Unloaded(object sender, RoutedEventArgs e)
+        {
+            ViewModel.UnregisterCommands();
         }
     }
 }

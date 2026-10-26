@@ -1,4 +1,5 @@
-﻿using Avalonia.Controls;
+using System;
+using Avalonia.Controls;
 using CommunityToolkit.Mvvm.ComponentModel;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -36,9 +37,12 @@ namespace TypeDCore.ViewModel.Panels
 
         // Models
         public IHookModel HookModel { get; set; }
+        IEditorCommandRegistry EditorCommandRegistry { get; set; }
+        IDisposable AddChildCommandRegistration { get; set; }
 
         // Data
         public Project LoadedProject { get; set; }
+        public Component SelectedComponent { get; private set; }
 
         // Properties
         private Component _component;
@@ -62,6 +66,7 @@ namespace TypeDCore.ViewModel.Panels
         {
             LoadedProject = project;
             HookModel = ResourceModel.Get<IHookModel>();
+            EditorCommandRegistry = ResourceModel.Get<IEditorCommandRegistry>();
             Nodes = new ObservableCollection<Node>();
 
             HookModel.AddHook<ComponentFocusHook>((hook) =>
@@ -116,14 +121,7 @@ namespace TypeDCore.ViewModel.Panels
         // Functions
         public void ContextMenuOpened(ContextMenu contextMenu, Node node)
         {
-            var componentContextMenuHook = new ComponentContextMenuHook()
-            {
-                Menu = new TypeD.View.Menu(),
-                Project = LoadedProject,
-                OpenedComponent = Component,
-                SelectedComponent = node?.Component
-            };
-            HookModel.Shoot(componentContextMenuHook);
+            var componentContextMenuHook = CreateComponentContextMenu(node?.Component);
 
             contextMenu.Items.Clear();
             foreach (var menu in componentContextMenuHook.Menu.Items)
@@ -132,9 +130,60 @@ namespace TypeDCore.ViewModel.Panels
             }
         }
 
+        public void AddChildComponent(Component selectedComponent)
+        {
+            var hook = CreateComponentContextMenu(selectedComponent);
+            var addChildItem = hook.Menu.Items.FirstOrDefault(item => item.Name == "_Add Child Component");
+            addChildItem?.Click?.Invoke(LoadedProject);
+        }
+
+        public bool TryExecuteShortcut(string shortcut, Component selectedComponent)
+        {
+            return EditorCommandRegistry.TryExecuteShortcut(shortcut, "component-explorer", selectedComponent);
+        }
+
+        public void UnregisterCommands()
+        {
+            AddChildCommandRegistration?.Dispose();
+            AddChildCommandRegistration = null;
+        }
+
+        public void RegisterCommands()
+        {
+            RegisterAddChildCommand();
+        }
+
         public void SelectionChanged(Component component)
         {
+            SelectedComponent = component;
             HookModel.Shoot(new ComponentFocusHook() { Project = LoadedProject, Component = component, Root = false });
+        }
+
+        private ComponentContextMenuHook CreateComponentContextMenu(Component selectedComponent)
+        {
+            var hook = new ComponentContextMenuHook()
+            {
+                Menu = new TypeD.View.Menu(),
+                Project = LoadedProject,
+                OpenedComponent = Component,
+                SelectedComponent = selectedComponent
+            };
+            HookModel.Shoot(hook);
+            return hook;
+        }
+
+        private void RegisterAddChildCommand()
+        {
+            AddChildCommandRegistration?.Dispose();
+            AddChildCommandRegistration = EditorCommandRegistry.Register(
+                "component.add-child",
+                "Add child component",
+                "Add a child component to the selected component in the Component Explorer.",
+                "component-explorer",
+                "Ctrl+A",
+                parameter => AddChildComponent(parameter as Component),
+                parameter => parameter is Component,
+                () => SelectedComponent);
         }
     }
 }
