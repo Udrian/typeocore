@@ -64,7 +64,6 @@ namespace TypeDCore.Code.Game
                 Writer.AddLine("Scenes.Draw();");
             }));
             AddFunction(new Function("protected override void Cleanup()", () => {
-                Writer.AddLine("Scenes.Cleanup();");
                 Writer.AddLine("InternalCleanup();");
             }));
         }
