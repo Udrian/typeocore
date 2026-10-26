@@ -125,6 +125,14 @@ namespace TypeOEngine.Typedeaf.Core
             }
 
             /// <summary>
+            /// Retrieves a drawable by its full parent-qualified identifier.
+            /// </summary>
+            public D GetDrawableByID<D>(string id) where D : T
+            {
+                return Context.GetTypeOObjectByID<D>(id);
+            }
+
+            /// <summary>
             /// Removes all drawable objects from the collection and releases their associated resources.
             /// </summary>
             /// <remarks>This method destroys each drawable object in the collection using the
