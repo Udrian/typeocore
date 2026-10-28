@@ -15,7 +15,7 @@ namespace TypeDCore.Models
     /// <summary>
     /// A content property, on a node of a component, that points at a content file.
     /// </summary>
-    internal record ContentReference(Component Root, Component Node, Property Property, string NodePath);
+    internal record ContentReference(Component Root, Component Node, Property Property, string NodePath, string ContentPath);
 
     /// <summary>
     /// Finds and updates the content properties in all components that reference a content file.
@@ -36,14 +36,30 @@ namespace TypeDCore.Models
 
         public List<ContentReference> Find(Project project, string relativePath)
         {
+            return Find(project, path => string.Equals(path, relativePath, StringComparison.OrdinalIgnoreCase));
+        }
+
+        /// <summary>
+        /// Finds content properties whose stored path (with '/' separators) satisfies the predicate.
+        /// </summary>
+        public List<ContentReference> Find(Project project, Func<string, bool> matches)
+        {
             var propertyModel = Resources.Get<IPropertyModel>();
             var references = new List<ContentReference>();
             foreach (var root in ListRoots(project))
-                Collect(root, root, root.Name, relativePath, propertyModel, references);
+                Collect(root, root, root.Name, matches, propertyModel, references);
             return references;
         }
 
         public void Update(Project project, IEnumerable<ContentReference> references, string newRelativePath)
+        {
+            Update(project, references, _ => newRelativePath);
+        }
+
+        /// <summary>
+        /// Sets every referencing property to the mapped value of its current path. A null result clears the property.
+        /// </summary>
+        public void Update(Project project, IEnumerable<ContentReference> references, Func<string, string> map)
         {
             var hooks = Resources.Get<IHookModel>();
             var saveModel = Resources.Get<ISaveModel>();
@@ -52,7 +68,7 @@ namespace TypeDCore.Models
 
             foreach (var reference in references)
             {
-                reference.Property.Value = newRelativePath;
+                reference.Property.Value = map(reference.ContentPath);
 
                 // Only the opened component is live in the viewer and properties panel.
                 if (ReferenceEquals(reference.Root, opened))
@@ -82,19 +98,19 @@ namespace TypeDCore.Models
                 .ToList();
         }
 
-        private static void Collect(Component root, Component node, string path, string relativePath, IPropertyModel propertyModel, List<ContentReference> references)
+        private static void Collect(Component root, Component node, string path, Func<string, bool> matches, IPropertyModel propertyModel, List<ContentReference> references)
         {
             foreach (var property in node.Properties)
             {
                 if (property.Value is not string value
                     || propertyModel.Get(property.Type) is not ContentPropertyDefinition
-                    || !string.Equals(value.Replace('\\', '/'), relativePath, StringComparison.OrdinalIgnoreCase))
+                    || !matches(value.Replace('\\', '/')))
                     continue;
-                references.Add(new ContentReference(root, node, property, $"{path} ({property.Name})"));
+                references.Add(new ContentReference(root, node, property, $"{path} ({property.Name})", value.Replace('\\', '/')));
             }
 
             foreach (var child in node.Children)
-                Collect(root, child, $"{path}/{child.Name}", relativePath, propertyModel, references);
+                Collect(root, child, $"{path}/{child.Name}", matches, propertyModel, references);
         }
     }
 }
