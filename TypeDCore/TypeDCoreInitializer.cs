@@ -75,6 +75,7 @@ namespace TypeDCore
             PropertyModel.Register(new DoublePropertyDefinition());
             PropertyModel.Register(new Vec2PropertyDefinition());
             PropertyModel.Register(new ColorPropertyDefinition());
+            PropertyModel.Register(new EnumPropertyDefinition());
 
             // Internal Models
             TypeDCoreProjectModel = new TypeDCoreProjectModel();
@@ -148,7 +149,7 @@ namespace TypeDCore
         public override void Uninitializer()
         {
             // Properties
-            foreach (var type in new[] { typeof(bool), typeof(string), typeof(int), typeof(double), typeof(Vec2), typeof(Color) })
+            foreach (var type in new[] { typeof(bool), typeof(string), typeof(int), typeof(double), typeof(Vec2), typeof(Color), typeof(Enum) })
                 PropertyModel.Unregister(type);
 
             CreateEntityTypeCommand.Dispose();            CreateSceneTypeCommand.Dispose();
