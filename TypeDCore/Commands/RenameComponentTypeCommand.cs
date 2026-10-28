@@ -14,14 +14,14 @@ namespace TypeDCore.Commands
         // Providers
         IComponentProvider ComponentProvider { get; set; }
         ICommandHistoryModel CommandHistoryModel { get; set; }
-        private readonly IDisposable _registration;
+        private readonly IDisposable Registration;
 
         // Constructors
         public RenameComponentTypeCommand(IResourceModel resourceModel) : base(resourceModel)
         {
             ComponentProvider = ResourceModel.Get<IComponentProvider>();
             CommandHistoryModel = ResourceModel.Get<ICommandHistoryModel>();
-            _registration = ResourceModel.Get<IEditorCommandRegistry>().Register(
+            Registration = ResourceModel.Get<IEditorCommandRegistry>().Register(
                 "component.rename-type",
                 "Rename component type",
                 "Rename the specified component type.",
@@ -30,17 +30,7 @@ namespace TypeDCore.Commands
                 this);
         }
 
-        public void Dispose() => _registration.Dispose();
-
-        public override bool CanExecute(object parameter)
-        {
-            return base.CanExecute(parameter);
-        }
-
-        public override bool CanExecute(ComponentCommandData parameter)
-        {
-            return base.CanExecute(parameter);
-        }
+        public void Dispose() => Registration.Dispose();
 
         public override async void Execute(ComponentCommandData parameter)
         {

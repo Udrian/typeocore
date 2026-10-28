@@ -40,6 +40,7 @@ namespace TypeDCore
         IPanelModel PanelModel { get; set; }
         IComponentModel ComponentModel { get; set; }
         IEditorCommandRegistry EditorCommandRegistry { get; set; }
+        NodeSelectionModel NodeSelectionModel { get; set; }
 
         // Commands
         CreateEntityTypeCommand CreateEntityTypeCommand { get; set; }
@@ -48,8 +49,8 @@ namespace TypeDCore
         DeleteComponentTypeCommand DeleteComponentTypeCommand { get; set; }
         RenameComponentTypeCommand RenameComponentTypeCommand { get; set; }
         SetStartSceneCommand SetStartSceneCommand { get; set; }
-        AddComponentCommand AddComponentCommand { get; set; }
-        RemoveComponentCommand RemoveComponentCommand { get; set; }
+        AddNodeCommand AddNodeCommand { get; set; }
+        RemoveNodeCommand RemoveNodeCommand { get; set; }
         ChangePropertyCommand ChangePropertyCommand { get; set; }
         OpenComponentCommand OpenComponentCommand { get; set; }
         CloseComponentCommand CloseComponentCommand { get; set; }
@@ -64,11 +65,13 @@ namespace TypeDCore
             TypeDCoreProjectModel = new TypeDCoreProjectModel();
             TypeDCoreRestoreModel = new TypeDCoreRestoreModel();
             CommandHistoryModel = new CommandHistoryModel();
+            NodeSelectionModel = new NodeSelectionModel();
 
             Resources.Add(new List<object>() {
                  TypeDCoreProjectModel,
                  TypeDCoreRestoreModel,
-                 CommandHistoryModel
+                 CommandHistoryModel,
+                 NodeSelectionModel
             });
 
             // Providers
@@ -87,8 +90,8 @@ namespace TypeDCore
             DeleteComponentTypeCommand = new DeleteComponentTypeCommand(Resources);
             RenameComponentTypeCommand = new RenameComponentTypeCommand(Resources);
             SetStartSceneCommand = new SetStartSceneCommand(Resources);
-            AddComponentCommand = new AddComponentCommand(Resources);
-            RemoveComponentCommand = new RemoveComponentCommand(Resources);
+            AddNodeCommand = new AddNodeCommand(Resources);
+            RemoveNodeCommand = new RemoveNodeCommand(Resources);
             ChangePropertyCommand = new ChangePropertyCommand(Resources);
             OpenComponentCommand = new OpenComponentCommand(project, Resources);
             CloseComponentCommand = new CloseComponentCommand(Resources);
@@ -133,8 +136,8 @@ namespace TypeDCore
             DeleteComponentTypeCommand.Dispose();
             RenameComponentTypeCommand.Dispose();
             SetStartSceneCommand.Dispose();
-            AddComponentCommand.Dispose();
-            RemoveComponentCommand.Dispose();
+            AddNodeCommand.Dispose();
+            RemoveNodeCommand.Dispose();
             ChangePropertyCommand.Dispose();
             OpenComponentCommand.Dispose();
             CloseComponentCommand.Dispose();
@@ -149,9 +152,11 @@ namespace TypeDCore
             PanelModel.DetachPanel("typed_commandhistory");
 
             // Internal Models
+            NodeSelectionModel.Dispose();
             Resources.Remove("TypeDCoreProjectModel");
             Resources.Remove("TypeDCoreRestoreModel");
             Resources.Remove("CommandHistoryModel");
+            Resources.Remove("NodeSelectionModel");
 
             // Hooks
             Hooks.RemoveHook<ProjectCreateHook>();
@@ -510,25 +515,25 @@ namespace TypeDCore
             hook.Menu.Items.Add(
                 new MenuItem()
                 {
-                    Name = "_Add Child Component",
+                    Name = "_Add Child Node",
                     ClickParameter = "LoadedProject",
                     Click = (param) =>
                     {
-                        EditorCommandRegistry.Execute("component.add", new AddComponentCommandData() { ToComponent = hook.SelectedComponent ?? hook.OpenedComponent, Project = param as Project });
+                        EditorCommandRegistry.Execute("node.add", new AddNodeCommandData { Project = param as Project });
                     }
                 }
             );
 
-            if(hook.SelectedComponent != hook.OpenedComponent)
+            if (hook.SelectedComponent != null && hook.SelectedComponent != hook.OpenedComponent)
             {
                 hook.Menu.Items.Add(
                     new MenuItem()
                     {
-                        Name = "_Remove Component",
+                        Name = "_Remove Node",
                         ClickParameter = "LoadedProject",
                         Click = (param) =>
                         {
-                            EditorCommandRegistry.Execute("component.remove", new RemoveComponentCommandData() { Component = hook.SelectedComponent, Project = param as Project });
+                            EditorCommandRegistry.Execute("node.remove", new RemoveNodeCommandData { Project = param as Project });
                         }
                     }
                 );

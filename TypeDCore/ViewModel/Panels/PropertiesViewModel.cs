@@ -329,7 +329,6 @@ namespace TypeDCore.ViewModel.Panels
                         var executed = EditorCommandRegistry.Execute("component.change-property", new ChangePropertyCommandData
                         {
                             Project = Project,
-                            Component = node.Component,
                             Property = node.Property,
                             Value = value
                         });

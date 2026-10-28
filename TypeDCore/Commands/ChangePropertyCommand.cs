@@ -5,24 +5,27 @@ using TypeD.Models.Data.Hooks;
 using TypeD.Models.Data.SaveContexts;
 using TypeD.Models.Interfaces;
 using TypeDCore.Commands.Data;
+using TypeDCore.Models.Interfaces;
 
 namespace TypeDCore.Commands
 {
     internal class ChangePropertyCommand : CustomCommand<ChangePropertyCommandData>, IDisposable
     {
-        private readonly IHookModel _hookModel;
-        private readonly ISaveModel _saveModel;
-        private readonly IProjectModel _projectModel;
-        private readonly ICommandHistoryModel _commandHistoryModel;
-        private readonly IDisposable _registration;
+        private IHookModel HookModel { get; set; }
+        private ISaveModel SaveModel { get; set; }
+        private IProjectModel ProjectModel { get; set; }
+        private ICommandHistoryModel CommandHistoryModel { get; set; }
+        private INodeSelectionModel NodeSelectionModel { get; set; }
+        private readonly IDisposable Registration;
 
         public ChangePropertyCommand(IResourceModel resourceModel) : base(resourceModel)
         {
-            _hookModel = resourceModel.Get<IHookModel>();
-            _saveModel = resourceModel.Get<ISaveModel>();
-            _projectModel = resourceModel.Get<IProjectModel>();
-            _commandHistoryModel = resourceModel.Get<ICommandHistoryModel>();
-            _registration = resourceModel.Get<IEditorCommandRegistry>().Register(
+            HookModel = resourceModel.Get<IHookModel>();
+            SaveModel = resourceModel.Get<ISaveModel>();
+            ProjectModel = resourceModel.Get<IProjectModel>();
+            CommandHistoryModel = resourceModel.Get<ICommandHistoryModel>();
+            NodeSelectionModel = resourceModel.Get<INodeSelectionModel>();
+            Registration = resourceModel.Get<IEditorCommandRegistry>().Register(
                 "component.change-property",
                 "Change property",
                 "Change a property on the opened component.",
@@ -31,12 +34,12 @@ namespace TypeDCore.Commands
                 this);
         }
 
-        public void Dispose() => _registration.Dispose();
+        public void Dispose() => Registration.Dispose();
 
         public override bool CanExecute(ChangePropertyCommandData parameter)
         {
             return parameter?.Project != null
-                && parameter.Component != null
+                && NodeSelectionModel.SelectedNode != null
                 && parameter.Property != null
                 && !parameter.Property.ReadOnly;
         }
@@ -44,23 +47,24 @@ namespace TypeDCore.Commands
         public override void Execute(ChangePropertyCommandData parameter)
         {
             var property = parameter.Property;
+            var component = NodeSelectionModel.SelectedNode;
             var previousValue = property.Value;
             var newValue = parameter.Value;
             if (Equals(previousValue, newValue))
                 return;
 
-            ApplyValue(parameter.Project, parameter.Component, property, newValue);
-            _commandHistoryModel.Record(
+            ApplyValue(parameter.Project, component, property, newValue);
+            CommandHistoryModel.Record(
                 "Change property",
-                $"Changed {parameter.Component.Name}.{property.Name} from {FormatValue(previousValue)} to {FormatValue(newValue)}.",
-                () => ApplyValue(parameter.Project, parameter.Component, property, previousValue),
-                () => ApplyValue(parameter.Project, parameter.Component, property, newValue));
+                $"Changed {component.Name}.{property.Name} from {FormatValue(previousValue)} to {FormatValue(newValue)}.",
+                () => ApplyValue(parameter.Project, component, property, previousValue),
+                () => ApplyValue(parameter.Project, component, property, newValue));
         }
 
         private void ApplyValue(Project project, Component component, Property property, object value)
         {
             property.Value = value;
-            _hookModel.Shoot(new PropertyChangedHook
+            HookModel.Shoot(new PropertyChangedHook
             {
                 Component = component,
                 Property = property
@@ -70,12 +74,12 @@ namespace TypeDCore.Commands
             while (componentToSave.ParentComponent != null)
                 componentToSave = componentToSave.ParentComponent;
 
-            var context = _saveModel.GetSaveContext<ComponentSaveContext>(project);
+            var context = SaveModel.GetSaveContext<ComponentSaveContext>(project);
             if (!context.Components.Contains(componentToSave))
             {
                 context.Components.Add(componentToSave);
-                _saveModel.AddSave<ComponentSaveContext>();
-                _projectModel.SaveCode(componentToSave.Template.Code);
+                SaveModel.AddSave<ComponentSaveContext>();
+                ProjectModel.SaveCode(componentToSave.Template.Code);
             }
         }
 

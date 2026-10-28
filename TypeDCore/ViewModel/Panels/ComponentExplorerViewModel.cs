@@ -8,6 +8,7 @@ using TypeD.Models.Data;
 using TypeD.Models.Data.Hooks;
 using TypeD.Models.Interfaces;
 using TypeD.ViewModel;
+using TypeDCore.Models.Interfaces;
 
 namespace TypeDCore.ViewModel.Panels
 {
@@ -37,28 +38,16 @@ namespace TypeDCore.ViewModel.Panels
 
         // Models
         public IHookModel HookModel { get; set; }
+        private INodeSelectionModel NodeSelectionModel { get; set; }
         IEditorCommandRegistry EditorCommandRegistry { get; set; }
         IDisposable AddChildCommandRegistration { get; set; }
 
         // Data
         public Project LoadedProject { get; set; }
-        public Component SelectedComponent { get; private set; }
+        public Component SelectedComponent => NodeSelectionModel.SelectedNode;
 
         // Properties
-        private Component _component;
-        public Component Component
-        {
-            get => _component;
-            set
-            {
-                _component = value;
-                Nodes.Clear();
-                if (Component != null)
-                {
-                    Nodes.Add(new Node(_component));
-                }
-            }
-        }
+        public Component Component => NodeSelectionModel.OpenedComponent;
         public ObservableCollection<Node> Nodes { get; set; }
 
         // Constructors
@@ -66,21 +55,24 @@ namespace TypeDCore.ViewModel.Panels
         {
             LoadedProject = project;
             HookModel = ResourceModel.Get<IHookModel>();
+            NodeSelectionModel = ResourceModel.Get<INodeSelectionModel>();
             EditorCommandRegistry = ResourceModel.Get<IEditorCommandRegistry>();
             Nodes = new ObservableCollection<Node>();
 
             HookModel.AddHook<ComponentFocusHook>((hook) =>
             {
-                if(hook.Root)
-                    Component = hook.Component;
+                if (hook.Root && ReferenceEquals(hook.Project, LoadedProject))
+                {
+                    Nodes.Clear();
+                    if (Component != null)
+                        Nodes.Add(new Node(Component));
+                }
             });
 
             HookModel.AddHook<CloseComponentHook>((hook) =>
             {
-                if (ReferenceEquals(Component, hook.Component))
-                {
-                    Component = null;
-                }
+                if (ReferenceEquals(hook.Project, LoadedProject) && NodeSelectionModel.OpenedComponent == null)
+                    Nodes.Clear();
             });
 
             HookModel.AddHook<ComponentAddedHook>((hook) =>
@@ -121,6 +113,9 @@ namespace TypeDCore.ViewModel.Panels
         // Functions
         public void ContextMenuOpened(ContextMenu contextMenu, Node node)
         {
+            if (node != null && !ReferenceEquals(SelectedComponent, node.Component))
+                SelectionChanged(node.Component);
+
             var componentContextMenuHook = CreateComponentContextMenu(node?.Component);
 
             contextMenu.Items.Clear();
@@ -132,8 +127,11 @@ namespace TypeDCore.ViewModel.Panels
 
         public void AddChildComponent(Component selectedComponent)
         {
+            if (selectedComponent != null && !ReferenceEquals(SelectedComponent, selectedComponent))
+                SelectionChanged(selectedComponent);
+
             var hook = CreateComponentContextMenu(selectedComponent);
-            var addChildItem = hook.Menu.Items.FirstOrDefault(item => item.Name == "_Add Child Component");
+            var addChildItem = hook.Menu.Items.FirstOrDefault(item => item.Name == "_Add Child Node");
             addChildItem?.Click?.Invoke(LoadedProject);
         }
 
@@ -155,7 +153,6 @@ namespace TypeDCore.ViewModel.Panels
 
         public void SelectionChanged(Component component)
         {
-            SelectedComponent = component;
             HookModel.Shoot(new ComponentFocusHook() { Project = LoadedProject, Component = component, Root = false });
         }
 
@@ -176,9 +173,9 @@ namespace TypeDCore.ViewModel.Panels
         {
             AddChildCommandRegistration?.Dispose();
             AddChildCommandRegistration = EditorCommandRegistry.Register(
-                "component.add-child",
-                "Add child component",
-                "Add a child component to the selected component in the Component Explorer.",
+                "node.add-child",
+                "Add child node",
+                "Add a child node to the selected node in the Component Explorer.",
                 "component-explorer",
                 "Ctrl+A",
                 parameter => AddChildComponent(parameter as Component),
