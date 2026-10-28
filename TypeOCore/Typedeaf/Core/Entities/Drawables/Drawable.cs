@@ -1,5 +1,6 @@
 ﻿using TypeOEngine.Typedeaf.Core.Attributes;
 using TypeOEngine.Typedeaf.Core.Engine;
+using TypeOEngine.Typedeaf.Core.Engine.Contents;
 using TypeOEngine.Typedeaf.Core.Engine.Graphics.Interfaces;
 using TypeOEngine.Typedeaf.Core.Engine.Interfaces;
 using TypeOEngine.Typedeaf.Core.Entities.Interfaces;
@@ -17,6 +18,11 @@ namespace TypeOEngine.Typedeaf.Core
         public abstract class Drawable : TypeOObject, IDrawable, IHasParent<Entity>
         {
             public Entity Parent { get; internal set; }
+
+            /// <summary>
+            /// Gets the <see cref="ContentLoader"/> instance used to load content for the application.
+            /// </summary>
+            public ContentLoader ContentLoader { get; internal set; }
 
             public bool Hidden { get; set; }
 

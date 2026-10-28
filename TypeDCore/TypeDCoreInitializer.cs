@@ -1,6 +1,7 @@
 ﻿using Dock.Model.Core;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using TypeD;
 using TypeD.Models.Data;
@@ -16,6 +17,7 @@ using TypeDCore.Components;
 using TypeDCore.Models;
 using TypeDCore.Models.Data;
 using TypeDCore.Models.Data.PropertyDefinitions;
+using TypeDCore.Models.Data.Hooks;
 using TypeOEngine.Typedeaf.Core.Common;
 using TypeDCore.Models.Interfaces;
 using TypeDCore.View.Panels;
@@ -76,6 +78,7 @@ namespace TypeDCore
             PropertyModel.Register(new Vec2PropertyDefinition());
             PropertyModel.Register(new ColorPropertyDefinition());
             PropertyModel.Register(new EnumPropertyDefinition());
+            PropertyModel.Register(new ContentPropertyDefinition(Resources.Get<IContentProvider>()));
 
             // Internal Models
             TypeDCoreProjectModel = new TypeDCoreProjectModel();
@@ -122,6 +125,7 @@ namespace TypeDCore
             Hooks.AddHook<ComponentContextMenuHook>(ComponentContextMenuOpened);
             Hooks.AddHook<OptionsHook>(OptionsWindowOpened);
             Hooks.AddHook<ExtractPropertiesHook>(ExtractProperties);
+            Hooks.AddHook<PropertyChangedHook>(ContentPropertyChanged);
 
             // Settings
 
@@ -142,14 +146,12 @@ namespace TypeDCore
             ComponentProvider.AddBaseTypeComponent(CoreComponent.SceneComponent());
             ComponentProvider.AddBaseTypeComponent(CoreComponent.DrawableComponent());
             ComponentProvider.AddBaseTypeComponent(CoreComponent.GameComponent());
-
-            ContentProvider.AddSupportedContentType<Texture2dContent>("png");
         }
 
         public override void Uninitializer()
         {
             // Properties
-            foreach (var type in new[] { typeof(bool), typeof(string), typeof(int), typeof(double), typeof(Vec2), typeof(Color), typeof(Enum) })
+            foreach (var type in new[] { typeof(bool), typeof(string), typeof(int), typeof(double), typeof(Vec2), typeof(Color), typeof(Enum), typeof(TypeOEngine.Typedeaf.Core.Engine.Contents.Content) })
                 PropertyModel.Unregister(type);
 
             CreateEntityTypeCommand.Dispose();            CreateSceneTypeCommand.Dispose();
@@ -187,6 +189,7 @@ namespace TypeDCore
             Hooks.RemoveHook<ComponentContextMenuHook>();
             Hooks.RemoveHook<OptionsHook>();
             Hooks.RemoveHook<ExtractPropertiesHook>();
+            Hooks.RemoveHook<PropertyChangedHook>(ContentPropertyChanged);
 
             // Settings
 
@@ -198,8 +201,6 @@ namespace TypeDCore
             ComponentProvider.RemoveBaseTypeComponent(CoreComponent.SceneComponent());
             ComponentProvider.RemoveBaseTypeComponent(CoreComponent.DrawableComponent());
             ComponentProvider.RemoveBaseTypeComponent(CoreComponent.GameComponent());
-
-            ContentProvider.RemoveSupportedContentType<Texture2dContent>("png");
         }
 
         // Events
@@ -673,11 +674,58 @@ namespace TypeDCore
             });
         }
 
-        private static object GetDefaultValue(Type componentType, PropertyInfo property)
+        void ContentPropertyChanged(PropertyChangedHook hook)
         {
+            if (hook.Property?.Type == null || PropertyModel.Get(hook.Property.Type) is not ContentPropertyDefinition definition)
+                return;
+
+            var path = hook.Property.Value as string;
+            var request = new ContentLoadRequestedHook
+            {
+                Component = hook.Component,
+                Property = hook.Property,
+                Path = path,
+                Association = definition.GetAssociation(path)
+            };
+
+            if (!Resources.Get<ICommandHistoryModel>().IsReplaying)
+                request.Loaded = content => ContentLoaded(hook.Component, content);
+
+            Hooks.Shoot(request);
+        }
+
+        void ContentLoaded(Component component, object content)
+        {
+            if (content is not TypeOEngine.Typedeaf.Core.Engine.Contents.Texture texture)
+                return;
+
+            var sizeProperty = component.Properties.FirstOrDefault(p => p.Name == "Size" && p.Type == typeof(Vec2));
+            if (sizeProperty == null || sizeProperty.ReadOnly)
+                return;
+
+            var previousSize = sizeProperty.Value;
+            var newSize = new Vec2(texture.Size.X, texture.Size.Y);
+            if (Equals(previousSize, newSize))
+                return;
+
+            void Apply(object size)
+            {
+                sizeProperty.Value = size;
+                Hooks.Shoot(new PropertyChangedHook { Component = component, Property = sizeProperty });
+            }
+
+            Apply(newSize);
+            Resources.Get<ICommandHistoryModel>().AmendCurrent(() => Apply(previousSize), () => Apply(newSize));
+        }
+
+        private object GetDefaultValue(Type componentType, PropertyInfo property)
+        {
+            var definition = PropertyModel.Get(property.PropertyType);
+            var referenceStored = definition != null && definition.ValueType != definition.Type;
+
             try
             {
-                if (!componentType.IsAbstract && property.CanRead)
+                if (!referenceStored && !componentType.IsAbstract && property.CanRead)
                 {
                     var instance = Activator.CreateInstance(componentType, true);
                     var value = property.GetValue(instance);
@@ -687,7 +735,10 @@ namespace TypeDCore
             }
             catch { }
 
-            return property.PropertyType.IsValueType || property.PropertyType.GetConstructor(Type.EmptyTypes) != null
+            if (referenceStored)
+                return null;
+
+            return property.PropertyType.IsValueType || (!property.PropertyType.IsAbstract && property.PropertyType.GetConstructor(Type.EmptyTypes) != null)
                 ? Activator.CreateInstance(property.PropertyType)
                 : null;
         }

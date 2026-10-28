@@ -426,6 +426,7 @@ namespace TypeOEngine.Typedeaf.Core
 
                 var drawable = Activator.CreateInstance(type) as Drawable;
                 drawable.Parent = obj as Entity;
+                drawable.ContentLoader = Game.ContentLoader;
                 drawable.ID = id;
 
                 InitializeObject(drawable, obj);
@@ -446,7 +447,8 @@ namespace TypeOEngine.Typedeaf.Core
                 var drawable = new D()
                 {
                     ID = id,
-                    Parent = obj as Entity
+                    Parent = obj as Entity,
+                    ContentLoader = Game.ContentLoader
                 };
 
                 InitializeObject(drawable, obj);

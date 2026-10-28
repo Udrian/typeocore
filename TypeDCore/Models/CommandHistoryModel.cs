@@ -20,6 +20,16 @@ namespace TypeDCore.Models
             ? "Before the first command"
             : Entries[_currentIndex].CommandName;
         public event EventHandler HistoryChanged;
+        public bool IsReplaying { get; private set; }
+
+        public bool AmendCurrent(Action undoAction, Action redoAction)
+        {
+            if (_currentIndex != 0 || Entries.Count == 0)
+                return false;
+
+            Entries[0].Amend(undoAction, redoAction);
+            return true;
+        }
 
         public void Record(string commandName, string context, Action undoAction, Action redoAction)
         {
@@ -39,7 +49,9 @@ namespace TypeDCore.Models
             if (!CanUndo)
                 return false;
 
-            Entries[_currentIndex].Undo();
+            IsReplaying = true;
+            try { Entries[_currentIndex].Undo(); }
+            finally { IsReplaying = false; }
             _currentIndex++;
             UpdateEntryStates();
             return true;
@@ -51,7 +63,9 @@ namespace TypeDCore.Models
                 return false;
 
             var nextIndex = _currentIndex - 1;
-            Entries[nextIndex].Redo();
+            IsReplaying = true;
+            try { Entries[nextIndex].Redo(); }
+            finally { IsReplaying = false; }
             _currentIndex = nextIndex;
             UpdateEntryStates();
             return true;
