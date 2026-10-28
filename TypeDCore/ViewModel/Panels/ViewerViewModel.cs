@@ -1,5 +1,8 @@
 ﻿using System;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
+using TypeD.Helpers;
+using TypeDCore.Models.Data.Hooks;
 using Avalonia.Threading;
 using TypeD.Models.Data;
 using TypeD.Models.Data.Hooks;
@@ -39,9 +42,42 @@ namespace TypeDCore.ViewModel.Panels
             HookModel.AddHook<CloseComponentHook>(ComponentClosed);
             HookModel.AddHook<ComponentFocusHook>(ComponentFocus);
             HookModel.AddHook<BuildStatusChangedHook>(BuildStatusChanged);
+            HookModel.AddHook<ViewerContextMenuRequestedHook>(ContextMenuRequested);
         }
 
         // Functions
+        void ContextMenuRequested(ViewerContextMenuRequestedHook hook)
+        {
+            if (hook.Project != Project || hook.Component == null)
+                return;
+
+            Dispatcher.UIThread.Post(() => ShowContextMenu(hook.Component));
+        }
+
+        void ShowContextMenu(Component component)
+        {
+            if (Viewer is not Control viewerControl)
+                return;
+
+            var menuHook = new ComponentContextMenuHook()
+            {
+                Menu = new TypeD.View.Menu(),
+                Project = Project,
+                OpenedComponent = Viewer.Component,
+                SelectedComponent = component
+            };
+            HookModel.Shoot(menuHook);
+
+            var contextMenu = new ContextMenu() { Placement = PlacementMode.Pointer };
+            foreach (var menu in menuHook.Menu.Items)
+            {
+                ViewHelper.InitMenu(contextMenu, menu, this);
+            }
+
+            if (contextMenu.Items.Count > 0)
+                contextMenu.Open(viewerControl);
+        }
+
         public void Load()
         {
             if (Viewer == null)
@@ -63,6 +99,7 @@ namespace TypeDCore.ViewModel.Panels
             HookModel.RemoveHook<CloseComponentHook>(ComponentClosed);
             HookModel.RemoveHook<ComponentFocusHook>(ComponentFocus);
             HookModel.RemoveHook<BuildStatusChangedHook>(BuildStatusChanged);
+            HookModel.RemoveHook<ViewerContextMenuRequestedHook>(ContextMenuRequested);
 
             if (Viewer != null)
             {
