@@ -39,7 +39,7 @@ namespace TypeDCore.Commands
 
         public override bool CanExecute(AddNodeCommandData parameter)
         {
-            return parameter?.Project != null && NodeSelectionModel.SelectedNode != null;
+            return parameter?.Project != null && NodeSelectionModel.SelectedNode != null && !NodeSelectionModel.SelectedNode.ReadOnly;
         }
 
         public override async void Execute(AddNodeCommandData parameter)

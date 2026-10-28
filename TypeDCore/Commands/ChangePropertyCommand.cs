@@ -40,6 +40,7 @@ namespace TypeDCore.Commands
         {
             return parameter?.Project != null
                 && NodeSelectionModel.SelectedNode != null
+                && !NodeSelectionModel.SelectedNode.ReadOnly
                 && parameter.Property != null
                 && !parameter.Property.ReadOnly;
         }

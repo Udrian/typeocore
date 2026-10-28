@@ -550,17 +550,20 @@ namespace TypeDCore
                 return;
             }
 
-            hook.Menu.Items.Add(
-                new MenuItem()
-                {
-                    Name = "_Add Child Node",
-                    ClickParameter = "LoadedProject",
-                    Click = (param) =>
+            if (hook.SelectedComponent?.ReadOnly != true)
+            {
+                hook.Menu.Items.Add(
+                    new MenuItem()
                     {
-                        EditorCommandRegistry.Execute("node.add-child", new AddNodeCommandData { Project = param as Project });
+                        Name = "_Add Child Node",
+                        ClickParameter = "LoadedProject",
+                        Click = (param) =>
+                        {
+                            EditorCommandRegistry.Execute("node.add-child", new AddNodeCommandData { Project = param as Project });
+                        }
                     }
-                }
-            );
+                );
+            }
 
             if (hook.SelectedComponent != null && hook.SelectedComponent != hook.OpenedComponent)
             {

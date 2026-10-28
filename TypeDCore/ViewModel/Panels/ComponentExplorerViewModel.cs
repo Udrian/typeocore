@@ -186,7 +186,7 @@ namespace TypeDCore.ViewModel.Panels
         public bool CommitRename(Node node)
         {
             var nameProperty = node.Component.Properties.FirstOrDefault(property => property.Name == "Name");
-            if (nameProperty == null || nameProperty.ReadOnly)
+            if (nameProperty == null || nameProperty.ReadOnly || node.Component.ReadOnly)
             {
                 node.CancelRename();
                 return false;
