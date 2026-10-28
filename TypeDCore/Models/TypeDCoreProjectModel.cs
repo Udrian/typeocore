@@ -32,7 +32,7 @@ namespace TypeDCore.Models
         }
 
         // Functions
-        public void CreateEntity(Project project, string className, string @namespace, Component parentComponent, bool updatable, bool drawable)
+        public Component CreateEntity(Project project, string className, string @namespace, Component parentComponent, bool updatable, bool drawable)
         {
             @namespace = ProjectModel.TransformNamespaceString(project, @namespace);
 
@@ -46,43 +46,48 @@ namespace TypeDCore.Models
                 interfaces.Add(typeof(IDrawable).FullName);
             }
 
-            ComponentProvider.Create(
+            return ComponentProvider.Create(
                 project,
                 className,
                 @namespace,
                 parentComponent,
                 interfaces
-            );
+            ).Component;
         }
 
-        public void CreateScene(Project project, string className, string @namespace, Component parentComponent)
+        public Component CreateScene(Project project, string className, string @namespace, Component parentComponent)
         {
             @namespace = ProjectModel.TransformNamespaceString(project, @namespace);
 
-            ComponentProvider.Create(
+            return ComponentProvider.Create(
                 project,
                 className,
                 @namespace,
                 parentComponent
-            );
+            ).Component;
         }
 
-        public void CreateDrawable(Project project, string className, string @namespace, Component parentComponent)
+        public Component CreateDrawable(Project project, string className, string @namespace, Component parentComponent)
         {
             @namespace = ProjectModel.TransformNamespaceString(project, @namespace);
 
-            ComponentProvider.Create(
+            return ComponentProvider.Create(
                 project,
                 className,
                 @namespace,
                 parentComponent
-            );
+            ).Component;
         }
 
         public void SetStartScene(Project project, Component scene)
         {
             if (!ComponentModel.IsOfType(scene, typeof(Scene))) return;
-            project.StartScene = scene.FullName;
+            SetStartScene(project, scene.FullName);
+        }
+
+        public void SetStartScene(Project project, string sceneFullName)
+        {
+            project.StartScene = sceneFullName;
 
             SaveModel.AddSave<ProjectSaveContext>(project);
 

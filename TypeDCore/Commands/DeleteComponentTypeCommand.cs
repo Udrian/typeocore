@@ -24,8 +24,15 @@ namespace TypeDCore.Commands
             //if (result == MessageBoxResult.Yes)
             {
                 var componentName = parameter.Component.FullName;
-                ComponentProvider.Delete(parameter.Project, parameter.Component);
-                CommandHistoryModel.Record("Delete component type", $"Deleted {componentName}.");
+                var component = parameter.Component;
+                ComponentProvider.Delete(parameter.Project, component);
+                CommandHistoryModel.Record(
+                    "Delete component type",
+                    $"Deleted {componentName}.",
+                    () => ComponentProvider.Restore(parameter.Project, component),
+                    () => ComponentProvider.Delete(
+                        parameter.Project,
+                        ComponentProvider.Load(parameter.Project, componentName) ?? component));
             }
         }
     }

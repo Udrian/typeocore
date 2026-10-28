@@ -6,6 +6,7 @@ using TypeDCore.Models.Data.DTO;
 using TypeDCore.Models.Data.Hooks;
 using TypeDCore.Models.Interfaces;
 using TypeDCore.View.Dialogs.Project;
+using TypeD.Models.Providers.Interfaces;
 using TypeOEngine.Typedeaf.Core.Entities.Drawables;
 
 namespace TypeDCore.Commands
@@ -14,6 +15,7 @@ namespace TypeDCore.Commands
     {
         // Models
         ITypeDCoreProjectModel TypeDCoreProjectModel { get; set; }
+        IComponentProvider ComponentProvider { get; set; }
         IHookModel HookModel { get; set; }
         ICommandHistoryModel CommandHistoryModel { get; set; }
 
@@ -21,6 +23,7 @@ namespace TypeDCore.Commands
         public CreateDrawableTypeCommand(IResourceModel resourceModel) : base(resourceModel)
         {
             TypeDCoreProjectModel = ResourceModel.Get<ITypeDCoreProjectModel>();
+            ComponentProvider = ResourceModel.Get<IComponentProvider>();
             HookModel = ResourceModel.Get<IHookModel>();
             CommandHistoryModel = ResourceModel.Get<ICommandHistoryModel>();
         }
@@ -39,10 +42,17 @@ namespace TypeDCore.Commands
                 {
                     if (dialog.ViewModel.ComponentBaseType == typeof(Drawable).FullName)
                     {
-                        TypeDCoreProjectModel.CreateDrawable(parameter.Project, dialog.ViewModel.ComponentName, dialog.ViewModel.ComponentNamespace, dialog.ViewModel.ParentComponent);
+                        var className = dialog.ViewModel.ComponentName;
+                        var @namespace = dialog.ViewModel.ComponentNamespace;
+                        var parent = dialog.ViewModel.ParentComponent;
+                        var component = TypeDCoreProjectModel.CreateDrawable(
+                            parameter.Project, className, @namespace, parent);
                         CommandHistoryModel.Record(
                             "Create drawable type",
-                            $"Created {dialog.ViewModel.ComponentNamespace}.{dialog.ViewModel.ComponentName} based on {dialog.ViewModel.ParentComponent?.FullName ?? "an unspecified base type"}.");
+                            $"Created {component.FullName} based on {parent?.FullName ?? "an unspecified base type"}.",
+                            () => ComponentProvider.Delete(parameter.Project, component),
+                            () => component = TypeDCoreProjectModel.CreateDrawable(
+                                parameter.Project, className, @namespace, parent));
                     }
                 }
             }

@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Interactivity;
 using TypeDCore.ViewModel.Panels;
 
 namespace TypeDCore.View.Panels
@@ -14,5 +15,14 @@ namespace TypeDCore.View.Panels
             DataContext = ViewModel = new CommandHistoryViewModel(this);
         }
 
+        private void Undo_Click(object sender, RoutedEventArgs e)
+        {
+            ViewModel.Undo();
+        }
+
+        private void Redo_Click(object sender, RoutedEventArgs e)
+        {
+            ViewModel.Redo();
+        }
     }
 }

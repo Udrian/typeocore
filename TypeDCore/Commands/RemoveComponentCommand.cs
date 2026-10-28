@@ -38,7 +38,9 @@ namespace TypeDCore.Commands
             {
                 CommandHistoryModel.Record(
                     "Remove component",
-                    $"Removed {componentName} from {parent.FullName}.");
+                    $"Removed {componentName} from {parent.FullName}.",
+                    () => ComponentModel.AddExisting(parameter.Project, parent, parameter.Component),
+                    () => ComponentModel.Remove(parameter.Project, parameter.Component));
             }
         }
     }

@@ -27,9 +27,12 @@ namespace TypeDCore.Commands
                 TypeDCoreProjectModel.SetStartScene(parameter.Project, parameter.Component);
                 if (parameter.Project.StartScene != previousStartScene)
                 {
+                    var newStartScene = parameter.Project.StartScene;
                     CommandHistoryModel.Record(
                         "Set start scene",
-                        $"Changed the start scene from {previousStartScene ?? "None"} to {parameter.Project.StartScene}.");
+                        $"Changed the start scene from {previousStartScene ?? "None"} to {newStartScene}.",
+                        () => TypeDCoreProjectModel.SetStartScene(parameter.Project, previousStartScene),
+                        () => TypeDCoreProjectModel.SetStartScene(parameter.Project, newStartScene));
                 }
             }
         }

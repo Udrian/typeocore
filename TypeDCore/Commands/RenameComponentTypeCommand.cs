@@ -1,5 +1,7 @@
-﻿using TypeD.Commands;
+﻿using System;
+using TypeD.Commands;
 using TypeD.ViewModel;
+using TypeD.Models.Data;
 using TypeD.Models.Interfaces;
 using TypeD.Models.Providers.Interfaces;
 using TypeDCore.Commands.Data;
@@ -27,9 +29,27 @@ namespace TypeDCore.Commands
             {
                 var previousName = parameter.Component.FullName;
                 var newName = $"{parameter.Component.Namespace}.{dialog.ViewModel.Name}";
-                ComponentProvider.Rename(parameter.Project, parameter.Component, dialog.ViewModel.Name);
-                CommandHistoryModel.Record("Rename component type", $"Renamed {previousName} to {newName}.");
+                var previousClassName = parameter.Component.ClassName;
+                var newClassName = dialog.ViewModel.Name;
+                if (previousClassName == newClassName)
+                    return;
+
+                ComponentProvider.Rename(parameter.Project, parameter.Component, newClassName);
+                CommandHistoryModel.Record(
+                    "Rename component type",
+                    $"Renamed {previousName} to {newName}.",
+                    () => RenameComponent(parameter.Project, newName, previousClassName),
+                    () => RenameComponent(parameter.Project, previousName, newClassName));
             }
+        }
+
+        private void RenameComponent(Project project, string currentFullName, string className)
+        {
+            var component = ComponentProvider.Load(project, currentFullName);
+            if (component == null)
+                throw new InvalidOperationException($"Could not find component type '{currentFullName}' to rename.");
+
+            ComponentProvider.Rename(project, component, className);
         }
     }
 }

@@ -1,4 +1,7 @@
-﻿using TypeD.Commands;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using TypeD.Commands;
 using TypeD.ViewModel;
 using TypeD.Models.Interfaces;
 using TypeDCore.Commands.Data;
@@ -38,10 +41,17 @@ namespace TypeDCore.Commands
             dialog.ViewModel.UpdateFilter();
             if(await dialog.ShowDialog<bool>(ViewModelBase.MainWindow) == true)
             {
+                var previousChildren = new HashSet<TypeD.Models.Data.Component>(parameter.ToComponent.Children);
                 ComponentModel.Add(parameter.Project, parameter.ToComponent, dialog.ViewModel.SelectedComponent);
+                var addedComponent = parameter.ToComponent.Children.LastOrDefault(child => !previousChildren.Contains(child));
+                if (addedComponent == null)
+                    throw new InvalidOperationException("The selected component was not added to its parent.");
+
                 CommandHistoryModel.Record(
                     "Add component",
-                    $"Added {dialog.ViewModel.SelectedComponent.FullName} to {parameter.ToComponent.FullName}.");
+                    $"Added {addedComponent.FullName} to {parameter.ToComponent.FullName}.",
+                    () => ComponentModel.Remove(parameter.Project, addedComponent),
+                    () => ComponentModel.AddExisting(parameter.Project, parameter.ToComponent, addedComponent));
             }
         }
     }

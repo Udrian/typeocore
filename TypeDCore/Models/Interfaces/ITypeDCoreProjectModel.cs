@@ -8,9 +8,10 @@ namespace TypeDCore.Models.Interfaces
     /// </summary>
     public interface ITypeDCoreProjectModel : IModel
     {
-        public void CreateEntity(Project project, string className, string @namespace, Component parentComponent, bool updatable, bool drawable);
-        public void CreateScene(Project project, string className, string @namespace, Component parentComponent);
-        public void CreateDrawable(Project project, string className, string @namespace, Component parentComponent);
+        public Component CreateEntity(Project project, string className, string @namespace, Component parentComponent, bool updatable, bool drawable);
+        public Component CreateScene(Project project, string className, string @namespace, Component parentComponent);
+        public Component CreateDrawable(Project project, string className, string @namespace, Component parentComponent);
         public void SetStartScene(Project project, Component scene);
+        public void SetStartScene(Project project, string sceneFullName);
     }
 }

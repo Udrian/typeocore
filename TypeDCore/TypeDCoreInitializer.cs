@@ -134,6 +134,7 @@ namespace TypeDCore
             // Internal Models
             Resources.Remove("TypeDCoreProjectModel");
             Resources.Remove("TypeDCoreRestoreModel");
+            Resources.Remove("CommandHistoryModel");
 
             // Hooks
             Hooks.RemoveHook<ProjectCreateHook>();
