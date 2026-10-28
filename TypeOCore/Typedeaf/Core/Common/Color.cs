@@ -121,7 +121,7 @@ namespace TypeOEngine.Typedeaf.Core
 
             public override bool Equals(object obj)
             {
-                if(obj == null) return false;
+                if(obj == null || !(obj is Color)) return false;
                 if((Color)obj == this) return true;
                 if(obj.GetType() != this.GetType()) return false;
                 return Equals((Color)obj);

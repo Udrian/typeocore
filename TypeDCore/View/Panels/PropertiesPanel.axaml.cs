@@ -13,7 +13,6 @@ namespace TypeDCore.View.Panels
         {
             InitializeComponent();
             DataContext = ViewModel = new PropertiesViewModel(this, project);
-            ViewModel.RegisterTypeTemplates();
         }
     }
 }

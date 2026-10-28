@@ -15,6 +15,8 @@ using TypeDCore.Commands.Data;
 using TypeDCore.Components;
 using TypeDCore.Models;
 using TypeDCore.Models.Data;
+using TypeDCore.Models.Data.PropertyDefinitions;
+using TypeOEngine.Typedeaf.Core.Common;
 using TypeDCore.Models.Interfaces;
 using TypeDCore.View.Panels;
 using TypeDCore.View.Viewer;
@@ -39,6 +41,7 @@ namespace TypeDCore
         ISettingModel SettingModel { get; set; }
         IPanelModel PanelModel { get; set; }
         IComponentModel ComponentModel { get; set; }
+        IPropertyModel PropertyModel { get; set; }
         IEditorCommandRegistry EditorCommandRegistry { get; set; }
         NodeSelectionModel NodeSelectionModel { get; set; }
         EditorToolModel EditorToolModel { get; set; }
@@ -61,6 +64,17 @@ namespace TypeDCore
         public override void Initializer(Project project)
         {
             Project = project;
+
+            // Models
+            PropertyModel = Resources.Get<IPropertyModel>();
+
+            // Properties
+            PropertyModel.Register(new BooleanPropertyDefinition());
+            PropertyModel.Register(new StringPropertyDefinition());
+            PropertyModel.Register(new Int32PropertyDefinition());
+            PropertyModel.Register(new DoublePropertyDefinition());
+            PropertyModel.Register(new Vec2PropertyDefinition());
+            PropertyModel.Register(new ColorPropertyDefinition());
 
             // Internal Models
             TypeDCoreProjectModel = new TypeDCoreProjectModel();
@@ -133,8 +147,11 @@ namespace TypeDCore
 
         public override void Uninitializer()
         {
-            CreateEntityTypeCommand.Dispose();
-            CreateSceneTypeCommand.Dispose();
+            // Properties
+            foreach (var type in new[] { typeof(bool), typeof(string), typeof(int), typeof(double), typeof(Vec2), typeof(Color) })
+                PropertyModel.Unregister(type);
+
+            CreateEntityTypeCommand.Dispose();            CreateSceneTypeCommand.Dispose();
             CreateDrawableTypeCommand.Dispose();
             DeleteComponentTypeCommand.Dispose();
             RenameComponentTypeCommand.Dispose();
