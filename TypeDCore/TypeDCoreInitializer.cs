@@ -39,6 +39,7 @@ namespace TypeDCore
         ISettingModel SettingModel { get; set; }
         IPanelModel PanelModel { get; set; }
         IComponentModel ComponentModel { get; set; }
+        IEditorCommandRegistry EditorCommandRegistry { get; set; }
 
         // Commands
         CreateEntityTypeCommand CreateEntityTypeCommand { get; set; }
@@ -76,11 +77,12 @@ namespace TypeDCore
             SettingModel = Resources.Get<ISettingModel>();
             PanelModel = Resources.Get<IPanelModel>();
             ComponentModel = Resources.Get<IComponentModel>();
+            EditorCommandRegistry = Resources.Get<IEditorCommandRegistry>();
 
             // Commands
-            CreateEntityTypeCommand = new CreateEntityTypeCommand(Resources);
-            CreateSceneTypeCommand = new CreateSceneTypeCommand(Resources);
-            CreateDrawableTypeCommand = new CreateDrawableTypeCommand(Resources);
+            CreateEntityTypeCommand = new CreateEntityTypeCommand(project, Resources);
+            CreateSceneTypeCommand = new CreateSceneTypeCommand(project, Resources);
+            CreateDrawableTypeCommand = new CreateDrawableTypeCommand(project, Resources);
             DeleteComponentTypeCommand = new DeleteComponentTypeCommand(Resources);
             RenameComponentTypeCommand = new RenameComponentTypeCommand(Resources);
             SetStartSceneCommand = new SetStartSceneCommand(Resources);
@@ -88,7 +90,7 @@ namespace TypeDCore
             RemoveComponentCommand = new RemoveComponentCommand(Resources);
             OpenComponentCommand = new OpenComponentCommand(project, Resources);
             CloseComponentCommand = new CloseComponentCommand(Resources);
-            OpenInExternalCommand = new OpenInExternalCommand(Resources);
+            OpenInExternalCommand = new OpenInExternalCommand(project, Resources);
 
             // Hooks
             Hooks.AddHook<ProjectCreateHook>(ProjectCreate);
@@ -123,7 +125,17 @@ namespace TypeDCore
 
         public override void Uninitializer()
         {
+            CreateEntityTypeCommand.Dispose();
+            CreateSceneTypeCommand.Dispose();
+            CreateDrawableTypeCommand.Dispose();
+            DeleteComponentTypeCommand.Dispose();
+            RenameComponentTypeCommand.Dispose();
+            SetStartSceneCommand.Dispose();
+            AddComponentCommand.Dispose();
+            RemoveComponentCommand.Dispose();
             OpenComponentCommand.Dispose();
+            CloseComponentCommand.Dispose();
+            OpenInExternalCommand.Dispose();
 
             // Panels
             PanelModel.DetachPanel("typed_viewer");
@@ -192,7 +204,7 @@ namespace TypeDCore
                             ClickParameter = "LoadedProject",
                             Click = (param) =>
                             {
-                                OpenComponentCommand.Execute(new OpenComponentCommandData() { Project = param as Project});
+                                EditorCommandRegistry.Execute("component.open", new OpenComponentCommandData() { Project = param as Project});
                             }
                         },
                         new MenuItem()
@@ -204,21 +216,21 @@ namespace TypeDCore
                                     Name = "_Entity",
                                     ClickParameter = "LoadedProject",
                                     Click = (param) => {
-                                        CreateEntityTypeCommand.Execute(new CreateComponentCommandData(param as Project, $"Entities"));
+                                        EditorCommandRegistry.Execute("component.create-entity", new CreateComponentCommandData(param as Project, "Entities"));
                                     }
                                 },
                                 new MenuItem() {
                                     Name = "_Scene",
                                     ClickParameter = "LoadedProject",
                                     Click = (param) => {
-                                        CreateSceneTypeCommand.Execute(new CreateComponentCommandData(param as Project, $"Scenes"));
+                                        EditorCommandRegistry.Execute("component.create-scene", new CreateComponentCommandData(param as Project, "Scenes"));
                                     }
                                 },
                                 new MenuItem() {
                                     Name = "_Drawable",
                                     ClickParameter = "LoadedProject",
                                     Click = (param) => {
-                                        CreateDrawableTypeCommand.Execute(new CreateComponentCommandData(param as Project, $"Drawables"));
+                                        EditorCommandRegistry.Execute("component.create-drawable", new CreateComponentCommandData(param as Project, "Drawables"));
                                     }
                                 }
                             }
@@ -235,7 +247,7 @@ namespace TypeDCore
                                     Click = (param) =>
                                     {
                                         var project = param as Project;
-                                        OpenInExternalCommand.Execute(new OpenInExternalCommandData(project.Location, OpenInExternalCommandData.CommandAction.OpenInFolder));
+                                        EditorCommandRegistry.Execute("project.open-in-folder", new OpenInExternalCommandData(project.Location, OpenInExternalCommandData.CommandAction.OpenInFolder));
                                     }
                                 },
                                 new MenuItem()
@@ -245,7 +257,7 @@ namespace TypeDCore
                                     Click = (param) =>
                                     {
                                         var project = param as Project;
-                                        OpenInExternalCommand.Execute(new OpenInExternalCommandData(project.Location, OpenInExternalCommandData.CommandAction.OpenInEditor));
+                                        EditorCommandRegistry.Execute("project.open-in-editor", new OpenInExternalCommandData(project.Location, OpenInExternalCommandData.CommandAction.OpenInEditor));
                                     }
                                 }
                             }
@@ -284,7 +296,7 @@ namespace TypeDCore
                                     };
                                     @namespace = getParentName(hook.Node);
                                 }
-                                CreateEntityTypeCommand.Execute(new CreateComponentCommandData(param as Project, @namespace));
+                                EditorCommandRegistry.Execute("component.create-entity", new CreateComponentCommandData(param as Project, @namespace));
                             }
                         },
                         new MenuItem() {
@@ -308,7 +320,7 @@ namespace TypeDCore
                                     };
                                     @namespace = getParentName(hook.Node);
                                 }
-                                CreateSceneTypeCommand.Execute(new CreateComponentCommandData(param as Project, @namespace));
+                                EditorCommandRegistry.Execute("component.create-scene", new CreateComponentCommandData(param as Project, @namespace));
                             }
                         },
                         new MenuItem() {
@@ -332,7 +344,7 @@ namespace TypeDCore
                                     };
                                     @namespace = getParentName(hook.Node);
                                 }
-                                CreateDrawableTypeCommand.Execute(new CreateComponentCommandData(param as Project, @namespace));
+                                EditorCommandRegistry.Execute("component.create-drawable", new CreateComponentCommandData(param as Project, @namespace));
                             }
                         }
                     }
@@ -351,7 +363,7 @@ namespace TypeDCore
                             ClickParameter = "LoadedProject",
                             Click = (param) =>
                             {
-                                DeleteComponentTypeCommand.Execute(new ComponentCommandData() { Component = component, Project = param as Project });
+                                EditorCommandRegistry.Execute("component.delete-type", new ComponentCommandData() { Component = component, Project = param as Project });
                             }
                         }
                     );
@@ -362,7 +374,7 @@ namespace TypeDCore
                             ClickParameter = "LoadedProject",
                             Click = (param) =>
                             {
-                                RenameComponentTypeCommand.Execute(new ComponentCommandData() { Component = component, Project = param as Project });
+                                EditorCommandRegistry.Execute("component.rename-type", new ComponentCommandData() { Component = component, Project = param as Project });
                             }
                         }
                     );
@@ -376,7 +388,7 @@ namespace TypeDCore
                            ClickParameter = "LoadedProject",
                            Click = (param) =>
                            {
-                               SetStartSceneCommand.Execute(new ComponentCommandData() { Component = component, Project = param as Project });
+                               EditorCommandRegistry.Execute("component.set-start-scene", new ComponentCommandData() { Component = component, Project = param as Project });
                            }
                        }
                    );
@@ -396,7 +408,7 @@ namespace TypeDCore
                                 Click = (param) =>
                                 {
                                     var path = ComponentProvider.GetPath(param as Project, component);
-                                    OpenInExternalCommand.Execute(new OpenInExternalCommandData(path, OpenInExternalCommandData.CommandAction.OpenInFolder));
+                                    EditorCommandRegistry.Execute("project.open-in-folder", new OpenInExternalCommandData(path, OpenInExternalCommandData.CommandAction.OpenInFolder));
                                 }
                             },
                             new MenuItem()
@@ -406,7 +418,7 @@ namespace TypeDCore
                                 Click = (param) =>
                                 {
                                     var path = ComponentProvider.GetPath(param as Project, component);
-                                    OpenInExternalCommand.Execute(new OpenInExternalCommandData(path, OpenInExternalCommandData.CommandAction.OpenInEditor));
+                                    EditorCommandRegistry.Execute("project.open-in-editor", new OpenInExternalCommandData(path, OpenInExternalCommandData.CommandAction.OpenInEditor));
                                 }
                             }
                         }
@@ -423,7 +435,7 @@ namespace TypeDCore
                                 Click = (param) =>
                                 {
                                     var path = component.Template.Code.FilePath();
-                                    OpenInExternalCommand.Execute(new OpenInExternalCommandData(path, OpenInExternalCommandData.CommandAction.OpenInFolder));
+                                    EditorCommandRegistry.Execute("project.open-in-folder", new OpenInExternalCommandData(path, OpenInExternalCommandData.CommandAction.OpenInFolder));
                                 }
                             },
                             new MenuItem()
@@ -433,7 +445,7 @@ namespace TypeDCore
                                 Click = (param) =>
                                 {
                                     var path = component.Template.Code.FilePath();
-                                    OpenInExternalCommand.Execute(new OpenInExternalCommandData(path, OpenInExternalCommandData.CommandAction.OpenInEditor));
+                                    EditorCommandRegistry.Execute("project.open-in-editor", new OpenInExternalCommandData(path, OpenInExternalCommandData.CommandAction.OpenInEditor));
                                 }
                             }
                         }
@@ -453,7 +465,7 @@ namespace TypeDCore
                         Name = "_Open Component",
                         ClickParameter = "LoadedProject",
                         Click = (param) => {
-                            OpenComponentCommand.Execute(new OpenComponentCommandData() { Project = param as Project });
+                            EditorCommandRegistry.Execute("component.open", new OpenComponentCommandData() { Project = param as Project });
                         }
                     },
                     new MenuItem()
@@ -466,7 +478,7 @@ namespace TypeDCore
                                 ClickParameter = "LoadedProject",
                                 Click = (param) => {
                                     var @namespace = "Entities";
-                                    CreateEntityTypeCommand.Execute(new CreateComponentCommandData(param as Project, @namespace));
+                                    EditorCommandRegistry.Execute("component.create-entity", new CreateComponentCommandData(param as Project, @namespace));
                                 }
                             },
                             new MenuItem() {
@@ -474,7 +486,7 @@ namespace TypeDCore
                                 ClickParameter = "LoadedProject",
                                 Click = (param) => {
                                     var @namespace = "Scenes";
-                                    CreateSceneTypeCommand.Execute(new CreateComponentCommandData(param as Project, @namespace));
+                                    EditorCommandRegistry.Execute("component.create-scene", new CreateComponentCommandData(param as Project, @namespace));
                                 }
                             },
                             new MenuItem() {
@@ -482,7 +494,7 @@ namespace TypeDCore
                                 ClickParameter = "LoadedProject",
                                 Click = (param) => {
                                     var @namespace = "Drawables";
-                                    CreateDrawableTypeCommand.Execute(new CreateComponentCommandData(param as Project, @namespace));
+                                    EditorCommandRegistry.Execute("component.create-drawable", new CreateComponentCommandData(param as Project, @namespace));
                                 }
                             }
                         }
@@ -499,7 +511,7 @@ namespace TypeDCore
                     ClickParameter = "LoadedProject",
                     Click = (param) =>
                     {
-                        AddComponentCommand.Execute(new AddComponentCommandData() { ToComponent = hook.SelectedComponent ?? hook.OpenedComponent, Project = param as Project });
+                        EditorCommandRegistry.Execute("component.add", new AddComponentCommandData() { ToComponent = hook.SelectedComponent ?? hook.OpenedComponent, Project = param as Project });
                     }
                 }
             );
@@ -513,7 +525,7 @@ namespace TypeDCore
                         ClickParameter = "LoadedProject",
                         Click = (param) =>
                         {
-                            RemoveComponentCommand.Execute(new RemoveComponentCommandData() { Component = hook.SelectedComponent, Project = param as Project });
+                            EditorCommandRegistry.Execute("component.remove", new RemoveComponentCommandData() { Component = hook.SelectedComponent, Project = param as Project });
                         }
                     }
                 );
@@ -533,7 +545,7 @@ namespace TypeDCore
                             Click = (param) =>
                             {
                                 var path = ComponentProvider.GetPath(param as Project, hook.SelectedComponent == null ? hook.OpenedComponent : hook.SelectedComponent);
-                                OpenInExternalCommand.Execute(new OpenInExternalCommandData(path, OpenInExternalCommandData.CommandAction.OpenInFolder));
+                                EditorCommandRegistry.Execute("project.open-in-folder", new OpenInExternalCommandData(path, OpenInExternalCommandData.CommandAction.OpenInFolder));
                             }
                         },
                         new MenuItem()
@@ -543,7 +555,7 @@ namespace TypeDCore
                             Click = (param) =>
                             {
                                 var path = ComponentProvider.GetPath(param as Project, hook.SelectedComponent == null ? hook.OpenedComponent : hook.SelectedComponent);
-                                OpenInExternalCommand.Execute(new OpenInExternalCommandData(path, OpenInExternalCommandData.CommandAction.OpenInEditor));
+                                EditorCommandRegistry.Execute("project.open-in-editor", new OpenInExternalCommandData(path, OpenInExternalCommandData.CommandAction.OpenInEditor));
                             }
                         }
                     }
@@ -560,7 +572,7 @@ namespace TypeDCore
                             Click = (param) =>
                             {
                                 var path = hook.SelectedComponent == null ? hook.OpenedComponent.Template.Code.FilePath() : hook.SelectedComponent.Template.Code.FilePath();
-                                OpenInExternalCommand.Execute(new OpenInExternalCommandData(path, OpenInExternalCommandData.CommandAction.OpenInFolder));
+                                EditorCommandRegistry.Execute("project.open-in-folder", new OpenInExternalCommandData(path, OpenInExternalCommandData.CommandAction.OpenInFolder));
                             }
                         },
                         new MenuItem()
@@ -570,7 +582,7 @@ namespace TypeDCore
                             Click = (param) =>
                             {
                                 var path = hook.SelectedComponent == null ? hook.OpenedComponent.Template.Code.FilePath() : hook.SelectedComponent.Template.Code.FilePath();
-                                OpenInExternalCommand.Execute(new OpenInExternalCommandData(path, OpenInExternalCommandData.CommandAction.OpenInEditor));
+                                EditorCommandRegistry.Execute("project.open-in-editor", new OpenInExternalCommandData(path, OpenInExternalCommandData.CommandAction.OpenInEditor));
                             }
                         }
                     }
@@ -584,7 +596,7 @@ namespace TypeDCore
                     ClickParameter = "LoadedProject",
                     Click = (param) =>
                     {
-                        CloseComponentCommand.Execute(new CloseComponentCommandData() { Project = param as Project, Component = hook.OpenedComponent });
+                        EditorCommandRegistry.Execute("component.close", new CloseComponentCommandData() { Project = param as Project, Component = hook.OpenedComponent });
                     }
                 }
             );

@@ -10,18 +10,28 @@ using TypeOEngine.Typedeaf.Core;
 
 namespace TypeDCore.Commands
 {
-    internal class AddComponentCommand : CustomCommand<AddComponentCommandData>
+    internal class AddComponentCommand : CustomCommand<AddComponentCommandData>, IDisposable
     {
         // Models
         IComponentModel ComponentModel { get; set; }
         ICommandHistoryModel CommandHistoryModel { get; set; }
+        private readonly IDisposable _registration;
 
         // Constructors
         public AddComponentCommand(IResourceModel resourceModel) : base(resourceModel)
         {
             ComponentModel = ResourceModel.Get<IComponentModel>();
             CommandHistoryModel = ResourceModel.Get<ICommandHistoryModel>();
+            _registration = ResourceModel.Get<IEditorCommandRegistry>().Register(
+                "component.add",
+                "Add component",
+                "Add a component to the specified parent component.",
+                "global",
+                string.Empty,
+                this);
         }
+
+        public void Dispose() => _registration.Dispose();
 
         public override async void Execute(AddComponentCommandData parameter)
         {

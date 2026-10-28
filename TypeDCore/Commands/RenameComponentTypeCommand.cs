@@ -9,17 +9,37 @@ using TypeDCore.View.Dialogs.Project;
 
 namespace TypeDCore.Commands
 {
-    internal class RenameComponentTypeCommand : CustomCommand<ComponentCommandData>
+    internal class RenameComponentTypeCommand : CustomCommand<ComponentCommandData>, IDisposable
     {
         // Providers
         IComponentProvider ComponentProvider { get; set; }
         ICommandHistoryModel CommandHistoryModel { get; set; }
+        private readonly IDisposable _registration;
 
         // Constructors
         public RenameComponentTypeCommand(IResourceModel resourceModel) : base(resourceModel)
         {
             ComponentProvider = ResourceModel.Get<IComponentProvider>();
             CommandHistoryModel = ResourceModel.Get<ICommandHistoryModel>();
+            _registration = ResourceModel.Get<IEditorCommandRegistry>().Register(
+                "component.rename-type",
+                "Rename component type",
+                "Rename the specified component type.",
+                "global",
+                string.Empty,
+                this);
+        }
+
+        public void Dispose() => _registration.Dispose();
+
+        public override bool CanExecute(object parameter)
+        {
+            return base.CanExecute(parameter);
+        }
+
+        public override bool CanExecute(ComponentCommandData parameter)
+        {
+            return base.CanExecute(parameter);
         }
 
         public override async void Execute(ComponentCommandData parameter)

@@ -1,6 +1,8 @@
-﻿using TypeD.Commands;
+﻿using System;
+using TypeD.Commands;
 using TypeD.ViewModel;
 using TypeD.Models.Interfaces;
+using TypeD.Models.Data;
 using TypeDCore.Commands.Data;
 using TypeDCore.Models.Data.DTO;
 using TypeDCore.Models.Data.Hooks;
@@ -11,22 +13,33 @@ using TypeOEngine.Typedeaf.Core.Entities;
 
 namespace TypeDCore.Commands
 {
-    internal class CreateEntityTypeCommand : CustomCommand<CreateComponentCommandData>
+    internal class CreateEntityTypeCommand : CustomCommand<CreateComponentCommandData>, IDisposable
     {
         // Models
         ITypeDCoreProjectModel TypeDCoreProjectModel { get; set; }
         IComponentProvider ComponentProvider { get; set; }
         IHookModel HookModel { get; set; }
         ICommandHistoryModel CommandHistoryModel { get; set; }
+        private readonly IDisposable _registration;
 
         // Constructors
-        public CreateEntityTypeCommand(IResourceModel resourceModel) : base(resourceModel)
+        public CreateEntityTypeCommand(Project project, IResourceModel resourceModel) : base(resourceModel)
         {
             TypeDCoreProjectModel = ResourceModel.Get<ITypeDCoreProjectModel>();
             ComponentProvider = ResourceModel.Get<IComponentProvider>();
             HookModel = ResourceModel.Get<IHookModel>();
             CommandHistoryModel = ResourceModel.Get<ICommandHistoryModel>();
+            _registration = ResourceModel.Get<IEditorCommandRegistry>().Register(
+                "component.create-entity",
+                "Create entity type",
+                "Create a new entity component type.",
+                "global",
+                string.Empty,
+                this,
+                () => new CreateComponentCommandData(project, "Entities"));
         }
+
+        public void Dispose() => _registration.Dispose();
 
         public override async void Execute(CreateComponentCommandData parameter)
         {

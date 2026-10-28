@@ -1,5 +1,7 @@
-﻿using TypeD.Commands;
+﻿using System;
+using TypeD.Commands;
 using TypeD.ViewModel;
+using TypeD.Models.Data;
 using TypeD.Models.Interfaces;
 using TypeDCore.Commands.Data;
 using TypeDCore.Models.Data.DTO;
@@ -11,22 +13,33 @@ using TypeOEngine.Typedeaf.Core.Entities.Drawables;
 
 namespace TypeDCore.Commands
 {
-    internal class CreateDrawableTypeCommand : CustomCommand<CreateComponentCommandData>
+    internal class CreateDrawableTypeCommand : CustomCommand<CreateComponentCommandData>, IDisposable
     {
         // Models
         ITypeDCoreProjectModel TypeDCoreProjectModel { get; set; }
         IComponentProvider ComponentProvider { get; set; }
         IHookModel HookModel { get; set; }
         ICommandHistoryModel CommandHistoryModel { get; set; }
+        private readonly IDisposable _registration;
 
         // Constructors
-        public CreateDrawableTypeCommand(IResourceModel resourceModel) : base(resourceModel)
+        public CreateDrawableTypeCommand(Project project, IResourceModel resourceModel) : base(resourceModel)
         {
             TypeDCoreProjectModel = ResourceModel.Get<ITypeDCoreProjectModel>();
             ComponentProvider = ResourceModel.Get<IComponentProvider>();
             HookModel = ResourceModel.Get<IHookModel>();
             CommandHistoryModel = ResourceModel.Get<ICommandHistoryModel>();
+            _registration = ResourceModel.Get<IEditorCommandRegistry>().Register(
+                "component.create-drawable",
+                "Create drawable type",
+                "Create a new drawable component type.",
+                "global",
+                string.Empty,
+                this,
+                () => new CreateComponentCommandData(project, "Drawables"));
         }
+
+        public void Dispose() => _registration.Dispose();
 
         public override async void Execute(CreateComponentCommandData parameter)
         {

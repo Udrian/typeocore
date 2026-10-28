@@ -1,5 +1,6 @@
 ﻿using MsBox.Avalonia;
 using MsBox.Avalonia.Enums;
+using System;
 using System.Linq;
 using TypeD.Commands;
 using TypeD.Models.Interfaces;
@@ -8,18 +9,28 @@ using TypeDCore.Commands.Data;
 
 namespace TypeDCore.Commands
 {
-    internal class RemoveComponentCommand : CustomCommand<RemoveComponentCommandData>
+    internal class RemoveComponentCommand : CustomCommand<RemoveComponentCommandData>, IDisposable
     {
         // Models
         IComponentModel ComponentModel { get; set; }
         ICommandHistoryModel CommandHistoryModel { get; set; }
+        private readonly IDisposable _registration;
 
         // Constructors
         public RemoveComponentCommand(IResourceModel resourceModel) : base(resourceModel)
         {
             ComponentModel = ResourceModel.Get<IComponentModel>();
             CommandHistoryModel = ResourceModel.Get<ICommandHistoryModel>();
+            _registration = ResourceModel.Get<IEditorCommandRegistry>().Register(
+                "component.remove",
+                "Remove component",
+                "Remove the specified component from its parent.",
+                "global",
+                string.Empty,
+                this);
         }
+
+        public void Dispose() => _registration.Dispose();
 
         public override async void Execute(RemoveComponentCommandData parameter)
         {

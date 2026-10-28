@@ -1,5 +1,7 @@
-﻿using TypeD.ViewModel;
+﻿using System;
+using TypeD.ViewModel;
 using TypeD.Commands;
+using TypeD.Models.Data;
 using TypeD.Models.Interfaces;
 using TypeDCore.Commands.Data;
 using TypeDCore.Models.Interfaces;
@@ -8,20 +10,31 @@ using TypeD.Models.Providers.Interfaces;
 
 namespace TypeDCore.Commands
 {
-    internal class CreateSceneTypeCommand : CustomCommand<CreateComponentCommandData>
+    internal class CreateSceneTypeCommand : CustomCommand<CreateComponentCommandData>, IDisposable
     {
         // Models
         ITypeDCoreProjectModel TypeDCoreProjectModel { get; set; }
         IComponentProvider ComponentProvider { get; set; }
         ICommandHistoryModel CommandHistoryModel { get; set; }
+        private readonly IDisposable _registration;
 
         // Constructors
-        public CreateSceneTypeCommand(IResourceModel resourceModel) : base(resourceModel)
+        public CreateSceneTypeCommand(Project project, IResourceModel resourceModel) : base(resourceModel)
         {
             TypeDCoreProjectModel = ResourceModel.Get<ITypeDCoreProjectModel>();
             ComponentProvider = ResourceModel.Get<IComponentProvider>();
             CommandHistoryModel = ResourceModel.Get<ICommandHistoryModel>();
+            _registration = ResourceModel.Get<IEditorCommandRegistry>().Register(
+                "component.create-scene",
+                "Create scene type",
+                "Create a new scene component type.",
+                "global",
+                string.Empty,
+                this,
+                () => new CreateComponentCommandData(project, "Scenes"));
         }
+
+        public void Dispose() => _registration.Dispose();
 
         public override async void Execute(CreateComponentCommandData parameter)
         {

@@ -1,22 +1,33 @@
-﻿using TypeDCore.Commands.Data;
+﻿using System;
+using TypeDCore.Commands.Data;
 using TypeD.Models.Providers.Interfaces;
 using TypeD.Commands;
 using TypeD.Models.Interfaces;
 
 namespace TypeDCore.Commands
 {
-    internal class DeleteComponentTypeCommand : CustomCommand<ComponentCommandData>
+    internal class DeleteComponentTypeCommand : CustomCommand<ComponentCommandData>, IDisposable
     {
         // Providers
         IComponentProvider ComponentProvider { get; set; }
         ICommandHistoryModel CommandHistoryModel { get; set; }
+        private readonly IDisposable _registration;
 
         // Constructors
         public DeleteComponentTypeCommand(IResourceModel resourceModel) : base(resourceModel)
         {
             ComponentProvider = ResourceModel.Get<IComponentProvider>();
             CommandHistoryModel = ResourceModel.Get<ICommandHistoryModel>();
+            _registration = ResourceModel.Get<IEditorCommandRegistry>().Register(
+                "component.delete-type",
+                "Delete component type",
+                "Delete the specified component type.",
+                "global",
+                string.Empty,
+                this);
         }
+
+        public void Dispose() => _registration.Dispose();
 
         public override void Execute(ComponentCommandData parameter)
         {
