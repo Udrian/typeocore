@@ -10,8 +10,8 @@ using TypeD.Models.Data;
 using TypeD.Models.Data.Hooks;
 using TypeD.Models.Interfaces;
 using TypeD.ViewModel;
+using TypeDCore.Commands.Data;
 using TypeDCore.View.Panels;
-using TypeD.Models.Data.SaveContexts;
 using TypeOEngine.Typedeaf.Core.Common;
 using System.Linq;
 
@@ -71,10 +71,9 @@ namespace TypeDCore.ViewModel.Panels
                 }
                 set
                 {
-                    if(!Property.Value.Equals(value))
+                    if (!Equals(Property.Value, value))
                     {
-                        Property.Value = value;
-                        ValueChanged(this);
+                        ValueChanged(this, value);
                     }
                 }
             }
@@ -82,19 +81,24 @@ namespace TypeDCore.ViewModel.Panels
             public Type Type { get => Property.Type; }
             public string Description { get => Property.Description; }
             public bool ReadOnly { get => Property.ReadOnly; }
-            public Action<PropertyNode> ValueChanged;
+            public Action<PropertyNode, object> ValueChanged;
 
-            public PropertyNode(Component component, Property property, Action<PropertyNode> value_changed)
+            public PropertyNode(Component component, Property property, Action<PropertyNode, object> value_changed)
             {
                 Component = component;
                 Property = property;
                 ValueChanged = value_changed;
             }
+
+            public void RefreshValue()
+            {
+                OnPropertyChanged(nameof(Value));
+            }
         }
 
         public class BooleanPropertyNode : PropertyNode
         {
-            public BooleanPropertyNode(Component component, Property property, Action<PropertyNode> value_changed) : base(component, property, value_changed) { }
+            public BooleanPropertyNode(Component component, Property property, Action<PropertyNode, object> value_changed) : base(component, property, value_changed) { }
 
             public override object Value {
                 get
@@ -121,7 +125,7 @@ namespace TypeDCore.ViewModel.Panels
 
         public class StringPropertyNode : PropertyNode
         {
-            public StringPropertyNode(Component component, Property property, Action<PropertyNode> value_changed) : base(component, property, value_changed) { }
+            public StringPropertyNode(Component component, Property property, Action<PropertyNode, object> value_changed) : base(component, property, value_changed) { }
 
             public override object Value
             {
@@ -149,7 +153,7 @@ namespace TypeDCore.ViewModel.Panels
 
         public class Int32PropertyNode : PropertyNode
         {
-            public Int32PropertyNode(Component component, Property property, Action<PropertyNode> value_changed) : base(component, property, value_changed) { }
+            public Int32PropertyNode(Component component, Property property, Action<PropertyNode, object> value_changed) : base(component, property, value_changed) { }
 
             public override object Value
             {
@@ -177,7 +181,7 @@ namespace TypeDCore.ViewModel.Panels
 
         public class DoublePropertyNode : PropertyNode
         {
-            public DoublePropertyNode(Component component, Property property, Action<PropertyNode> value_changed) : base(component, property, value_changed) { }
+            public DoublePropertyNode(Component component, Property property, Action<PropertyNode, object> value_changed) : base(component, property, value_changed) { }
 
             public override object Value
             {
@@ -205,7 +209,7 @@ namespace TypeDCore.ViewModel.Panels
 
         public class Vec2PropertyNode : PropertyNode
         {
-            public Vec2PropertyNode(Component component, Property property, Action<PropertyNode> value_changed) : base(component, property, value_changed) { }
+            public Vec2PropertyNode(Component component, Property property, Action<PropertyNode, object> value_changed) : base(component, property, value_changed) { }
 
             public override object Value
             {
@@ -277,8 +281,7 @@ namespace TypeDCore.ViewModel.Panels
 
         // Models
         public IHookModel HookModel { get; set; }
-        public ISaveModel SaveModel { get; set; }
-        public IProjectModel ProjectModel { get; set; }
+        public IEditorCommandRegistry EditorCommandRegistry { get; set; }
 
         // Properties
         private Project Project { get; set; }
@@ -301,8 +304,7 @@ namespace TypeDCore.ViewModel.Panels
             RegisterTypeTemplates();
 
             HookModel = ResourceModel.Get<IHookModel>();
-            SaveModel = ResourceModel.Get<ISaveModel>();
-            ProjectModel = ResourceModel.Get<IProjectModel>();
+            EditorCommandRegistry = ResourceModel.Get<IEditorCommandRegistry>();
 
             PropertyNodes = new ObservableCollection<PropertyNode>();
 
@@ -315,28 +317,27 @@ namespace TypeDCore.ViewModel.Panels
                 foreach(var property in Component.Properties)
                 {
                     var propertyNodeType = TypeToPropertyNode.ContainsKey(property.Type) ? TypeToPropertyNode[property.Type] : typeof(PropertyNode);
-                    PropertyNodes.Add((PropertyNode)Activator.CreateInstance(propertyNodeType, Component, property, (Action<PropertyNode>)(node =>
+                    PropertyNodes.Add((PropertyNode)Activator.CreateInstance(propertyNodeType, Component, property, (Action<PropertyNode, object>)((node, value) =>
                     {
-                        HookModel.Shoot(new PropertyChangedHook {
+                        var executed = EditorCommandRegistry.Execute("component.change-property", new ChangePropertyCommandData
+                        {
+                            Project = Project,
                             Component = node.Component,
-                            Property = node.Property
+                            Property = node.Property,
+                            Value = value
                         });
-
-                        Component componentToSave = node.Component;
-                        while (componentToSave.ParentComponent != null)
-                        {
-                            componentToSave = componentToSave.ParentComponent;
-                        }
-
-                        var context = SaveModel.GetSaveContext<ComponentSaveContext>(Project);
-                        if(!context.Components.Contains(componentToSave))
-                        {
-                            context.Components.Add(componentToSave);
-                            SaveModel.AddSave<ComponentSaveContext>();
-                            ProjectModel.SaveCode(componentToSave.Template.Code);
-                        }
+                        if (!executed)
+                            throw new InvalidOperationException($"Could not execute the change-property command for '{node.Property.Name}'.");
                     })));
                 }
+            });
+
+            HookModel.AddHook<PropertyChangedHook>((hook) =>
+            {
+                if (!ReferenceEquals(Component, hook.Component))
+                    return;
+
+                PropertyNodes.FirstOrDefault(node => ReferenceEquals(node.Property, hook.Property))?.RefreshValue();
             });
 
             HookModel.AddHook<CloseComponentHook>((hook) =>
