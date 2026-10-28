@@ -2,6 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
+using System.Windows.Input;
+using CommunityToolkit.Mvvm.Input;
+using TypeDCore.View.Dialogs.Project;
 using TypeD.Models.Data;
 using TypeD.Models.Providers.Interfaces;
 using TypeD.ViewModel;
@@ -15,13 +19,12 @@ namespace TypeDCore.Models.Data.PropertyDefinitions
     {
         public ContentPropertyNode(Component component, Property property, Action<PropertyNode, object> value_changed) : base(component, property, value_changed)
         {
-            Options = ListOptions(property.Type);
+            BrowseCommand = new AsyncRelayCommand(BrowseAsync);
+            ClearCommand = new RelayCommand(() => Value = null);
         }
 
-        /// <summary>
-        /// Content paths, relative to the project's content folder, that can be assigned to the property. The first entry is empty and clears the value.
-        /// </summary>
-        public List<string> Options { get; }
+        public ICommand BrowseCommand { get; }
+        public ICommand ClearCommand { get; }
 
         public override object Value
         {
@@ -33,24 +36,21 @@ namespace TypeDCore.Models.Data.PropertyDefinitions
             }
         }
 
-        private static List<string> ListOptions(Type propertyType)
+        private async Task BrowseAsync()
         {
-            var options = new List<string> { string.Empty };
+            if (ReadOnly)
+                return;
 
-            var project = ResourceModel?.Get<INodeSelectionModel>()?.Project;
-            var contentProvider = ResourceModel?.Get<IContentProvider>();
-            if (project == null || contentProvider == null || !Directory.Exists(project.ProjectContentPath))
-                return options;
+            var project = ResourceModel.Get<INodeSelectionModel>()?.Project;
+            var contentProvider = ResourceModel.Get<IContentProvider>();
+            if (project == null || contentProvider == null)
+                return;
 
-            var extensions = contentProvider.GetAssociationsForEngineType(propertyType)
-                .Select(a => a.Extension.ToLowerInvariant())
-                .ToHashSet();
-
-            options.AddRange(Directory.EnumerateFiles(project.ProjectContentPath, "*", SearchOption.AllDirectories)
-                .Where(file => extensions.Contains(Path.GetExtension(file).TrimStart('.').ToLowerInvariant()))
-                .Select(file => Path.GetRelativePath(project.ProjectContentPath, file).Replace('\\', '/'))
-                .OrderBy(path => path, StringComparer.OrdinalIgnoreCase));
-            return options;
+            var extensions = contentProvider.GetAssociationsForEngineType(Property.Type).Select(a => a.Extension);
+            var dialog = new ContentSelectorDialog(project, extensions);
+            await dialog.ShowDialog(MainWindow);
+            if (dialog.SelectedPath != null)
+                Value = dialog.SelectedPath;
         }
     }
 

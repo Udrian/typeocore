@@ -93,6 +93,11 @@ namespace TypeDCore.Models
             _activeTree = ActiveTree.ComponentExplorer;
         }
 
+        public void SetNoTreeActive()
+        {
+            _activeTree = ActiveTree.None;
+        }
+
         public void SetComponentBrowserActive(Project project, Component component)
         {
             Project = project;

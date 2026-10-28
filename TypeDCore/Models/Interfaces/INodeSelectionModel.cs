@@ -13,6 +13,7 @@ namespace TypeDCore.Models.Interfaces
         bool IsComponentBrowserActive { get; }
 
         void SetComponentExplorerActive();
+        void SetNoTreeActive();
         void SetComponentBrowserActive(Project project, Component component);
     }
 }

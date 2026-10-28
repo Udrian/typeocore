@@ -1,10 +1,15 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <DataTemplate x:Key="ContentPropertyTemplate">
-        <ComboBox ItemsSource="{Binding Options}"
-                  SelectedItem="{Binding Value, Mode=TwoWay}"
-                  IsEnabled="{Binding !ReadOnly}"
-                  Classes="PropertyInput"
-                  HorizontalAlignment="Stretch"/>
+        <Grid ColumnDefinitions="*,Auto,Auto">
+            <TextBox Text="{Binding Value, Mode=OneWay}" IsReadOnly="True"
+                     Classes="PropertyInput"/>
+            <Button Grid.Column="1" Content="..." Command="{Binding BrowseCommand}"
+                    IsEnabled="{Binding !ReadOnly}" Padding="8,0" MinHeight="0"
+                    VerticalAlignment="Stretch" ToolTip.Tip="Select content"/>
+            <Button Grid.Column="2" Content="X" Command="{Binding ClearCommand}"
+                    IsEnabled="{Binding !ReadOnly}" Padding="8,0" MinHeight="0"
+                    VerticalAlignment="Stretch" ToolTip.Tip="Clear content"/>
+        </Grid>
     </DataTemplate>
 </ResourceDictionary>

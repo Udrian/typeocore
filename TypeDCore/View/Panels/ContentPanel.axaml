@@ -13,33 +13,47 @@
             <Button Content="Clear" Command="{Binding ClearSearchCommand}"/>
         </StackPanel>
 
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,8,0,0">
-            <ItemsControl ItemsSource="{Binding FilteredItems}">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <WrapPanel Orientation="Horizontal" />
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
+        <ListBox Grid.Row="1" x:Name="ContentList" Margin="0,8,0,0" Background="Transparent"
+                 ItemsSource="{Binding FilteredItems}"
+                 SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
+                 GotFocus="ContentList_GotFocus"
+                 KeyDown="ContentList_KeyDown"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+            <ListBox.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <WrapPanel Orientation="Horizontal" />
+                </ItemsPanelTemplate>
+            </ListBox.ItemsPanel>
 
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <Border Width="160" Height="140" Margin="6" BorderBrush="#FFCCCCCC" BorderThickness="1" CornerRadius="4">
-                            <StackPanel>
-                                <Image Source="{Binding Thumbnail}" Stretch="Uniform" Height="100">
-                                    <ToolTip.Tip>
-                                        <Border Background="White" Padding="4" BorderBrush="#FFCCCCCC" BorderThickness="1">
-                                            <ScrollViewer MaxWidth="800" MaxHeight="600" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-                                                <Image Source="{Binding Thumbnail}" Stretch="None" />
-                                            </ScrollViewer>
-                                        </Border>
-                                    </ToolTip.Tip>
-                                </Image>
-                                <TextBlock Text="{Binding Title}" Margin="6,4,6,0" TextTrimming="CharacterEllipsis" />
-                            </StackPanel>
+            <ListBox.ContextMenu>
+                <ContextMenu Opening="ContextMenu_Opening">
+                    <MenuItem Header="Rename" InputGesture="F2" Click="Rename_Click"/>
+                    <MenuItem Header="Show in Explorer" Click="ShowInExplorer_Click"/>
+                    <MenuItem Header="Delete" InputGesture="Delete" Click="Delete_Click"/>
+                </ContextMenu>
+            </ListBox.ContextMenu>
+
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Width="160" Margin="4" Background="Transparent">
+                        <Border Height="110" BorderBrush="#FFCCCCCC" BorderThickness="1" CornerRadius="4">
+                            <Image Source="{Binding Thumbnail}" Stretch="Uniform" Margin="4">
+                                <ToolTip.Tip>
+                                    <Border Background="White" Padding="4" BorderBrush="#FFCCCCCC" BorderThickness="1">
+                                        <ScrollViewer MaxWidth="800" MaxHeight="600" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                                            <Image Source="{Binding Thumbnail}" Stretch="None" />
+                                        </ScrollViewer>
+                                    </Border>
+                                </ToolTip.Tip>
+                            </Image>
                         </Border>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </ScrollViewer>
+                        <TextBlock Text="{Binding Title}" IsVisible="{Binding !IsEditing}" Margin="2,4,2,0"
+                                   HorizontalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                        <TextBox Text="{Binding EditName}" IsVisible="{Binding IsEditing}" Margin="0,4,0,0"
+                                 KeyDown="NameEditor_KeyDown" LostFocus="NameEditor_LostFocus"/>
+                    </StackPanel>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
     </Grid>
 </UserControl>
