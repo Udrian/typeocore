@@ -39,11 +39,32 @@ namespace TypeDCore.View.Panels
 
             if (item is not null)
             {
-               if (item.DataContext is ComponentBrowserViewModel.Node node)
-               {
+                if (item.DataContext is ComponentBrowserViewModel.Node node)
                     ViewModel.DoubleClickItem(node);
-               }
             }
+        }
+
+        private void TreeView_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            ViewModel.SelectionChanged(TreeView.SelectedItem as ComponentBrowserViewModel.Node);
+        }
+
+        private void TreeView_GotFocus(object sender, RoutedEventArgs e)
+        {
+            ViewModel.BrowserFocused();
+        }
+
+        private void TreeView_KeyDown(object sender, KeyEventArgs e)
+        {
+            ViewModel.BrowserFocused();
+            var shortcut = TypeD.Models.Data.EditorShortcut.FromKey(
+                e.Key.ToString(),
+                e.KeyModifiers.HasFlag(KeyModifiers.Control),
+                e.KeyModifiers.HasFlag(KeyModifiers.Shift),
+                e.KeyModifiers.HasFlag(KeyModifiers.Alt),
+                e.KeyModifiers.HasFlag(KeyModifiers.Meta));
+
+            e.Handled = ViewModel.TryExecuteShortcut(shortcut);
         }
     }
 }

@@ -27,7 +27,7 @@ namespace TypeDCore.Commands
                 "Remove node",
                 "Remove the selected node from its parent.",
                 "global",
-                string.Empty,
+                "Delete",
                 this,
                 () => new RemoveNodeCommandData { Project = _nodeSelectionModel.Project });
         }
@@ -39,6 +39,7 @@ namespace TypeDCore.Commands
             var selectedNode = _nodeSelectionModel.SelectedNode;
             return parameter?.Project != null
                 && selectedNode != null
+                && _nodeSelectionModel.IsComponentExplorerActive
                 && !ReferenceEquals(selectedNode, _nodeSelectionModel.OpenedComponent)
                 && selectedNode.ParentComponent != null;
         }

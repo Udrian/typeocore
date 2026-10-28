@@ -9,6 +9,7 @@ using TypeD.Models.Interfaces;
 using TypeD.ViewModel;
 using TypeDCore.Commands;
 using TypeDCore.Commands.Data;
+using TypeDCore.Models.Interfaces;
 
 namespace TypeDCore.ViewModel.Panels
 {
@@ -31,6 +32,8 @@ namespace TypeDCore.ViewModel.Panels
 
         // Models
         IHookModel HookModel { get; set; }
+        IEditorCommandRegistry EditorCommandRegistry { get; set; }
+        INodeSelectionModel NodeSelectionModel { get; set; }
 
         // View
         TreeView TreeView { get; set; }
@@ -46,6 +49,8 @@ namespace TypeDCore.ViewModel.Panels
         public ComponentBrowserViewModel(Control element, Project loadedProject, TreeView treeView) : base(element)
         {
             HookModel = ResourceModel.Get<IHookModel>();
+            EditorCommandRegistry = ResourceModel.Get<IEditorCommandRegistry>();
+            NodeSelectionModel = ResourceModel.Get<INodeSelectionModel>();
             LoadedProject = loadedProject;
             TreeView = treeView;
 
@@ -82,6 +87,8 @@ namespace TypeDCore.ViewModel.Panels
 
         public void ContextMenuOpened(ContextMenu contextMenu, Node node)
         {
+            NodeSelectionModel.SetComponentBrowserActive(LoadedProject, node?.Context.Item as Component);
+
             var componentTypeBrowserContextMenuOpenedHook = new ComponentTypeBrowserContextMenuOpenedHook(node?.Context);
             HookModel.Shoot(componentTypeBrowserContextMenuOpenedHook);
 
@@ -90,6 +97,23 @@ namespace TypeDCore.ViewModel.Panels
             {
                 ViewHelper.InitMenu(contextMenu, menu, this);
             }
+        }
+
+        public void SelectionChanged(Node node)
+        {
+            NodeSelectionModel.SetComponentBrowserActive(LoadedProject, node?.Context.Item as Component);
+        }
+
+        public void BrowserFocused()
+        {
+            NodeSelectionModel.SetComponentBrowserActive(
+                LoadedProject,
+                (TreeView.SelectedItem as Node)?.Context.Item as Component);
+        }
+
+        public bool TryExecuteShortcut(string shortcut)
+        {
+            return EditorCommandRegistry.TryExecuteShortcut(shortcut, "global");
         }
 
         private void BuildTree(ComponentTreeBuiltHook hook)

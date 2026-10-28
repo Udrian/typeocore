@@ -8,6 +8,13 @@ namespace TypeDCore.Models
 {
     internal sealed class NodeSelectionModel : INodeSelectionModel, IDisposable
     {
+        private enum ActiveTree
+        {
+            None,
+            ComponentExplorer,
+            ComponentBrowser
+        }
+
         private IHookModel HookModel { get; set; }
         private readonly Action<ComponentFocusHook> ComponentFocusedHandler;
         private readonly Action<CloseComponentHook> ComponentClosedHandler;
@@ -16,6 +23,11 @@ namespace TypeDCore.Models
         public Project Project { get; private set; }
         public Component OpenedComponent { get; private set; }
         public Component SelectedNode { get; private set; }
+        public Component SelectedComponentType { get; private set; }
+        public bool IsComponentExplorerActive => _activeTree == ActiveTree.ComponentExplorer;
+        public bool IsComponentBrowserActive => _activeTree == ActiveTree.ComponentBrowser;
+
+        private ActiveTree _activeTree;
 
         public NodeSelectionModel()
         {
@@ -53,7 +65,10 @@ namespace TypeDCore.Models
                 return;
 
             if (ReferenceEquals(GetRootComponent(hook.Component), OpenedComponent))
+            {
                 SelectedNode = hook.Component;
+                _activeTree = ActiveTree.ComponentExplorer;
+            }
         }
 
         private void OnComponentClosed(CloseComponentHook hook)
@@ -64,12 +79,25 @@ namespace TypeDCore.Models
             Project = null;
             OpenedComponent = null;
             SelectedNode = null;
+            _activeTree = ActiveTree.None;
         }
 
         private void OnComponentRemoved(ComponentRemovedHook hook)
         {
             if (SelectedNode != null && IsWithin(SelectedNode, hook.Child))
                 SelectedNode = OpenedComponent;
+        }
+
+        public void SetComponentExplorerActive()
+        {
+            _activeTree = ActiveTree.ComponentExplorer;
+        }
+
+        public void SetComponentBrowserActive(Project project, Component component)
+        {
+            Project = project;
+            SelectedComponentType = component;
+            _activeTree = ActiveTree.ComponentBrowser;
         }
 
         private static Component GetRootComponent(Component component)

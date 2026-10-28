@@ -8,6 +8,7 @@ using TypeD.Models.Data;
 using TypeD.Models.Data.Hooks;
 using TypeD.Models.Interfaces;
 using TypeD.ViewModel;
+using TypeDCore.Commands.Data;
 using TypeDCore.Models.Interfaces;
 
 namespace TypeDCore.ViewModel.Panels
@@ -21,8 +22,26 @@ namespace TypeDCore.ViewModel.Panels
 
             [ObservableProperty]
             private string _title;
+
+            [ObservableProperty]
+            private string _editName;
+
+            [ObservableProperty]
+            private bool _isEditing;
+
             public void UpdateTitle() {
                 Title = Component.Name;
+            }
+
+            public void BeginRename()
+            {
+                EditName = Component.Name;
+                IsEditing = true;
+            }
+
+            public void CancelRename()
+            {
+                IsEditing = false;
             }
 
             [ObservableProperty]
@@ -112,6 +131,7 @@ namespace TypeDCore.ViewModel.Panels
         // Functions
         public void ContextMenuOpened(ContextMenu contextMenu, Node node)
         {
+            NodeSelectionModel.SetComponentExplorerActive();
             if (node != null && !ReferenceEquals(SelectedComponent, node.Component))
                 SelectionChanged(node.Component);
 
@@ -128,13 +148,50 @@ namespace TypeDCore.ViewModel.Panels
         {
             if (selectedComponent != null && !ReferenceEquals(SelectedComponent, selectedComponent))
                 SelectionChanged(selectedComponent);
+            else
+                NodeSelectionModel.SetComponentExplorerActive();
 
             return EditorCommandRegistry.TryExecuteShortcut(shortcut, "global");
         }
 
         public void SelectionChanged(Component component)
         {
+            NodeSelectionModel.SetComponentExplorerActive();
             HookModel.Shoot(new ComponentFocusHook() { Project = LoadedProject, Component = component, Root = false });
+        }
+
+        public void SetExplorerActive()
+        {
+            NodeSelectionModel.SetComponentExplorerActive();
+        }
+
+        public bool CommitRename(Node node)
+        {
+            var nameProperty = node.Component.Properties.FirstOrDefault(property => property.Name == "Name");
+            if (nameProperty == null || nameProperty.ReadOnly)
+            {
+                node.CancelRename();
+                return false;
+            }
+
+            var executed = EditorCommandRegistry.Execute("component.change-property", new ChangePropertyCommandData
+            {
+                Project = LoadedProject,
+                Property = nameProperty,
+                Value = node.EditName
+            });
+            if (executed)
+                node.CancelRename();
+            return executed;
+        }
+
+        public void BeginRename(Node node)
+        {
+            if (node == null || !ReferenceEquals(SelectedComponent, node.Component))
+                return;
+
+            NodeSelectionModel.SetComponentExplorerActive();
+            node.BeginRename();
         }
 
         private ComponentContextMenuHook CreateComponentContextMenu(Component selectedComponent)

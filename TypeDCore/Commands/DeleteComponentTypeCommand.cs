@@ -1,8 +1,12 @@
-﻿using System;
+﻿using MsBox.Avalonia;
+using MsBox.Avalonia.Enums;
+using System;
+using TypeD.ViewModel;
 using TypeDCore.Commands.Data;
 using TypeD.Models.Providers.Interfaces;
 using TypeD.Commands;
 using TypeD.Models.Interfaces;
+using TypeDCore.Models.Interfaces;
 
 namespace TypeDCore.Commands
 {
@@ -11,6 +15,7 @@ namespace TypeDCore.Commands
         // Providers
         IComponentProvider ComponentProvider { get; set; }
         ICommandHistoryModel CommandHistoryModel { get; set; }
+        INodeSelectionModel NodeSelectionModel { get; set; }
         private readonly IDisposable _registration;
 
         // Constructors
@@ -18,33 +23,50 @@ namespace TypeDCore.Commands
         {
             ComponentProvider = ResourceModel.Get<IComponentProvider>();
             CommandHistoryModel = ResourceModel.Get<ICommandHistoryModel>();
+            NodeSelectionModel = ResourceModel.Get<INodeSelectionModel>();
             _registration = ResourceModel.Get<IEditorCommandRegistry>().Register(
                 "component.delete-type",
                 "Delete component type",
                 "Delete the specified component type.",
                 "global",
-                string.Empty,
-                this);
+                "Delete",
+                this,
+                () => new ComponentCommandData
+                {
+                    Project = NodeSelectionModel.Project,
+                    Component = NodeSelectionModel.SelectedComponentType
+                });
         }
 
         public void Dispose() => _registration.Dispose();
 
-        public override void Execute(ComponentCommandData parameter)
+        public override bool CanExecute(ComponentCommandData parameter)
         {
-            //var result = MessageBox.Show($"Do you want to delete '{parameter.Component.FullName}'?", "Deleting", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-            //if (result == MessageBoxResult.Yes)
-            {
-                var componentName = parameter.Component.FullName;
-                var component = parameter.Component;
-                ComponentProvider.Delete(parameter.Project, component);
-                CommandHistoryModel.Record(
-                    "Delete component type",
-                    $"Deleted {componentName}.",
-                    () => ComponentProvider.Restore(parameter.Project, component),
-                    () => ComponentProvider.Delete(
-                        parameter.Project,
-                        ComponentProvider.Load(parameter.Project, componentName) ?? component));
-            }
+            return parameter?.Project != null
+                && parameter.Component != null
+                && NodeSelectionModel.IsComponentBrowserActive;
+        }
+
+        public override async void Execute(ComponentCommandData parameter)
+        {
+            var component = parameter.Component;
+            var componentName = component.FullName;
+            var box = MessageBoxManager.GetMessageBoxStandard(
+                "Delete Component Type",
+                $"Delete component type '{componentName}'?",
+                ButtonEnum.YesNoCancel,
+                Icon.Question);
+            if (await box.ShowWindowDialogAsync(ViewModelBase.MainWindow) != ButtonResult.Yes)
+                return;
+
+            ComponentProvider.Delete(parameter.Project, component);
+            CommandHistoryModel.Record(
+                "Delete component type",
+                $"Deleted {componentName}.",
+                () => ComponentProvider.Restore(parameter.Project, component),
+                () => ComponentProvider.Delete(
+                    parameter.Project,
+                    ComponentProvider.Load(parameter.Project, componentName) ?? component));
         }
     }
 }

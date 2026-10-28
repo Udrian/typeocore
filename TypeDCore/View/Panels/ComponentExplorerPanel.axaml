@@ -9,10 +9,15 @@
              x:DataType="vm:ComponentExplorerViewModel">
     <TreeView Name="ComponentsTree" ItemsSource="{Binding Nodes}"
               SelectionChanged="ComponentsTree_SelectionChanged"
+              GotFocus="ComponentsTree_GotFocus"
               KeyDown="ComponentsTree_KeyDown">
         <TreeView.ItemTemplate>
             <TreeDataTemplate ItemsSource="{Binding Nodes}">
-                <TextBlock Text="{Binding Title}"/>
+                <Grid>
+                    <TextBlock Text="{Binding Title}" IsVisible="{Binding !IsEditing}"/>
+                    <TextBox Text="{Binding EditName}" IsVisible="{Binding IsEditing}"
+                             KeyDown="NodeName_KeyDown"/>
+                </Grid>
             </TreeDataTemplate>
         </TreeView.ItemTemplate>
         

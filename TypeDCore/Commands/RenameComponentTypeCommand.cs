@@ -6,6 +6,7 @@ using TypeD.Models.Interfaces;
 using TypeD.Models.Providers.Interfaces;
 using TypeDCore.Commands.Data;
 using TypeDCore.View.Dialogs.Project;
+using TypeDCore.Models.Interfaces;
 
 namespace TypeDCore.Commands
 {
@@ -14,6 +15,7 @@ namespace TypeDCore.Commands
         // Providers
         IComponentProvider ComponentProvider { get; set; }
         ICommandHistoryModel CommandHistoryModel { get; set; }
+        INodeSelectionModel NodeSelectionModel { get; set; }
         private readonly IDisposable Registration;
 
         // Constructors
@@ -21,16 +23,29 @@ namespace TypeDCore.Commands
         {
             ComponentProvider = ResourceModel.Get<IComponentProvider>();
             CommandHistoryModel = ResourceModel.Get<ICommandHistoryModel>();
+            NodeSelectionModel = ResourceModel.Get<INodeSelectionModel>();
             Registration = ResourceModel.Get<IEditorCommandRegistry>().Register(
                 "component.rename-type",
                 "Rename component type",
                 "Rename the specified component type.",
                 "global",
-                string.Empty,
-                this);
+                "F2",
+                this,
+                () => new ComponentCommandData
+                {
+                    Project = NodeSelectionModel.Project,
+                    Component = NodeSelectionModel.SelectedComponentType
+                });
         }
 
         public void Dispose() => Registration.Dispose();
+
+        public override bool CanExecute(ComponentCommandData parameter)
+        {
+            return parameter?.Project != null
+                && parameter.Component != null
+                && NodeSelectionModel.IsComponentBrowserActive;
+        }
 
         public override async void Execute(ComponentCommandData parameter)
         {

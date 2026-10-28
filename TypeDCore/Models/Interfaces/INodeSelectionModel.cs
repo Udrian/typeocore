@@ -8,5 +8,11 @@ namespace TypeDCore.Models.Interfaces
         Project Project { get; }
         Component OpenedComponent { get; }
         Component SelectedNode { get; }
+        Component SelectedComponentType { get; }
+        bool IsComponentExplorerActive { get; }
+        bool IsComponentBrowserActive { get; }
+
+        void SetComponentExplorerActive();
+        void SetComponentBrowserActive(Project project, Component component);
     }
 }
