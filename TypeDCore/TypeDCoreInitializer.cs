@@ -86,7 +86,7 @@ namespace TypeDCore
             SetStartSceneCommand = new SetStartSceneCommand(Resources);
             AddComponentCommand = new AddComponentCommand(Resources);
             RemoveComponentCommand = new RemoveComponentCommand(Resources);
-            OpenComponentCommand = new OpenComponentCommand(Resources);
+            OpenComponentCommand = new OpenComponentCommand(project, Resources);
             CloseComponentCommand = new CloseComponentCommand(Resources);
             OpenInExternalCommand = new OpenInExternalCommand(Resources);
 
@@ -123,6 +123,8 @@ namespace TypeDCore
 
         public override void Uninitializer()
         {
+            OpenComponentCommand.Dispose();
+
             // Panels
             PanelModel.DetachPanel("typed_viewer");
             PanelModel.DetachPanel("typed_componentexplorer");

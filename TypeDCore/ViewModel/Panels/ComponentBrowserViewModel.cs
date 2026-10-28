@@ -53,7 +53,7 @@ namespace TypeDCore.ViewModel.Panels
             Nodes = TreeToNodeList(LoadedProject.ComponentTree.Nodes);
             TreeView.ItemsSource = Nodes;
 
-            OpenComponentCommand = new OpenComponentCommand(ResourceModel);
+            OpenComponentCommand = ResourceModel.Get<IEditorCommandRegistry>().GetCommand<OpenComponentCommand>("component.open");
         }
 
         // Functions
