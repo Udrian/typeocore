@@ -11,11 +11,13 @@ namespace TypeDCore.Commands
     {
         // Models
         IComponentModel ComponentModel { get; set; }
+        ICommandHistoryModel CommandHistoryModel { get; set; }
 
         // Constructors
         public AddComponentCommand(IResourceModel resourceModel) : base(resourceModel)
         {
             ComponentModel = ResourceModel.Get<IComponentModel>();
+            CommandHistoryModel = ResourceModel.Get<ICommandHistoryModel>();
         }
 
         public override async void Execute(AddComponentCommandData parameter)
@@ -37,6 +39,9 @@ namespace TypeDCore.Commands
             if(await dialog.ShowDialog<bool>(ViewModelBase.MainWindow) == true)
             {
                 ComponentModel.Add(parameter.Project, parameter.ToComponent, dialog.ViewModel.SelectedComponent);
+                CommandHistoryModel.Record(
+                    "Add component",
+                    $"Added {dialog.ViewModel.SelectedComponent.FullName} to {parameter.ToComponent.FullName}.");
             }
         }
     }

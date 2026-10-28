@@ -12,11 +12,13 @@ namespace TypeDCore.Commands
     {
         // Models
         IComponentModel ComponentModel { get; set; }
+        ICommandHistoryModel CommandHistoryModel { get; set; }
 
         // Constructors
         public RemoveComponentCommand(IResourceModel resourceModel) : base(resourceModel)
         {
             ComponentModel = ResourceModel.Get<IComponentModel>();
+            CommandHistoryModel = ResourceModel.Get<ICommandHistoryModel>();
         }
 
         public override async void Execute(RemoveComponentCommandData parameter)
@@ -29,7 +31,15 @@ namespace TypeDCore.Commands
 
             if (result != ButtonResult.Yes) return;
 
+            var componentName = parameter.Component.FullName;
+            var parent = parameter.Component.ParentComponent;
             ComponentModel.Remove(parameter.Project, parameter.Component);
+            if (parent != null)
+            {
+                CommandHistoryModel.Record(
+                    "Remove component",
+                    $"Removed {componentName} from {parent.FullName}.");
+            }
         }
     }
 }

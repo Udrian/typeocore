@@ -1,0 +1,40 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignHeight="450" d:DesignWidth="800"
+             x:Class="TypeDCore.View.Panels.CommandHistoryPanel">
+    <Grid RowDefinitions="Auto,*" Margin="8">
+        <TextBlock Text="Undo is not available yet." Margin="0,0,0,8"
+                   Foreground="#B9C0CA"/>
+        <Grid Grid.Row="1">
+            <TextBlock Text="No reversible commands have been recorded yet."
+                       IsVisible="{Binding HasNoEntries}" HorizontalAlignment="Center"
+                       VerticalAlignment="Center" Foreground="#B9C0CA"/>
+            <ScrollViewer IsVisible="{Binding HasEntries}"
+                          VerticalScrollBarVisibility="Auto">
+                <ItemsControl ItemsSource="{Binding Entries}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Background="#242830" BorderBrush="#505762"
+                                    BorderThickness="1" CornerRadius="3"
+                                    Padding="9,7" Margin="0,0,0,6">
+                                <StackPanel Spacing="4">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Text="{Binding CommandName}"
+                                                   FontWeight="Bold" Foreground="White"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding Timestamp}"
+                                                   FontSize="11" Foreground="#B9C0CA"
+                                                   Margin="8,0,0,0"/>
+                                    </Grid>
+                                    <TextBlock Text="{Binding Context}" TextWrapping="Wrap"
+                                               Foreground="#D7DBE2"/>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</UserControl>

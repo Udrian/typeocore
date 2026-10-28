@@ -1,7 +1,6 @@
 ﻿using Dock.Model.Core;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using TypeD;
 using TypeD.Models.Data;
@@ -36,6 +35,7 @@ namespace TypeDCore
         // Models
         ITypeDCoreProjectModel TypeDCoreProjectModel { get; set; }
         ITypeDCoreRestoreModel TypeDCoreRestoreModel { get; set; }
+        ICommandHistoryModel CommandHistoryModel { get; set; }
         ISettingModel SettingModel { get; set; }
         IPanelModel PanelModel { get; set; }
         IComponentModel ComponentModel { get; set; }
@@ -61,10 +61,12 @@ namespace TypeDCore
             // Internal Models
             TypeDCoreProjectModel = new TypeDCoreProjectModel();
             TypeDCoreRestoreModel = new TypeDCoreRestoreModel();
+            CommandHistoryModel = new CommandHistoryModel();
 
             Resources.Add(new List<object>() {
                  TypeDCoreProjectModel,
                  TypeDCoreRestoreModel,
+                 CommandHistoryModel
             });
 
             // Providers
@@ -101,6 +103,7 @@ namespace TypeDCore
             // Panels
             PanelModel.AttachPanel("typed_viewer", "Viewer", new ViewerPanel(project), Alignment.Unset);
             PanelModel.AttachPanel("typed_properties", "Properties", new PropertiesPanel(project), Alignment.Right);
+            PanelModel.AttachPanel("typed_commandhistory", "Command History", new CommandHistoryPanel(), Alignment.Right);
             PanelModel.AttachPanel("typed_componentexplorer", "Component Explorer", new ComponentExplorerPanel(project), Alignment.Left);
             PanelModel.AttachPanel("typed_content", "Content", new ContentPanel(project), Alignment.Bottom);
             PanelModel.AttachPanel("typed_output", "Output", new OutputPanel(), Alignment.Bottom);
@@ -126,6 +129,7 @@ namespace TypeDCore
             PanelModel.DetachPanel("typed_output");
             PanelModel.DetachPanel("typed_componentbrowser");
             PanelModel.DetachPanel("typed_properties");
+            PanelModel.DetachPanel("typed_commandhistory");
 
             // Internal Models
             Resources.Remove("TypeDCoreProjectModel");

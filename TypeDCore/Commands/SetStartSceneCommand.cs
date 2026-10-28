@@ -9,11 +9,13 @@ namespace TypeDCore.Commands
     {
         // Models
         ITypeDCoreProjectModel TypeDCoreProjectModel { get; set; }
+        ICommandHistoryModel CommandHistoryModel { get; set; }
 
         // Constructors
         public SetStartSceneCommand(IResourceModel resourceModel) : base(resourceModel)
         {
             TypeDCoreProjectModel = ResourceModel.Get<ITypeDCoreProjectModel>();
+            CommandHistoryModel = ResourceModel.Get<ICommandHistoryModel>();
         }
 
         public override void Execute(ComponentCommandData parameter)
@@ -21,7 +23,14 @@ namespace TypeDCore.Commands
             //var result = MessageBox.Show($"Do you want to set '{parameter.Component.FullName}' as start scene?", "Set Start Scene", MessageBoxButton.YesNo, MessageBoxImage.Warning);
             //if (result == MessageBoxResult.Yes)
             {
+                var previousStartScene = parameter.Project.StartScene;
                 TypeDCoreProjectModel.SetStartScene(parameter.Project, parameter.Component);
+                if (parameter.Project.StartScene != previousStartScene)
+                {
+                    CommandHistoryModel.Record(
+                        "Set start scene",
+                        $"Changed the start scene from {previousStartScene ?? "None"} to {parameter.Project.StartScene}.");
+                }
             }
         }
     }

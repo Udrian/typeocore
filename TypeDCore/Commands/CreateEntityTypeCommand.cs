@@ -7,7 +7,6 @@ using TypeDCore.Models.Data.Hooks;
 using TypeDCore.Models.Interfaces;
 using TypeDCore.View.Dialogs.Project;
 using TypeOEngine.Typedeaf.Core.Entities;
-using System.Threading.Tasks;
 
 namespace TypeDCore.Commands
 {
@@ -16,12 +15,14 @@ namespace TypeDCore.Commands
         // Models
         ITypeDCoreProjectModel TypeDCoreProjectModel { get; set; }
         IHookModel HookModel { get; set; }
+        ICommandHistoryModel CommandHistoryModel { get; set; }
 
         // Constructors
         public CreateEntityTypeCommand(IResourceModel resourceModel) : base(resourceModel)
         {
             TypeDCoreProjectModel = ResourceModel.Get<ITypeDCoreProjectModel>();
             HookModel = ResourceModel.Get<IHookModel>();
+            CommandHistoryModel = ResourceModel.Get<ICommandHistoryModel>();
         }
 
         public override async void Execute(CreateComponentCommandData parameter)
@@ -39,6 +40,9 @@ namespace TypeDCore.Commands
                     if (dialog.ViewModel.ComponentBaseType == typeof(Entity).FullName)
                     {
                         TypeDCoreProjectModel.CreateEntity(parameter.Project, dialog.ViewModel.ComponentName, dialog.ViewModel.ComponentNamespace, dialog.ViewModel.ParentComponent, dialog.ViewModel.ComponentUpdatable, dialog.ViewModel.ComponentDrawable);
+                        CommandHistoryModel.Record(
+                            "Create entity type",
+                            $"Created {dialog.ViewModel.ComponentNamespace}.{dialog.ViewModel.ComponentName} based on {dialog.ViewModel.ParentComponent?.FullName ?? "an unspecified base type"}.");
                     }
                 }
             }
