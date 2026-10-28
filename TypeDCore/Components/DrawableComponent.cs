@@ -18,7 +18,8 @@ namespace TypeDCore.Components
             {
                 ClassName = typeof(Drawable).Name,
                 Namespace = typeof(Drawable).Namespace,
-                Template = new DrawableComponentTemplate()
+                Template = new DrawableComponentTemplate(),
+                TypeOBaseType = typeof(Drawable)
             };
         }            
     }

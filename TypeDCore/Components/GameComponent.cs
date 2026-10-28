@@ -18,7 +18,8 @@ namespace TypeDCore.Components
             {
                 ClassName = typeof(Game).Name,
                 Namespace = typeof(Game).Namespace,
-                Template = new GameComponentTemplate()
+                Template = new GameComponentTemplate(),
+                TypeOBaseType = typeof(Game)
             };
         }
     }

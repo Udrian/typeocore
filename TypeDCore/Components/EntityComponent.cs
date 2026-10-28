@@ -18,7 +18,8 @@ namespace TypeDCore.Components
             {
                 ClassName = typeof(Entity).Name,
                 Namespace = typeof(Entity).Namespace,
-                Template = new EntityComponentTemplate()
+                Template = new EntityComponentTemplate(),
+                TypeOBaseType = typeof(Entity)
             };
         }
     }

@@ -18,7 +18,8 @@ namespace TypeDCore.Components
             {
                 ClassName = typeof(Scene).Name,
                 Namespace = typeof(Scene).Namespace,
-                Template = new SceneComponentTemplate()
+                Template = new SceneComponentTemplate(),
+                TypeOBaseType = typeof(Scene)
             };
         }
     }
