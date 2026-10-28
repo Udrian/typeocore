@@ -286,6 +286,47 @@ namespace TypeDCore.ViewModel.Panels
             }
         }
 
+        public class ColorPropertyNode : PropertyNode
+        {
+            public ColorPropertyNode(Component component, Property property, Action<PropertyNode, object> value_changed) : base(component, property, value_changed) { }
+
+            public override void RefreshValue()
+            {
+                base.RefreshValue();
+                OnPropertyChanged(nameof(AvaloniaColor));
+            }
+
+            public override object Value
+            {
+                get
+                {
+                    if (base.Value is Color colorValue)
+                        return colorValue;
+                    return new Color(255, 0, 0, 0);
+                }
+                set
+                {
+                    if (value is Color colorValue)
+                        base.Value = colorValue;
+                }
+            }
+
+            public Avalonia.Media.Color AvaloniaColor
+            {
+                get
+                {
+                    var color = (Color)Value;
+                    return Avalonia.Media.Color.FromArgb(color.A, color.R, color.G, color.B);
+                }
+                set
+                {
+                    var color = new Color(value.A, value.R, value.G, value.B);
+                    if (!color.Equals((Color)Value))
+                        Value = color;
+                }
+            }
+        }
+
         // Models
         public IHookModel HookModel { get; set; }
         public IEditorCommandRegistry EditorCommandRegistry { get; set; }
@@ -365,6 +406,7 @@ namespace TypeDCore.ViewModel.Panels
             RegisterPropertyTemplate<int, Int32PropertyNode>("Int32PropertyTemplate", "avares://TypeDCore/View/Panels/PropertyTemplates/Int32PropertyTemplate.axaml");
             RegisterPropertyTemplate<double, DoublePropertyNode>("DoublePropertyTemplate", "avares://TypeDCore/View/Panels/PropertyTemplates/DoublePropertyTemplate.axaml");
             RegisterPropertyTemplate<Vec2, Vec2PropertyNode>("Vec2PropertyTemplate", "avares://TypeDCore/View/Panels/PropertyTemplates/Vec2PropertyTemplate.axaml");
+            RegisterPropertyTemplate<Color, ColorPropertyNode>("ColorPropertyTemplate", "avares://TypeDCore/View/Panels/PropertyTemplates/ColorPropertyTemplate.axaml");
 
             // Fallback: use StringPropertyTemplate as default if available.
             if (stringTemplate != null)
