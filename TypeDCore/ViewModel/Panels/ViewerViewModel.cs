@@ -49,7 +49,9 @@ namespace TypeDCore.ViewModel.Panels
                 var setting = SettingModel.GetContext<MainWindowSettingContext>();
 
                 Viewer = PanelModel.CreateViewer(Project, setting.ViewerType.Value);
-                ViewerPanel.Tabs.Children.Add(Viewer as Control);
+                var viewerControl = Viewer as Control;
+                Grid.SetRow(viewerControl, 1);
+                ViewerPanel.ViewerHost.Children.Add(viewerControl);
 
                 Viewer.Init();
             }

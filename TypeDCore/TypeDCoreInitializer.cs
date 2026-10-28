@@ -41,6 +41,7 @@ namespace TypeDCore
         IComponentModel ComponentModel { get; set; }
         IEditorCommandRegistry EditorCommandRegistry { get; set; }
         NodeSelectionModel NodeSelectionModel { get; set; }
+        EditorToolModel EditorToolModel { get; set; }
 
         // Commands
         CreateEntityTypeCommand CreateEntityTypeCommand { get; set; }
@@ -66,12 +67,14 @@ namespace TypeDCore
             TypeDCoreRestoreModel = new TypeDCoreRestoreModel();
             CommandHistoryModel = new CommandHistoryModel();
             NodeSelectionModel = new NodeSelectionModel();
+            EditorToolModel = new EditorToolModel();
 
             Resources.Add(new List<object>() {
                  TypeDCoreProjectModel,
                  TypeDCoreRestoreModel,
                  CommandHistoryModel,
-                 NodeSelectionModel
+                 NodeSelectionModel,
+                 EditorToolModel
             });
 
             // Providers
@@ -157,6 +160,7 @@ namespace TypeDCore
             Resources.Remove("TypeDCoreRestoreModel");
             Resources.Remove("CommandHistoryModel");
             Resources.Remove("NodeSelectionModel");
+            Resources.Remove("EditorToolModel");
 
             // Hooks
             Hooks.RemoveHook<ProjectCreateHook>();
@@ -201,6 +205,10 @@ namespace TypeDCore
 
         void InitUI(InitUIHook hook)
         {
+            AddToolbarTool(hook, "Select", EditorTool.Selection, "M5,3 L5,19 L9.5,15 L12.5,21 L15,20 L12,14 L18,14 Z");
+            AddToolbarTool(hook, "Move", EditorTool.Move, "M12,2 L16,6 L13,6 L13,11 L18,11 L18,8 L22,12 L18,16 L18,13 L13,13 L13,18 L16,18 L12,22 L8,18 L11,18 L11,13 L6,13 L6,16 L2,12 L6,8 L6,11 L11,11 L11,6 L8,6 Z");
+            AddToolbarTool(hook, "Resize", EditorTool.Resize, "M14,3 L21,3 L21,10 L18.5,7.5 L7.5,18.5 L10,21 L3,21 L3,14 L5.5,16.5 L16.5,5.5 Z");
+
             hook.Menu.Items.Add(
                 new MenuItem() {
                     Name = "_Project",
@@ -273,6 +281,19 @@ namespace TypeDCore
                     }
                 }
             );
+        }
+
+        void AddToolbarTool(InitUIHook hook, string name, EditorTool tool, string iconData)
+        {
+            hook.Toolbar.Add("Tools", new ToolbarItem()
+            {
+                Name = name,
+                ToolTip = name,
+                IconData = iconData,
+                IsToggle = true,
+                IsChecked = () => EditorToolModel.ActiveTool == tool,
+                Click = _ => EditorToolModel.ActiveTool = tool
+            });
         }
 
         void ComponentTypeBrowserContextMenuOpened(ComponentTypeBrowserContextMenuOpenedHook hook)

@@ -68,6 +68,9 @@ namespace TypeDCore.ViewModel.Panels
         public Component Component => NodeSelectionModel.OpenedComponent;
         public ObservableCollection<Node> Nodes { get; set; }
 
+        [ObservableProperty]
+        private Node _selectedNode;
+
         // Constructors
         public ComponentExplorerViewModel(Control element, Project project) : base(element)
         {
@@ -83,8 +86,16 @@ namespace TypeDCore.ViewModel.Panels
                 {
                     Nodes.Clear();
                     if (Component != null)
+                    {
                         Nodes.Add(new Node(Component));
+                        SelectedNode = Nodes[0];
+                    }
                 }
+                else if (ReferenceEquals(hook.Project, LoadedProject)
+                    && Component != null
+                    && ReferenceEquals(GetRootComponent(hook.Component), Component))
+                    SelectedNode = Nodes.Flatten(node => node.Nodes)
+                        .FirstOrDefault(node => ReferenceEquals(node.Component, hook.Component));
             });
 
             HookModel.AddHook<CloseComponentHook>((hook) =>
@@ -158,6 +169,13 @@ namespace TypeDCore.ViewModel.Panels
         {
             NodeSelectionModel.SetComponentExplorerActive();
             HookModel.Shoot(new ComponentFocusHook() { Project = LoadedProject, Component = component, Root = false });
+        }
+
+        private static Component GetRootComponent(Component component)
+        {
+            while (component?.ParentComponent != null)
+                component = component.ParentComponent;
+            return component;
         }
 
         public void SetExplorerActive()

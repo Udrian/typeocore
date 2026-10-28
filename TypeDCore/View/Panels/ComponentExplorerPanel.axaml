@@ -8,6 +8,7 @@
              x:Class="TypeDCore.View.Panels.ComponentExplorerPanel"
              x:DataType="vm:ComponentExplorerViewModel">
     <TreeView Name="ComponentsTree" ItemsSource="{Binding Nodes}"
+              SelectedItem="{Binding SelectedNode}"
               SelectionChanged="ComponentsTree_SelectionChanged"
               GotFocus="ComponentsTree_GotFocus"
               KeyDown="ComponentsTree_KeyDown">

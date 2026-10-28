@@ -1,6 +1,11 @@
 ﻿using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
+using System;
 using TypeD.Models.Data;
+using TypeD.ViewModel;
+using TypeDCore.Models.Data;
+using TypeDCore.Models.Interfaces;
 using TypeDCore.ViewModel.Panels;
 
 namespace TypeDCore.View.Panels
