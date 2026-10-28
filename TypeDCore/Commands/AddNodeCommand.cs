@@ -60,6 +60,7 @@ namespace TypeDCore.Commands
             dialog.ViewModel.TypeFilter.Exclude = $"{typeof(Game).FullName};{typeof(TypeOEngine.Typedeaf.Core.Scene).FullName};";
 
             parentComponent.Template.ChildrenFilter(dialog.ViewModel.TypeFilter);
+            dialog.ViewModel.ExcludeAbstract = true;
 
             dialog.ViewModel.UpdateFilter();
             if(await dialog.ShowDialog<bool>(ViewModelBase.MainWindow) == true)

@@ -26,6 +26,12 @@ namespace TypeDCore.ViewModel.Dialogs.Project
         public Component SelectedComponent { get; set; }
         public FilterHelper TypeFilter { get; set; }
         public FilterHelper NameFilter { get; set; }
+        public bool ExcludeAbstract { get; set; }
+
+        private bool IsAbstract(Component component)
+        {
+            return ComponentModel.GetType(component)?.IsAbstract == true;
+        }
 
         // Constructors
         public ComponentSelectorViewModel(Control element, TypeD.Models.Data.Project project) : base(element)
@@ -57,6 +63,10 @@ namespace TypeDCore.ViewModel.Dialogs.Project
                     continue;
                 }
                 if(NameFilter.Filter(component.FullName))
+                {
+                    continue;
+                }
+                if (ExcludeAbstract && IsAbstract(component))
                 {
                     continue;
                 }
