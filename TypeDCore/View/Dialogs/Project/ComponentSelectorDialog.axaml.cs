@@ -27,6 +27,14 @@ namespace TypeDCore.View.Dialogs.Project
             };
             // Tunnel so the TextBox doesn't consume Up/Down first.
             tbFilter.AddHandler(KeyDownEvent, tbFilter_KeyDown, RoutingStrategies.Tunnel);
+            // Window level so Escape works whichever control has focus.
+            AddHandler(KeyDownEvent, (_, e) =>
+            {
+                if (e.Key != Key.Escape) return;
+                ViewModel.SelectedComponent = null;
+                e.Handled = true;
+                Close(false);
+            }, RoutingStrategies.Tunnel);
         }
 
         // Event Handlers
