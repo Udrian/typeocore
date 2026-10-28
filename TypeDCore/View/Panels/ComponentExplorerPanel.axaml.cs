@@ -51,14 +51,5 @@ namespace TypeDCore.View.Panels
             e.Handled = ViewModel.TryExecuteShortcut(shortcut, selectedItem.Component);
         }
 
-        private void Panel_Loaded(object sender, RoutedEventArgs e)
-        {
-            ViewModel.RegisterCommands();
-        }
-
-        private void Panel_Unloaded(object sender, RoutedEventArgs e)
-        {
-            ViewModel.UnregisterCommands();
-        }
     }
 }

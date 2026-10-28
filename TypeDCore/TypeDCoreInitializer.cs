@@ -519,7 +519,7 @@ namespace TypeDCore
                     ClickParameter = "LoadedProject",
                     Click = (param) =>
                     {
-                        EditorCommandRegistry.Execute("node.add", new AddNodeCommandData { Project = param as Project });
+                        EditorCommandRegistry.Execute("node.add-child", new AddNodeCommandData { Project = param as Project });
                     }
                 }
             );

@@ -40,7 +40,6 @@ namespace TypeDCore.ViewModel.Panels
         public IHookModel HookModel { get; set; }
         private INodeSelectionModel NodeSelectionModel { get; set; }
         IEditorCommandRegistry EditorCommandRegistry { get; set; }
-        IDisposable AddChildCommandRegistration { get; set; }
 
         // Data
         public Project LoadedProject { get; set; }
@@ -125,30 +124,12 @@ namespace TypeDCore.ViewModel.Panels
             }
         }
 
-        public void AddChildComponent(Component selectedComponent)
+        public bool TryExecuteShortcut(string shortcut, Component selectedComponent)
         {
             if (selectedComponent != null && !ReferenceEquals(SelectedComponent, selectedComponent))
                 SelectionChanged(selectedComponent);
 
-            var hook = CreateComponentContextMenu(selectedComponent);
-            var addChildItem = hook.Menu.Items.FirstOrDefault(item => item.Name == "_Add Child Node");
-            addChildItem?.Click?.Invoke(LoadedProject);
-        }
-
-        public bool TryExecuteShortcut(string shortcut, Component selectedComponent)
-        {
-            return EditorCommandRegistry.TryExecuteShortcut(shortcut, "component-explorer", selectedComponent);
-        }
-
-        public void UnregisterCommands()
-        {
-            AddChildCommandRegistration?.Dispose();
-            AddChildCommandRegistration = null;
-        }
-
-        public void RegisterCommands()
-        {
-            RegisterAddChildCommand();
+            return EditorCommandRegistry.TryExecuteShortcut(shortcut, "global");
         }
 
         public void SelectionChanged(Component component)
@@ -169,18 +150,5 @@ namespace TypeDCore.ViewModel.Panels
             return hook;
         }
 
-        private void RegisterAddChildCommand()
-        {
-            AddChildCommandRegistration?.Dispose();
-            AddChildCommandRegistration = EditorCommandRegistry.Register(
-                "node.add-child",
-                "Add child node",
-                "Add a child node to the selected node in the Component Explorer.",
-                "component-explorer",
-                "Ctrl+A",
-                parameter => AddChildComponent(parameter as Component),
-                parameter => parameter is Component,
-                () => SelectedComponent);
-        }
     }
 }

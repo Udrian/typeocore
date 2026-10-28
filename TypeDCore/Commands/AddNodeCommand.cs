@@ -26,11 +26,11 @@ namespace TypeDCore.Commands
             CommandHistoryModel = ResourceModel.Get<ICommandHistoryModel>();
             NodeSelectionModel = ResourceModel.Get<INodeSelectionModel>();
             Registration = ResourceModel.Get<IEditorCommandRegistry>().Register(
-                "node.add",
-                "Add node",
+                "node.add-child",
+                "Add child node",
                 "Add a child node to the selected node.",
                 "global",
-                string.Empty,
+                "Ctrl+A",
                 this,
                 () => new AddNodeCommandData { Project = NodeSelectionModel.Project });
         }
