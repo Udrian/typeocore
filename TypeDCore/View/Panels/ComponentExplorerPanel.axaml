@@ -7,13 +7,20 @@
              xmlns:local="clr-namespace:TypeDCore.View.Panels"
              x:Class="TypeDCore.View.Panels.ComponentExplorerPanel"
              x:DataType="vm:ComponentExplorerViewModel">
-    <TreeView Name="ComponentsTree" ItemsSource="{Binding Nodes}"
+    <DockPanel>
+    <TextBox DockPanel.Dock="Top" Text="{Binding FilterText}" Watermark="Filter nodes..." Margin="2"/>
+    <TreeView Name="ComponentsTree" ItemsSource="{Binding VisibleNodes}"
               SelectedItem="{Binding SelectedNode}"
               SelectionChanged="ComponentsTree_SelectionChanged"
               GotFocus="ComponentsTree_GotFocus"
               KeyDown="ComponentsTree_KeyDown">
+        <TreeView.Styles>
+            <Style Selector="TreeViewItem">
+                <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
+            </Style>
+        </TreeView.Styles>
         <TreeView.ItemTemplate>
-            <TreeDataTemplate ItemsSource="{Binding Nodes}">
+            <TreeDataTemplate ItemsSource="{Binding VisibleNodes}">
                 <Grid>
                     <TextBlock Text="{Binding Title}" IsVisible="{Binding !IsEditing}"/>
                     <TextBox Text="{Binding EditName}" IsVisible="{Binding IsEditing}"
@@ -26,4 +33,5 @@
             <ContextMenu Opened="ContextMenu_Opened"/>
         </TreeView.ContextMenu>
     </TreeView>
+    </DockPanel>
 </UserControl>

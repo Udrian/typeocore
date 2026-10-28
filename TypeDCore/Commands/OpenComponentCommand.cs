@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Linq;
+using TypeDCore.View.Panels;
 using TypeD.Commands;
 using TypeD.ViewModel;
 using TypeD.Models.Interfaces;
@@ -46,6 +48,11 @@ namespace TypeDCore.Commands
             if (parameter.Component == null) return;
 
             ComponentModel.Open(parameter.Project, parameter.Component);
+
+            const string explorerId = "typed_componentexplorer";
+            var panelModel = ResourceModel.Get<IPanelModel>();
+            panelModel.OpenPanel(explorerId);
+            (panelModel.GetPanels().FirstOrDefault(p => p.ID == explorerId)?.PanelView as ComponentExplorerPanel)?.FocusTree();
         }
 
         public void Dispose()

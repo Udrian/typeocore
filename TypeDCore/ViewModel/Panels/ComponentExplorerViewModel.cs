@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Avalonia.Controls;
 using CommunityToolkit.Mvvm.ComponentModel;
 using System.Collections.ObjectModel;
@@ -47,11 +48,63 @@ namespace TypeDCore.ViewModel.Panels
             [ObservableProperty]
             private ObservableCollection<Node> _nodes;
 
+            [ObservableProperty]
+            private bool _isExpanded;
+
+            public ObservableCollection<Node> VisibleNodes { get; } = new ObservableCollection<Node>();
+
+            private bool _isMatch = true;
+            public bool IsMatch => _isMatch;
+
             public Node(Component component) : base()
             {
                 Component = component;
                 Nodes = new ObservableCollection<Node>(Component.Children.Select(c => new Node(c)));
+                foreach (var node in Nodes)
+                    VisibleNodes.Add(node);
                 UpdateTitle();
+            }
+
+            public bool ApplyFilter(string filter)
+            {
+                var childMatch = false;
+                foreach (var child in Nodes)
+                    childMatch |= child.ApplyFilter(filter);
+
+                _isMatch = string.IsNullOrEmpty(filter) || MatchesFilter(filter);
+                SyncVisible(VisibleNodes, Nodes.Where(n => n._isMatch || n.HasVisibleDescendants).ToList());
+                if (!string.IsNullOrEmpty(filter) && VisibleNodes.Count > 0)
+                    IsExpanded = true;
+                return _isMatch || childMatch;
+            }
+
+            private bool HasVisibleDescendants => VisibleNodes.Count > 0;
+
+            private bool MatchesFilter(string filter)
+            {
+                if (Component.FullName?.Contains(filter, StringComparison.OrdinalIgnoreCase) ?? false)
+                    return true;
+                return Component.Properties.Any(p =>
+                    (p.Name?.Contains(filter, StringComparison.OrdinalIgnoreCase) ?? false)
+                    || (p.Value?.ToString()?.Contains(filter, StringComparison.OrdinalIgnoreCase) ?? false));
+            }
+
+            public static void SyncVisible(ObservableCollection<Node> target, List<Node> desired)
+            {
+                for (var i = target.Count - 1; i >= 0; i--)
+                    if (!desired.Contains(target[i]))
+                        target.RemoveAt(i);
+
+                for (var i = 0; i < desired.Count; i++)
+                {
+                    if (i < target.Count && ReferenceEquals(target[i], desired[i]))
+                        continue;
+                    var existing = target.IndexOf(desired[i]);
+                    if (existing >= 0)
+                        target.Move(existing, i);
+                    else
+                        target.Insert(i, desired[i]);
+                }
             }
         }
 
@@ -67,6 +120,20 @@ namespace TypeDCore.ViewModel.Panels
         // Properties
         public Component Component => NodeSelectionModel.OpenedComponent;
         public ObservableCollection<Node> Nodes { get; set; }
+        public ObservableCollection<Node> VisibleNodes { get; } = new ObservableCollection<Node>();
+
+        [ObservableProperty]
+        private string _filterText = "";
+
+        partial void OnFilterTextChanged(string value) => RefreshFilter();
+
+        private void RefreshFilter()
+        {
+            var filter = FilterText?.Trim();
+            foreach (var node in Nodes)
+                node.ApplyFilter(filter);
+            Node.SyncVisible(VisibleNodes, Nodes.Where(n => n.IsMatch || n.VisibleNodes.Count > 0).ToList());
+        }
 
         [ObservableProperty]
         private Node _selectedNode;
@@ -90,6 +157,7 @@ namespace TypeDCore.ViewModel.Panels
                         Nodes.Add(new Node(Component));
                         SelectedNode = Nodes[0];
                     }
+                    RefreshFilter();
                 }
                 else if (ReferenceEquals(hook.Project, LoadedProject)
                     && Component != null
@@ -102,6 +170,7 @@ namespace TypeDCore.ViewModel.Panels
             {
                 if (ReferenceEquals(hook.Project, LoadedProject) && NodeSelectionModel.OpenedComponent == null)
                     Nodes.Clear();
+                    RefreshFilter();
             });
 
             HookModel.AddHook<ComponentAddedHook>((hook) =>
@@ -110,6 +179,7 @@ namespace TypeDCore.ViewModel.Panels
                 if (node != null)
                 {
                     node.Nodes.Add(new Node(hook.Child));
+                    RefreshFilter();
                 }
             });
             
@@ -122,6 +192,7 @@ namespace TypeDCore.ViewModel.Panels
                     if (childNode != null)
                     {
                         node.Nodes.Remove(childNode);
+                        RefreshFilter();
                     }
                 }
             });
@@ -136,6 +207,8 @@ namespace TypeDCore.ViewModel.Panels
                         node.UpdateTitle();
                     }
                 }
+                if (!string.IsNullOrWhiteSpace(FilterText))
+                    RefreshFilter();
             });
         }
 

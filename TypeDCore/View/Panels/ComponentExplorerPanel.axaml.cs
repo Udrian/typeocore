@@ -38,6 +38,17 @@ namespace TypeDCore.View.Panels
             }
         }
 
+        public void FocusTree()
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                var item = ComponentsTree.GetSelfAndVisualDescendants()
+                    .OfType<TreeViewItem>()
+                    .FirstOrDefault(treeItem => treeItem.IsSelected);
+                (item ?? (Control)ComponentsTree).Focus();
+            }, DispatcherPriority.Background);
+        }
+
         private void ComponentsTree_GotFocus(object sender, RoutedEventArgs e)
         {
             ViewModel.SetExplorerActive();
