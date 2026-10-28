@@ -672,6 +672,25 @@ namespace TypeDCore
             });
         }
 
+        private static object GetDefaultValue(Type componentType, PropertyInfo property)
+        {
+            try
+            {
+                if (!componentType.IsAbstract && property.CanRead)
+                {
+                    var instance = Activator.CreateInstance(componentType, true);
+                    var value = property.GetValue(instance);
+                    if (value != null)
+                        return value;
+                }
+            }
+            catch { }
+
+            return property.PropertyType.IsValueType || property.PropertyType.GetConstructor(Type.EmptyTypes) != null
+                ? Activator.CreateInstance(property.PropertyType)
+                : null;
+        }
+
         public void ExtractProperties(ExtractPropertiesHook hook)
         {
             var componentType = ComponentModel.GetType(hook.Component);
@@ -701,7 +720,7 @@ namespace TypeDCore
                         Name = property.Name,
                         Description = typeOPropertyAttribute.Description,
                         Type = property.PropertyType,
-                        Value = typeOPropertyAttribute.DefaultValue ?? Activator.CreateInstance(property.PropertyType),
+                        Value = typeOPropertyAttribute.DefaultValue ?? GetDefaultValue(componentType, property),
                         FromComponent = property.DeclaringType.FullName == componentType.FullName ? hook.Component : ComponentProvider.Load(Project, property.DeclaringType.FullName),
                         ReadOnly = (property.CanWrite && property.GetSetMethod(true).IsPublic) ? false : true
                     });
