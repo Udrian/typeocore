@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Dock.Model.Core;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -98,12 +99,12 @@ namespace TypeDCore
             // Settings
 
             // Panels
-            PanelModel.AttachPanel("typed_viewer", "Viewer", new ViewerPanel(project));
-            PanelModel.AttachPanel("typed_componentexplorer", "Component Explorer", new ComponentExplorerPanel(project));
-            PanelModel.AttachPanel("typed_output", "Output", new OutputPanel());
-            PanelModel.AttachPanel("typed_componentbrowser", "Component Browser", new ComponentBrowserPanel(project));
-            PanelModel.AttachPanel("typed_properties", "Properties", new PropertiesPanel(project));
-            PanelModel.AttachPanel("typed_content", "Content", new ContentPanel(project));
+            PanelModel.AttachPanel("typed_viewer", "Viewer", new ViewerPanel(project), Alignment.Unset);
+            PanelModel.AttachPanel("typed_properties", "Properties", new PropertiesPanel(project), Alignment.Right);
+            PanelModel.AttachPanel("typed_componentexplorer", "Component Explorer", new ComponentExplorerPanel(project), Alignment.Left);
+            PanelModel.AttachPanel("typed_content", "Content", new ContentPanel(project), Alignment.Bottom);
+            PanelModel.AttachPanel("typed_output", "Output", new OutputPanel(), Alignment.Bottom);
+            PanelModel.AttachPanel("typed_componentbrowser", "Component Browser", new ComponentBrowserPanel(project), Alignment.Left);
 
             // Viewers
             PanelModel.AddViewer<ConsoleViewer>();

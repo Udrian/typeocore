@@ -6,8 +6,7 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              xmlns:local="clr-namespace:TypeDCore.View.Panels"
              x:Class="TypeDCore.ContentPanel"
-             x:DataType="vm:ContentPanelViewModel"
-             Loaded="OnLoaded">
+             x:DataType="vm:ContentPanelViewModel">
     <Grid RowDefinitions="Auto, *" Margin="8">
         <StackPanel Orientation="Horizontal" Spacing="8">
             <TextBox Width="300" Watermark="Search..." Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>

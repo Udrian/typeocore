@@ -1,5 +1,4 @@
 using Avalonia.Controls;
-using Avalonia.Interactivity;
 using TypeD.Models.Data;
 using TypeDCore.ViewModel.Panels;
 
@@ -14,10 +13,12 @@ public partial class ContentPanel : UserControl
     {
         DataContext = ViewModel = new ContentPanelViewModel(this, project);
         InitializeComponent();
+
+        LoadContentAsync();
     }
 
-    private void OnLoaded(object? sender, RoutedEventArgs e)
+    private async void LoadContentAsync()
     {
-        ViewModel.LoadAllContent();
+        await ViewModel.LoadAllContent();
     }
 }
