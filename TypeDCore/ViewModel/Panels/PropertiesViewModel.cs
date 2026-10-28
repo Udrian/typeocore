@@ -90,7 +90,7 @@ namespace TypeDCore.ViewModel.Panels
                 ValueChanged = value_changed;
             }
 
-            public void RefreshValue()
+            public virtual void RefreshValue()
             {
                 OnPropertyChanged(nameof(Value));
             }
@@ -210,6 +210,13 @@ namespace TypeDCore.ViewModel.Panels
         public class Vec2PropertyNode : PropertyNode
         {
             public Vec2PropertyNode(Component component, Property property, Action<PropertyNode, object> value_changed) : base(component, property, value_changed) { }
+
+            public override void RefreshValue()
+            {
+                base.RefreshValue();
+                OnPropertyChanged(nameof(ValueX));
+                OnPropertyChanged(nameof(ValueY));
+            }
 
             public override object Value
             {
@@ -334,10 +341,12 @@ namespace TypeDCore.ViewModel.Panels
 
             HookModel.AddHook<PropertyChangedHook>((hook) =>
             {
-                if (!ReferenceEquals(Component, hook.Component))
+                if (!ReferenceEquals(Component, hook.Component) || hook.Property == null)
                     return;
 
-                PropertyNodes.FirstOrDefault(node => ReferenceEquals(node.Property, hook.Property))?.RefreshValue();
+                var propertyNode = PropertyNodes.FirstOrDefault(node => ReferenceEquals(node.Property, hook.Property))
+                    ?? PropertyNodes.FirstOrDefault(node => node.Property.Name == hook.Property.Name);
+                propertyNode?.RefreshValue();
             });
 
             HookModel.AddHook<CloseComponentHook>((hook) =>
