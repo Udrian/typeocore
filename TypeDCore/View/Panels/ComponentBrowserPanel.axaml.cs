@@ -26,7 +26,7 @@ namespace TypeDCore.View.Panels
             DataContext = ViewModel;
         }
 
-        private void ContextMenu_Opened(object sender, RoutedEventArgs e)
+        private void ContextMenu_Opening(object sender, System.ComponentModel.CancelEventArgs e)
         {
             ViewModel.ContextMenuOpened(sender as ContextMenu, TreeView.SelectedItem as ComponentBrowserViewModel.Node);
         }

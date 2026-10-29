@@ -158,7 +158,7 @@ namespace TypeDCore.ViewModel.Panels
                     Nodes.Clear();
                     if (Component != null)
                     {
-                        Nodes.Add(new Node(Component));
+                        Nodes.Add(new Node(Component) { IsExpanded = true });
                         SelectedNode = Nodes[0];
                     }
                     RefreshFilter();

@@ -34,7 +34,7 @@
         </TreeView.ItemTemplate>
         
         <TreeView.ContextMenu>
-            <ContextMenu Opened="ContextMenu_Opened"/>
+            <ContextMenu Opening="ContextMenu_Opening"/>
         </TreeView.ContextMenu>
     </TreeView>
     </DockPanel>
