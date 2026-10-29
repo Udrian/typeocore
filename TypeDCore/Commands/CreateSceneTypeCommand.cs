@@ -44,14 +44,15 @@ namespace TypeDCore.Commands
                 var className = dialog.ViewModel.ComponentName;
                 var @namespace = dialog.ViewModel.ComponentNamespace;
                 var parent = dialog.ViewModel.ParentComponent;
+                var icon = dialog.ViewModel.IconName;
                 var component = TypeDCoreProjectModel.CreateScene(
-                    parameter.Project, className, @namespace, parent);
+                    parameter.Project, className, @namespace, parent, icon);
                 CommandHistoryModel.Record(
                     "Create scene type",
                     $"Created {component.FullName} based on {parent?.FullName ?? "an unspecified base type"}.",
                     () => ComponentProvider.Delete(parameter.Project, component),
                     () => component = TypeDCoreProjectModel.CreateScene(
-                        parameter.Project, className, @namespace, parent));
+                        parameter.Project, className, @namespace, parent, icon));
             }
         }
     }

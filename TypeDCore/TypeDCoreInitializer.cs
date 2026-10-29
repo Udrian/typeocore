@@ -54,6 +54,7 @@ namespace TypeDCore
         CreateDrawableTypeCommand CreateDrawableTypeCommand { get; set; }
         DeleteComponentTypeCommand DeleteComponentTypeCommand { get; set; }
         RenameComponentTypeCommand RenameComponentTypeCommand { get; set; }
+        ChangeComponentIconCommand ChangeComponentIconCommand { get; set; }
         SetStartSceneCommand SetStartSceneCommand { get; set; }
         AddNodeCommand AddNodeCommand { get; set; }
         RemoveNodeCommand RemoveNodeCommand { get; set; }
@@ -113,6 +114,7 @@ namespace TypeDCore
             CreateDrawableTypeCommand = new CreateDrawableTypeCommand(project, Resources);
             DeleteComponentTypeCommand = new DeleteComponentTypeCommand(Resources);
             RenameComponentTypeCommand = new RenameComponentTypeCommand(Resources);
+            ChangeComponentIconCommand = new ChangeComponentIconCommand(Resources);
             SetStartSceneCommand = new SetStartSceneCommand(Resources);
             AddNodeCommand = new AddNodeCommand(Resources);
             RemoveNodeCommand = new RemoveNodeCommand(Resources);
@@ -164,6 +166,7 @@ namespace TypeDCore
             CreateDrawableTypeCommand.Dispose();
             DeleteComponentTypeCommand.Dispose();
             RenameComponentTypeCommand.Dispose();
+            ChangeComponentIconCommand.Dispose();
             SetStartSceneCommand.Dispose();
             AddNodeCommand.Dispose();
             RemoveNodeCommand.Dispose();
@@ -432,6 +435,20 @@ namespace TypeDCore
                             Click = (param) =>
                             {
                                 EditorCommandRegistry.Execute("component.rename-type", new ComponentCommandData() { Component = component, Project = param as Project });
+                            }
+                        }
+                    );
+                }
+                if (!component.ReadOnly)
+                {
+                    hook.Menu.Items.Add(
+                        new MenuItem()
+                        {
+                            Name = "Change _Icon...",
+                            ClickParameter = "LoadedProject",
+                            Click = (param) =>
+                            {
+                                EditorCommandRegistry.Execute("component.change-icon", new ComponentCommandData() { Component = component, Project = param as Project });
                             }
                         }
                     );

@@ -5,6 +5,7 @@ using Avalonia.Controls;
 using Avalonia.Platform.Storage;
 using TypeD.Models.Data;
 using TypeD.ViewModel;
+using TypeDCore.Models;
 using TypeDCore.View.Dialogs.Project;
 
 namespace TypeDCore.ViewModel.Dialogs.Project
@@ -21,6 +22,19 @@ namespace TypeDCore.ViewModel.Dialogs.Project
         public string ParentComponentFullName { get; set; }
         public Component ParentComponent { get; set; }
         public string ComponentBaseType { get; set; }
+
+        /// <summary>
+        /// The icon explicitly chosen for the new component, or <see langword="null"/> to inherit the one of the parent component.
+        /// </summary>
+        public string IconName { get; private set; }
+        public Avalonia.Media.Imaging.Bitmap IconPreview
+        {
+            get { return IconCache.Get(Project, IconName ?? ParentComponent?.ResolvedIcon); }
+        }
+        public string IconText
+        {
+            get { return IconName ?? $"{ParentComponent?.ResolvedIcon ?? Component.DefaultIcon} (inherited)"; }
+        }
 
         // Constructors
         public CreateComponentTypeBaseViewModel(Control element, TypeD.Models.Data.Project project, string @namespace, Component componentBaseType) : base(element)
@@ -89,6 +103,19 @@ namespace TypeDCore.ViewModel.Dialogs.Project
         {
             ParentComponent = parentComponent;
             ParentComponentFullName = ParentComponent.FullName;
+            OnPropertyChanged(nameof(IconPreview));
+            OnPropertyChanged(nameof(IconText));
+        }
+
+        public async Task OpenIcons()
+        {
+            var dialog = new IconSelectorDialog(Project, IconName ?? ParentComponent?.ResolvedIcon);
+            if (await dialog.ShowDialog<bool>(ViewModelBase.MainWindow) == true && dialog.SelectedIcon != null)
+            {
+                IconName = dialog.SelectedIcon;
+                OnPropertyChanged(nameof(IconPreview));
+                OnPropertyChanged(nameof(IconText));
+            }
         }
     }
 }

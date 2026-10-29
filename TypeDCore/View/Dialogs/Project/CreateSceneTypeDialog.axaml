@@ -38,6 +38,12 @@
                     <TextBox Name="txtParentComponent" Margin="5,0,0,0" IsEnabled="False" Text="{Binding ParentComponentFullName}"/>
                     <Button Name="btnOpenInherit" Content="_..." Width="25" Grid.Column="1" Margin="5,0,0,0" HorizontalAlignment="Left" Click="btnOpenInherit_Click"/>
                 </Grid>
+                <Label FontSize="16" Content="_Icon:" Target="{Binding ElementName=btnOpenIcon}" />
+                <Grid ColumnDefinitions="Auto,*,75" Margin="5,0,0,0">
+                    <Image Source="{Binding IconPreview}" Width="24" Height="24"/>
+                    <TextBlock Grid.Column="1" Text="{Binding IconText}" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                    <Button Name="btnOpenIcon" Grid.Column="2" Content="_..." Width="25" Margin="5,0,0,0" HorizontalAlignment="Left" Click="btnOpenIcon_Click"/>
+                </Grid>
             </StackPanel>
         </DockPanel>
     </Grid>

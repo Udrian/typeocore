@@ -21,7 +21,7 @@
                         <ColumnDefinition Width="5"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <Image Grid.Column="0" Source="{Binding IconPath}" Width="8" Height="8"/>
+                    <Image Grid.Column="0" Source="{Binding Icon}" Width="16" Height="16"/>
                     <TextBlock Grid.Column="2" Text="{Binding Name}"/>
                 </Grid>
             </TreeDataTemplate>

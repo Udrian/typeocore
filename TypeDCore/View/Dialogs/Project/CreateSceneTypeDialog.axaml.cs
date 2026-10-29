@@ -39,5 +39,10 @@ namespace TypeDCore.View.Dialogs.Project
         {
             ViewModel.OpenComponents();
         }
+
+        private void btnOpenIcon_Click(object sender, RoutedEventArgs e)
+        {
+            ViewModel.OpenIcons();
+        }
     }
 }

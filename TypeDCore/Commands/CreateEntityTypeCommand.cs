@@ -60,14 +60,15 @@ namespace TypeDCore.Commands
                         var parent = dialog.ViewModel.ParentComponent;
                         var updatable = dialog.ViewModel.ComponentUpdatable;
                         var drawable = dialog.ViewModel.ComponentDrawable;
+                        var icon = dialog.ViewModel.IconName;
                         var component = TypeDCoreProjectModel.CreateEntity(
-                            parameter.Project, className, @namespace, parent, updatable, drawable);
+                            parameter.Project, className, @namespace, parent, updatable, drawable, icon);
                         CommandHistoryModel.Record(
                             "Create entity type",
                             $"Created {component.FullName} based on {parent?.FullName ?? "an unspecified base type"}.",
                             () => ComponentProvider.Delete(parameter.Project, component),
                             () => component = TypeDCoreProjectModel.CreateEntity(
-                                parameter.Project, className, @namespace, parent, updatable, drawable));
+                                parameter.Project, className, @namespace, parent, updatable, drawable, icon));
                     }
                 }
             }

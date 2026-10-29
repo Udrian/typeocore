@@ -19,7 +19,8 @@ namespace TypeDCore.Components
                 ClassName = typeof(Entity).Name,
                 Namespace = typeof(Entity).Namespace,
                 Template = new EntityComponentTemplate(),
-                TypeOBaseType = typeof(Entity)
+                TypeOBaseType = typeof(Entity),
+                Icon = "entity.png"
             };
         }
     }

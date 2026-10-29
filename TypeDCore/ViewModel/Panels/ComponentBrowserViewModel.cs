@@ -1,7 +1,11 @@
-﻿using System.Collections.Generic;
+using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using Avalonia.Controls;
+using Avalonia.Media.Imaging;
+using Avalonia.Platform;
 using Avalonia.Threading;
+using TypeDCore.Models;
 using TypeD.Helpers;
 using TypeD.Models.Data;
 using TypeD.Models.Data.Hooks;
@@ -17,7 +21,28 @@ namespace TypeDCore.ViewModel.Panels
     {
         public class Node
         {
-            public string IconPath { get { return $"/Icons/{Component}.png"; } }
+            public TypeD.Models.Data.Project Project { get; set; }
+            public Bitmap Icon
+            {
+                get
+                {
+                    if (Context.Item is Component component)
+                        return IconCache.Get(Project, component.ResolvedIcon);
+                    return NamespaceIcon.Value;
+                }
+            }
+
+            private static readonly Lazy<Bitmap> NamespaceIcon = new Lazy<Bitmap>(() =>
+            {
+                try
+                {
+                    return new Bitmap(AssetLoader.Open(new Uri("avares://TypeDitor/Icons/namespace.png")));
+                }
+                catch (Exception)
+                {
+                    return null;
+                }
+            });
             public string Name { get { return Context.Name; } }
             public string Key { get { return Context.Key; } }
             public string Component { 
@@ -70,6 +95,7 @@ namespace TypeDCore.ViewModel.Panels
             {
                 nodes.Add(new Node()
                 {
+                    Project = LoadedProject,
                     Context = treeNode,
                     Nodes = TreeToNodeList(treeNode.Nodes)
                 });

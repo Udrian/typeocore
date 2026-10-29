@@ -19,7 +19,8 @@ namespace TypeDCore.Components
                 ClassName = typeof(Drawable).Name,
                 Namespace = typeof(Drawable).Namespace,
                 Template = new DrawableComponentTemplate(),
-                TypeOBaseType = typeof(Drawable)
+                TypeOBaseType = typeof(Drawable),
+                Icon = "drawable.png"
             };
         }            
     }

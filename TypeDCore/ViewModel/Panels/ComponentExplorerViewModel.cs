@@ -12,6 +12,7 @@ using TypeD.ViewModel;
 using TypeDCore.Commands;
 using TypeDCore.Commands.Data;
 using TypeDCore.Models.Interfaces;
+using TypeDCore.Models;
 
 namespace TypeDCore.ViewModel.Panels
 {
@@ -79,6 +80,11 @@ namespace TypeDCore.ViewModel.Panels
             }
 
             public string VisibilityIcon => IsPublic ? "\U0001F310" : "\U0001F512";
+
+            public Avalonia.Media.Imaging.Bitmap Icon =>
+                IconCache.Get(ResourceModel.Get<INodeSelectionModel>().Project, Component.ResolvedIcon);
+
+            public void RefreshIcon() => OnPropertyChanged(nameof(Icon));
 
             public bool ShowVisibilityIcon => Component.ParentComponent != null;
 
@@ -272,6 +278,19 @@ namespace TypeDCore.ViewModel.Panels
                 var childNode = Nodes.Flatten(n => n.Nodes).FirstOrDefault(n => ReferenceEquals(n.Component, hook.Child));
                 if (childNode != null)
                     childNode.IsPublic = hook.Child.Public;
+            });
+
+            HookModel.AddHook<ComponentIconChangedHook>((hook) =>
+            {
+                foreach (var node in Nodes.Flatten(n => n.Nodes))
+                {
+                    for (var component = node.Component; component != null; component = component.BaseInheritedComponent)
+                    {
+                        if (component.FullName == hook.Component.FullName)
+                            component.Icon = hook.Component.Icon;
+                    }
+                    node.RefreshIcon();
+                }
             });
             
             HookModel.AddHook<ComponentRemovedHook>((hook) =>

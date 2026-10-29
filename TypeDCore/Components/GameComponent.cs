@@ -19,7 +19,8 @@ namespace TypeDCore.Components
                 ClassName = typeof(Game).Name,
                 Namespace = typeof(Game).Namespace,
                 Template = new GameComponentTemplate(),
-                TypeOBaseType = typeof(Game)
+                TypeOBaseType = typeof(Game),
+                Icon = "game.png"
             };
         }
     }
