@@ -51,6 +51,9 @@ namespace TypeDCore.ViewModel.Panels
             [ObservableProperty]
             private bool _isExpanded;
 
+            [ObservableProperty]
+            private bool _isRemoved;
+
             public ObservableCollection<Node> VisibleNodes { get; } = new ObservableCollection<Node>();
 
             private bool _isMatch = true;
@@ -59,6 +62,7 @@ namespace TypeDCore.ViewModel.Panels
             public Node(Component component) : base()
             {
                 Component = component;
+                IsRemoved = component.Removed;
                 Nodes = new ObservableCollection<Node>(Component.Children.Select(c => new Node(c)));
                 foreach (var node in Nodes)
                     VisibleNodes.Add(node);
@@ -195,6 +199,13 @@ namespace TypeDCore.ViewModel.Panels
                         RefreshFilter();
                     }
                 }
+            });
+
+            HookModel.AddHook<ComponentRemovedStateChangedHook>((hook) =>
+            {
+                var childNode = Nodes.Flatten(n => n.Nodes).FirstOrDefault(n => ReferenceEquals(n.Component, hook.Child));
+                if (childNode != null)
+                    childNode.IsRemoved = hook.Child.Removed;
             });
 
             HookModel.AddHook<PropertyChangedHook>((hook) =>

@@ -41,13 +41,20 @@ namespace TypeDCore.Commands
                 && selectedNode != null
                 && _nodeSelectionModel.IsComponentExplorerActive
                 && !ReferenceEquals(selectedNode, _nodeSelectionModel.OpenedComponent)
-                && selectedNode.ParentComponent != null;
+                && selectedNode.ParentComponent != null
+                && !selectedNode.Removed;
+        }
+
+        private static bool IsInheritedFromInstance(TypeD.Models.Data.Component component)
+        {
+            var parent = component.ParentComponent;
+            return parent?.ParentComponent != null && parent.DefinitionChildren.Contains(component);
         }
 
         public override async void Execute(RemoveNodeCommandData parameter)
         {
             var component = _nodeSelectionModel.SelectedNode;
-            if (component == null || ReferenceEquals(component, _nodeSelectionModel.OpenedComponent))
+            if (component == null || ReferenceEquals(component, _nodeSelectionModel.OpenedComponent) || component.Removed)
                 return;
 
             var name = component.Properties.FirstOrDefault(property => property.Name == "Name")?.Value as string;
@@ -60,6 +67,17 @@ namespace TypeDCore.Commands
 
             var componentName = component.FullName;
             var parent = component.ParentComponent;
+            if (IsInheritedFromInstance(component))
+            {
+                _componentModel.SetRemoved(parameter.Project, component, true);
+                _commandHistoryModel.Record(
+                    "Remove node",
+                    $"Removed inherited {componentName} from {parent.FullName}.",
+                    () => _componentModel.SetRemoved(parameter.Project, component, false),
+                    () => _componentModel.SetRemoved(parameter.Project, component, true));
+                return;
+            }
+
             _componentModel.Remove(parameter.Project, component);
             if (parent == null)
                 return;

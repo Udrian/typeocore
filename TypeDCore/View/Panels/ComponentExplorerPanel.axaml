@@ -18,11 +18,15 @@
             <Style Selector="TreeViewItem">
                 <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
             </Style>
+            <Style Selector="TextBlock.removed">
+                <Setter Property="TextDecorations" Value="Strikethrough"/>
+                <Setter Property="Opacity" Value="0.5"/>
+            </Style>
         </TreeView.Styles>
         <TreeView.ItemTemplate>
             <TreeDataTemplate ItemsSource="{Binding VisibleNodes}">
                 <Grid>
-                    <TextBlock Text="{Binding Title}" IsVisible="{Binding !IsEditing}"/>
+                    <TextBlock Text="{Binding Title}" IsVisible="{Binding !IsEditing}" Classes.removed="{Binding IsRemoved}"/>
                     <TextBox Text="{Binding EditName}" IsVisible="{Binding IsEditing}"
                              KeyDown="NodeName_KeyDown"/>
                 </Grid>
