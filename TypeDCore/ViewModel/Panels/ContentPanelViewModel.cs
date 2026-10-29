@@ -43,9 +43,14 @@ namespace TypeDCore.ViewModel.Panels
             public Content Content { get; private set; }
             public DateTime LastWrite { get; set; }
 
+            private Avalonia.Controls.Control _toolTipContent;
+            public Avalonia.Controls.Control ToolTipContent => _toolTipContent ??= Content?.CreateToolTip();
+
             public void SetContent(Content content)
             {
                 Content = content;
+                _toolTipContent = null;
+                OnPropertyChanged(nameof(ToolTipContent));
                 Title = content.Name;
                 Path = content.Path;
                 Thumbnail = content.Thumbnail;
