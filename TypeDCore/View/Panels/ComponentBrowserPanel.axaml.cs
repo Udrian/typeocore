@@ -5,6 +5,7 @@ using Avalonia.Interactivity;
 using Avalonia.VisualTree;
 using System.Linq;
 using TypeD.Models.Data;
+using TypeDCore.Models;
 using TypeDCore.ViewModel.Panels;
 
 namespace TypeDCore.View.Panels
@@ -24,6 +25,53 @@ namespace TypeDCore.View.Panels
 
             ViewModel = new ComponentBrowserViewModel(this, project, TreeView);
             DataContext = ViewModel;
+
+            TreeView.AddHandler(PointerPressedEvent, TreeView_PointerPressed, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, true);
+            TreeView.AddHandler(PointerMovedEvent, TreeView_PointerMoved, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, true);
+            TreeView.AddHandler(PointerReleasedEvent, (_, _) => _pressed = null, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, true);
+        }
+
+        private PointerPressedEventArgs _pressed;
+        private Component _dragComponent;
+        private Point _pressedPosition;
+
+        private void TreeView_PointerPressed(object sender, PointerPressedEventArgs e)
+        {
+            var node = (e.Source as Visual)?.GetSelfAndVisualAncestors().OfType<TreeViewItem>().FirstOrDefault()?.DataContext as ComponentBrowserViewModel.Node;
+            _dragComponent = node?.Context.Item as Component;
+            _pressed = _dragComponent != null && e.GetCurrentPoint(TreeView).Properties.IsLeftButtonPressed ? e : null;
+            _pressedPosition = e.GetPosition(TreeView);
+        }
+
+        private async void TreeView_PointerMoved(object sender, PointerEventArgs e)
+        {
+            if (_pressed == null || _dragComponent == null)
+                return;
+            if (!e.GetCurrentPoint(TreeView).Properties.IsLeftButtonPressed)
+            {
+                _pressed = null;
+                return;
+            }
+
+            var delta = e.GetPosition(TreeView) - _pressedPosition;
+            if (System.Math.Abs(delta.X) < 6 && System.Math.Abs(delta.Y) < 6)
+                return;
+
+            var pressed = _pressed;
+            _pressed = null;
+
+            var transfer = new DataTransfer();
+            transfer.Add(DataTransferItem.CreateText(_dragComponent.FullName));
+            ViewerDragPayload.SetComponent(_dragComponent);
+            try
+            {
+                await DragDrop.DoDragDropAsync(pressed, transfer, DragDropEffects.Copy);
+            }
+            finally
+            {
+                ViewerDragPayload.Clear();
+                _dragComponent = null;
+            }
         }
 
         private void ContextMenu_Opening(object sender, System.ComponentModel.CancelEventArgs e)

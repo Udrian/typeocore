@@ -10,6 +10,8 @@ using TypeD.Models.Data.SettingContexts;
 using TypeD.Models.Interfaces;
 using TypeD.View.Viewer;
 using TypeD.ViewModel;
+using Avalonia.Input;
+using TypeDCore.Models;
 using TypeDCore.View.Panels;
 
 namespace TypeDCore.ViewModel.Panels
@@ -90,7 +92,32 @@ namespace TypeDCore.ViewModel.Panels
                 ViewerPanel.ViewerHost.Children.Add(viewerControl);
 
                 Viewer.Init();
+                AttachDrop(viewerControl);
             }
+        }
+
+        private ViewerDropHandler DropHandler { get; set; }
+
+        void AttachDrop(Control viewerControl)
+        {
+            DropHandler = new ViewerDropHandler(ResourceModel);
+            ViewerPanel.ViewerHost.SetValue(DragDrop.AllowDropProperty, true);
+            ViewerPanel.ViewerHost.AddHandler(DragDrop.DragOverEvent, (_, e) =>
+            {
+                var canDrop = Viewer?.Component != null && !Viewer.Component.ReadOnly && DropHandler.CanDrop(Project, Viewer.Component);
+                e.DragEffects = canDrop ? DragDropEffects.Copy : DragDropEffects.None;
+                e.Handled = true;
+            });
+            ViewerPanel.ViewerHost.AddHandler(DragDrop.DropEvent, (_, e) =>
+            {
+                e.Handled = true;
+                var root = Viewer?.Component;
+                if (root == null || root.ReadOnly)
+                    return;
+
+                var position = e.GetPosition(viewerControl);
+                DropHandler.Drop(Project, root, position.X, position.Y);
+            });
         }
 
         public void Unload()

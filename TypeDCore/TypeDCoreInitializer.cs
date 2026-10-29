@@ -764,6 +764,14 @@ namespace TypeDCore
             if (sizeProperty == null || sizeProperty.ReadOnly)
                 return;
 
+            var positionProperty = component.Properties.FirstOrDefault(p => p.Name == "Position" && p.Type == typeof(Vec2));
+            if (positionProperty != null && !positionProperty.ReadOnly && ViewerDropHandler.PendingCenters.Remove(component, out var center))
+            {
+                // The node was dropped before its size was known, so center it now that the texture has loaded.
+                positionProperty.Value = new Vec2((float)(center.X - texture.Size.X / 2.0), (float)(center.Y - texture.Size.Y / 2.0));
+                Hooks.Shoot(new PropertyChangedHook { Component = component, Property = positionProperty });
+            }
+
             var previousSize = sizeProperty.Value;
             var newSize = new Vec2(texture.Size.X, texture.Size.Y);
             if (Equals(previousSize, newSize))

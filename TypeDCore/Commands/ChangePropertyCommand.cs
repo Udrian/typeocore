@@ -41,8 +41,7 @@ namespace TypeDCore.Commands
         public override bool CanExecute(ChangePropertyCommandData parameter)
         {
             return parameter?.Project != null
-                && NodeSelectionModel.SelectedNode != null
-                && !NodeSelectionModel.SelectedNode.ReadOnly
+                && (parameter.Component ?? NodeSelectionModel.SelectedNode) is { ReadOnly: false }
                 && parameter.Property != null
                 && !parameter.Property.ReadOnly;
         }
@@ -50,7 +49,7 @@ namespace TypeDCore.Commands
         public override void Execute(ChangePropertyCommandData parameter)
         {
             var property = parameter.Property;
-            var component = NodeSelectionModel.SelectedNode;
+            var component = parameter.Component ?? NodeSelectionModel.SelectedNode;
             var newValue = parameter.Value;
 
             var targets = new List<(Component Component, Property Property, object Previous)> { (component, property, property.Value) };

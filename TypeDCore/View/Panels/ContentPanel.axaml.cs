@@ -6,6 +6,7 @@ using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using TypeD.Models.Data;
+using TypeDCore.Models;
 using TypeDCore.ViewModel.Panels;
 
 namespace TypeDCore;
@@ -62,7 +63,15 @@ public partial class ContentPanel : UserControl
 
         var transfer = new DataTransfer();
         transfer.Add(DataTransferItem.CreateText(_dragItem.Path));
-        await DragDrop.DoDragDropAsync(pressed, transfer, DragDropEffects.Move);
+        ViewerDragPayload.SetContent(_dragItem.Path);
+        try
+        {
+            await DragDrop.DoDragDropAsync(pressed, transfer, DragDropEffects.Move | DragDropEffects.Copy);
+        }
+        finally
+        {
+            ViewerDragPayload.Clear();
+        }
         _dragItem = null;
     }
 

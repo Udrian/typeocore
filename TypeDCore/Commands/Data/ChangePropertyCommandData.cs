@@ -6,6 +6,10 @@ namespace TypeDCore.Commands.Data
     {
         public Project Project { get; set; }
         public Property Property { get; set; }
+        /// <summary>
+        /// The component owning the property. Defaults to the selected node.
+        /// </summary>
+        public Component Component { get; set; }
         public object Value { get; set; }
         /// <summary>
         /// Also applies the value to the same-named property of the other selected nodes.
