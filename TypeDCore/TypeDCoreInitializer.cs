@@ -162,7 +162,8 @@ namespace TypeDCore
             foreach (var type in new[] { typeof(bool), typeof(string), typeof(int), typeof(double), typeof(Vec2), typeof(Color), typeof(Enum), typeof(TypeOEngine.Typedeaf.Core.Engine.Contents.Content) })
                 PropertyModel.Unregister(type);
 
-            CreateEntityTypeCommand.Dispose();            CreateSceneTypeCommand.Dispose();
+            CreateEntityTypeCommand.Dispose();
+            CreateSceneTypeCommand.Dispose();
             CreateDrawableTypeCommand.Dispose();
             DeleteComponentTypeCommand.Dispose();
             RenameComponentTypeCommand.Dispose();

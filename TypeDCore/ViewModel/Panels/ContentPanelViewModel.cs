@@ -34,6 +34,8 @@ namespace TypeDCore.ViewModel.Panels
             [ObservableProperty]
             private Bitmap _thumbnail;
             [ObservableProperty]
+            private Bitmap _typeIcon;
+            [ObservableProperty]
             private string _editName;
             [ObservableProperty]
             private bool _isEditing;
@@ -307,12 +309,14 @@ namespace TypeDCore.ViewModel.Panels
                         if (existing != null)
                         {
                             existing.SetContent(content);
+                            existing.TypeIcon = LoadTypeIcon(path);
                             existing.LastWrite = lastWrite;
                         }
                         else
                         {
                             var item = new ImageItem { Id = (_nextId++).ToString(), LastWrite = lastWrite };
                             item.SetContent(content);
+                            item.TypeIcon = LoadTypeIcon(path);
                             Items.Add(item);
                         }
                     }
@@ -330,6 +334,12 @@ namespace TypeDCore.ViewModel.Panels
             {
                 _syncLock.Release();
             }
+        }
+
+        private Bitmap LoadTypeIcon(string path)
+        {
+            var icon = ContentProvider.GetIcon(System.IO.Path.GetExtension(path));
+            return icon == null ? null : IconCache.Get(Project, icon);
         }
 
         void UpdateFilter()
