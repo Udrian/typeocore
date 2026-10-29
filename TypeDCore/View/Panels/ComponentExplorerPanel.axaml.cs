@@ -1,10 +1,12 @@
-﻿using Avalonia.Controls;
+using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using System.Linq;
 using TypeD.Models.Data;
+using TypeDCore.Commands.Data;
 using TypeDCore.ViewModel.Panels;
 
 namespace TypeDCore.View.Panels
@@ -22,6 +24,145 @@ namespace TypeDCore.View.Panels
         {
             DataContext = ViewModel = new ComponentExplorerViewModel(this, project);
             InitializeComponent();
+
+            DragDrop.SetAllowDrop(ComponentsTree, true);
+            ComponentsTree.AddHandler(PointerPressedEvent, ComponentsTree_PointerPressed, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, true);
+            ComponentsTree.AddHandler(PointerMovedEvent, ComponentsTree_PointerMoved, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, true);
+            ComponentsTree.AddHandler(PointerReleasedEvent, (_, _) => _pressed = null, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, true);
+            ComponentsTree.AddHandler(KeyDownEvent, ComponentsTree_MoveKeyDown, RoutingStrategies.Tunnel);
+            DragDrop.AddDragOverHandler(ComponentsTree, ComponentsTree_DragOver);
+            DragDrop.AddDropHandler(ComponentsTree, ComponentsTree_Drop);
+        }
+
+        private PointerPressedEventArgs _pressed;
+        private Point _pressedPosition;
+        private ComponentExplorerViewModel.Node _dragNode;
+        private ComponentExplorerViewModel.Node _dropNode;
+
+        private void ComponentsTree_PointerPressed(object sender, PointerPressedEventArgs e)
+        {
+            var node = NodeAt(e, out var row);
+            var isLeft = e.GetCurrentPoint(ComponentsTree).Properties.IsLeftButtonPressed;
+            var isTextBox = (e.Source as Visual)?.GetSelfAndVisualAncestors().OfType<TextBox>().Any() == true;
+            var canDrag = node is { IsEditing: false } && row != null && !isTextBox && isLeft && node.Component.ParentComponent != null;
+            _pressed = canDrag ? e : null;
+            _dragNode = canDrag ? node : null;
+            _pressedPosition = e.GetPosition(ComponentsTree);
+        }
+
+        private async void ComponentsTree_PointerMoved(object sender, PointerEventArgs e)
+        {
+            if (_pressed == null || _dragNode == null)
+                return;
+            if (!e.GetCurrentPoint(ComponentsTree).Properties.IsLeftButtonPressed)
+            {
+                _pressed = null;
+                return;
+            }
+
+            var delta = e.GetPosition(ComponentsTree) - _pressedPosition;
+            if (System.Math.Abs(delta.X) < 6 && System.Math.Abs(delta.Y) < 6)
+                return;
+
+            var pressed = _pressed;
+            _pressed = null;
+
+            var transfer = new DataTransfer();
+            transfer.Add(DataTransferItem.CreateText(_dragNode.Component.ID ?? string.Empty));
+            await DragDrop.DoDragDropAsync(pressed, transfer, DragDropEffects.Move);
+            ClearDropIndicator();
+            _dragNode = null;
+        }
+
+        private static ComponentExplorerViewModel.Node NodeAt(RoutedEventArgs e, out Control row)
+        {
+            row = null;
+            if (e.Source is not Visual source)
+                return null;
+
+            foreach (var visual in source.GetSelfAndVisualAncestors())
+            {
+                if (row == null && visual is Control control && control.Classes.Contains("noderow"))
+                    row = control;
+                if (visual is TreeViewItem item)
+                    return item.DataContext as ComponentExplorerViewModel.Node;
+            }
+            return null;
+        }
+
+        private static MovePosition PositionAt(DragEventArgs e, Control row)
+        {
+            if (row == null || row.Bounds.Height <= 0)
+                return MovePosition.Child;
+
+            var y = e.GetPosition(row).Y;
+            if (y < row.Bounds.Height * 0.25)
+                return MovePosition.Before;
+            if (y > row.Bounds.Height * 0.75)
+                return MovePosition.After;
+            return MovePosition.Child;
+        }
+
+        private void ClearDropIndicator()
+        {
+            _dropNode?.SetDrop(null);
+            _dropNode = null;
+        }
+
+        private void ComponentsTree_DragOver(object sender, DragEventArgs e)
+        {
+            e.Handled = true;
+            var target = NodeAt(e, out var row);
+            var position = PositionAt(e, row);
+            if (_dragNode == null || target == null || !ViewModel.CanDrop(_dragNode.Component, target.Component, position))
+            {
+                ClearDropIndicator();
+                e.DragEffects = DragDropEffects.None;
+                return;
+            }
+
+            if (!ReferenceEquals(_dropNode, target))
+                ClearDropIndicator();
+            _dropNode = target;
+            target.SetDrop(position);
+            e.DragEffects = DragDropEffects.Move;
+        }
+
+        private void ComponentsTree_Drop(object sender, DragEventArgs e)
+        {
+            e.Handled = true;
+            var node = _dragNode;
+            var target = NodeAt(e, out var row);
+            var position = PositionAt(e, row);
+            ClearDropIndicator();
+            if (node == null || target == null)
+                return;
+
+            ViewModel.MoveNode(node.Component, target.Component, position);
+            FocusTree();
+        }
+
+        private void ComponentsTree_MoveKeyDown(object sender, KeyEventArgs e)
+        {
+            var modifiers = e.KeyModifiers & (KeyModifiers.Control | KeyModifiers.Shift | KeyModifiers.Alt | KeyModifiers.Meta);
+            if (modifiers != (KeyModifiers.Control | KeyModifiers.Shift) || e.Source is TextBox)
+                return;
+            if (ComponentsTree.SelectedItem is not ComponentExplorerViewModel.Node { IsEditing: false } node)
+                return;
+
+            ComponentExplorerViewModel.MoveDirection direction;
+            switch (e.Key)
+            {
+                case Key.Up: direction = ComponentExplorerViewModel.MoveDirection.Up; break;
+                case Key.Down: direction = ComponentExplorerViewModel.MoveDirection.Down; break;
+                case Key.Left: direction = ComponentExplorerViewModel.MoveDirection.Left; break;
+                case Key.Right: direction = ComponentExplorerViewModel.MoveDirection.Right; break;
+                default: return;
+            }
+
+            e.Handled = true;
+            if (ViewModel.MoveSelected(node.Component, direction))
+                FocusTree();
         }
 
         private void ContextMenu_Opening(object sender, System.ComponentModel.CancelEventArgs e)

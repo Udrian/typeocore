@@ -57,6 +57,7 @@ namespace TypeDCore
         SetStartSceneCommand SetStartSceneCommand { get; set; }
         AddNodeCommand AddNodeCommand { get; set; }
         RemoveNodeCommand RemoveNodeCommand { get; set; }
+        ComponentMoveCommand ComponentMoveCommand { get; set; }
         RestoreNodeCommand RestoreNodeCommand { get; set; }
         ChangePropertyCommand ChangePropertyCommand { get; set; }
         OpenComponentCommand OpenComponentCommand { get; set; }
@@ -114,6 +115,7 @@ namespace TypeDCore
             SetStartSceneCommand = new SetStartSceneCommand(Resources);
             AddNodeCommand = new AddNodeCommand(Resources);
             RemoveNodeCommand = new RemoveNodeCommand(Resources);
+            ComponentMoveCommand = new ComponentMoveCommand(Resources);
             RestoreNodeCommand = new RestoreNodeCommand(Resources);
             ChangePropertyCommand = new ChangePropertyCommand(Resources);
             OpenComponentCommand = new OpenComponentCommand(project, Resources);
@@ -163,6 +165,7 @@ namespace TypeDCore
             SetStartSceneCommand.Dispose();
             AddNodeCommand.Dispose();
             RemoveNodeCommand.Dispose();
+            ComponentMoveCommand.Dispose();
             RestoreNodeCommand.Dispose();
             ChangePropertyCommand.Dispose();
             OpenComponentCommand.Dispose();

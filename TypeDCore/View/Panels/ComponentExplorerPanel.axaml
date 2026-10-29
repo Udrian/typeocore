@@ -22,14 +22,31 @@
                 <Setter Property="TextDecorations" Value="Strikethrough"/>
                 <Setter Property="Opacity" Value="0.5"/>
             </Style>
+            <Style Selector="Border.noderow">
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                <Setter Property="BorderBrush" Value="#007ACC"/>
+            </Style>
+            <Style Selector="Border.noderow.dropbefore">
+                <Setter Property="BorderThickness" Value="0,2,0,0"/>
+            </Style>
+            <Style Selector="Border.noderow.dropafter">
+                <Setter Property="BorderThickness" Value="0,0,0,2"/>
+            </Style>
+            <Style Selector="Border.noderow.dropchild">
+                <Setter Property="Background" Value="#66007ACC"/>
+            </Style>
         </TreeView.Styles>
         <TreeView.ItemTemplate>
             <TreeDataTemplate ItemsSource="{Binding VisibleNodes}">
-                <Grid>
-                    <TextBlock Text="{Binding Title}" IsVisible="{Binding !IsEditing}" Classes.removed="{Binding IsRemoved}"/>
-                    <TextBox Text="{Binding EditName}" IsVisible="{Binding IsEditing}"
-                             KeyDown="NodeName_KeyDown"/>
-                </Grid>
+                <Border Classes="noderow" Classes.dropbefore="{Binding IsDropBefore}"
+                        Classes.dropafter="{Binding IsDropAfter}" Classes.dropchild="{Binding IsDropChild}">
+                    <Grid>
+                        <TextBlock Text="{Binding Title}" IsVisible="{Binding !IsEditing}" Classes.removed="{Binding IsRemoved}"/>
+                        <TextBox Text="{Binding EditName}" IsVisible="{Binding IsEditing}"
+                                 KeyDown="NodeName_KeyDown"/>
+                    </Grid>
+                </Border>
             </TreeDataTemplate>
         </TreeView.ItemTemplate>
         

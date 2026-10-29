@@ -9,6 +9,7 @@ using TypeD.Models.Data;
 using TypeD.Models.Data.Hooks;
 using TypeD.Models.Interfaces;
 using TypeD.ViewModel;
+using TypeDCore.Commands;
 using TypeDCore.Commands.Data;
 using TypeDCore.Models.Interfaces;
 
@@ -53,6 +54,22 @@ namespace TypeDCore.ViewModel.Panels
 
             [ObservableProperty]
             private bool _isRemoved;
+
+            [ObservableProperty]
+            private bool _isDropBefore;
+
+            [ObservableProperty]
+            private bool _isDropAfter;
+
+            [ObservableProperty]
+            private bool _isDropChild;
+
+            public void SetDrop(MovePosition? position)
+            {
+                IsDropBefore = position == MovePosition.Before;
+                IsDropAfter = position == MovePosition.After;
+                IsDropChild = position == MovePosition.Child;
+            }
 
             public ObservableCollection<Node> VisibleNodes { get; } = new ObservableCollection<Node>();
 
@@ -182,7 +199,23 @@ namespace TypeDCore.ViewModel.Panels
                 var node = Nodes.Flatten(n => n.Nodes).FirstOrDefault(n => ReferenceEquals(n.Component, hook.Parent));
                 if (node != null)
                 {
-                    node.Nodes.Add(new Node(hook.Child));
+                    var newNode = new Node(hook.Child);
+                    if (hook.Index >= 0 && hook.Index <= node.Nodes.Count)
+                        node.Nodes.Insert(hook.Index, newNode);
+                    else
+                        node.Nodes.Add(newNode);
+                    node.IsExpanded = true;
+                    RefreshFilter();
+                }
+            });
+
+            HookModel.AddHook<ComponentMovedHook>((hook) =>
+            {
+                var node = Nodes.Flatten(n => n.Nodes).FirstOrDefault(n => ReferenceEquals(n.Component, hook.Parent));
+                var childNode = node?.Nodes.FirstOrDefault(n => ReferenceEquals(n.Component, hook.Child));
+                if (childNode != null)
+                {
+                    node.Nodes.Move(node.Nodes.IndexOf(childNode), Math.Min(hook.Index, node.Nodes.Count - 1));
                     RefreshFilter();
                 }
             });
@@ -265,6 +298,49 @@ namespace TypeDCore.ViewModel.Panels
         public void SetExplorerActive()
         {
             NodeSelectionModel.SetComponentExplorerActive();
+        }
+
+        public bool MoveNode(Component node, Component target, MovePosition position)
+        {
+            return EditorCommandRegistry.Execute("node.move", new ComponentMoveCommandData
+            {
+                Project = LoadedProject,
+                Node = node,
+                Target = target,
+                Position = position
+            });
+        }
+
+        public enum MoveDirection { Up, Down, Left, Right }
+
+        public bool MoveSelected(Component node, MoveDirection direction)
+        {
+            var parent = node.ParentComponent;
+            if (parent == null)
+                return false;
+
+            var siblings = parent.Children;
+            var index = siblings.IndexOf(node);
+            switch (direction)
+            {
+                case MoveDirection.Up:
+                    return index > 0 && MoveNode(node, siblings[index - 1], MovePosition.Before);
+                case MoveDirection.Down:
+                    return index < siblings.Count - 1 && MoveNode(node, siblings[index + 1], MovePosition.After);
+                case MoveDirection.Left:
+                    return parent.ParentComponent != null && MoveNode(node, parent, MovePosition.After);
+                default:
+                    var below = siblings.Skip(index + 1).FirstOrDefault(sibling => !sibling.Removed);
+                    if (below != null)
+                        return MoveNode(node, below, MovePosition.FirstChild);
+                    var above = siblings.Take(index).LastOrDefault(sibling => !sibling.Removed);
+                    return above != null && MoveNode(node, above, MovePosition.Child);
+            }
+        }
+
+        public bool CanDrop(Component node, Component target, MovePosition position)
+        {
+            return ComponentMoveCommand.TryResolve(node, target, position, out _, out _);
         }
 
         public bool CommitRename(Node node)

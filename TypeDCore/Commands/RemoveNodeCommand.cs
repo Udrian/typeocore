@@ -45,11 +45,7 @@ namespace TypeDCore.Commands
                 && !selectedNode.Removed;
         }
 
-        private static bool IsInheritedFromInstance(TypeD.Models.Data.Component component)
-        {
-            var parent = component.ParentComponent;
-            return parent?.ParentComponent != null && parent.DefinitionChildren.Contains(component);
-        }
+        private static bool IsInheritedFromInstance(TypeD.Models.Data.Component component) => component.IsInherited;
 
         public override async void Execute(RemoveNodeCommandData parameter)
         {
