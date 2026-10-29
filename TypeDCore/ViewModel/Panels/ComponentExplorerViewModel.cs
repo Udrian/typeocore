@@ -56,6 +56,33 @@ namespace TypeDCore.ViewModel.Panels
             private bool _isRemoved;
 
             [ObservableProperty]
+            [NotifyPropertyChangedFor(nameof(VisibilityIcon))]
+            [NotifyPropertyChangedFor(nameof(ToolTipText))]
+            private bool _isPublic;
+
+            public string ToolTipText
+            {
+                get
+                {
+                    var lines = new List<string>
+                    {
+                        $"Class: {Component.ClassName}",
+                        $"Namespace: {(string.IsNullOrEmpty(Component.Namespace) ? "-" : Component.Namespace)}"
+                    };
+                    if (Component.ParentComponent != null)
+                    {
+                        lines.Add($"Instanced in: {Component.ParentComponent.Name} ({Component.ParentComponent.FullName})");
+                        lines.Add($"Visibility: {(IsPublic ? "Public" : "Private")}");
+                    }
+                    return string.Join(Environment.NewLine, lines);
+                }
+            }
+
+            public string VisibilityIcon => IsPublic ? "\U0001F310" : "\U0001F512";
+
+            public bool ShowVisibilityIcon => Component.ParentComponent != null;
+
+            [ObservableProperty]
             private bool _isDropBefore;
 
             [ObservableProperty]
@@ -80,7 +107,8 @@ namespace TypeDCore.ViewModel.Panels
             {
                 Component = component;
                 IsRemoved = component.Removed;
-                Nodes = new ObservableCollection<Node>(Component.Children.Select(c => new Node(c)));
+                IsPublic = component.Public;
+                Nodes = new ObservableCollection<Node>(Component.Children.Where(c => c.IsVisible).Select(c => new Node(c)));
                 foreach (var node in Nodes)
                     VisibleNodes.Add(node);
                 UpdateTitle();
@@ -213,13 +241,13 @@ namespace TypeDCore.ViewModel.Panels
             HookModel.AddHook<ComponentAddedHook>((hook) =>
             {
                 var node = Nodes.Flatten(n => n.Nodes).FirstOrDefault(n => ReferenceEquals(n.Component, hook.Parent));
-                if (node != null)
+                if (node != null && hook.Child.IsVisible)
                 {
                     var newNode = new Node(hook.Child);
-                    if (hook.Index >= 0 && hook.Index <= node.Nodes.Count)
-                        node.Nodes.Insert(hook.Index, newNode);
-                    else
-                        node.Nodes.Add(newNode);
+                    var nodeIndex = hook.Index < 0
+                        ? node.Nodes.Count
+                        : node.Nodes.TakeWhile(n => hook.Parent.Children.IndexOf(n.Component) < hook.Index).Count();
+                    node.Nodes.Insert(nodeIndex, newNode);
                     node.IsExpanded = true;
                     RefreshFilter();
                 }
@@ -231,9 +259,19 @@ namespace TypeDCore.ViewModel.Panels
                 var childNode = node?.Nodes.FirstOrDefault(n => ReferenceEquals(n.Component, hook.Child));
                 if (childNode != null)
                 {
-                    node.Nodes.Move(node.Nodes.IndexOf(childNode), Math.Min(hook.Index, node.Nodes.Count - 1));
+                    var oldIndex = node.Nodes.IndexOf(childNode);
+                    var target = node.Nodes.Where(n => n != childNode)
+                        .TakeWhile(n => hook.Parent.Children.IndexOf(n.Component) < hook.Index).Count();
+                    node.Nodes.Move(oldIndex, target);
                     RefreshFilter();
                 }
+            });
+
+            HookModel.AddHook<ComponentPublicStateChangedHook>((hook) =>
+            {
+                var childNode = Nodes.Flatten(n => n.Nodes).FirstOrDefault(n => ReferenceEquals(n.Component, hook.Child));
+                if (childNode != null)
+                    childNode.IsPublic = hook.Child.Public;
             });
             
             HookModel.AddHook<ComponentRemovedHook>((hook) =>
@@ -377,7 +415,7 @@ namespace TypeDCore.ViewModel.Panels
 
                 var siblings = parent.Children;
                 var index = siblings.IndexOf(node);
-                bool Free(Component sibling) => !ordered.Contains(sibling) && !selected.Contains(sibling);
+                bool Free(Component sibling) => sibling.IsVisible && !ordered.Contains(sibling) && !selected.Contains(sibling);
                 switch (direction)
                 {
                     case MoveDirection.Up:

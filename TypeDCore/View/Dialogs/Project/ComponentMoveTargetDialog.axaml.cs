@@ -64,7 +64,7 @@ namespace TypeDCore.View.Dialogs.Project
                 Title = (string.IsNullOrEmpty(name) ? component.ClassName : name) + (component.Removed ? " (removed)" : string.Empty),
                 IsEnabled = ComponentMoveCommand.TryResolve(nodeToMove, component, MovePosition.Child, out _, out _)
             };
-            foreach (var child in component.Children)
+            foreach (var child in component.Children.Where(c => c.IsVisible))
                 node.Children.Add(Build(child, nodeToMove));
             return node;
         }

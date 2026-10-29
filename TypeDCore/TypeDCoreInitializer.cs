@@ -59,6 +59,7 @@ namespace TypeDCore
         RemoveNodeCommand RemoveNodeCommand { get; set; }
         ComponentMoveCommand ComponentMoveCommand { get; set; }
         RestoreNodeCommand RestoreNodeCommand { get; set; }
+        TogglePublicNodeCommand TogglePublicNodeCommand { get; set; }
         ChangePropertyCommand ChangePropertyCommand { get; set; }
         OpenComponentCommand OpenComponentCommand { get; set; }
         CloseComponentCommand CloseComponentCommand { get; set; }
@@ -117,6 +118,7 @@ namespace TypeDCore
             RemoveNodeCommand = new RemoveNodeCommand(Resources);
             ComponentMoveCommand = new ComponentMoveCommand(Resources);
             RestoreNodeCommand = new RestoreNodeCommand(Resources);
+            TogglePublicNodeCommand = new TogglePublicNodeCommand(Resources);
             ChangePropertyCommand = new ChangePropertyCommand(Resources);
             OpenComponentCommand = new OpenComponentCommand(project, Resources);
             CloseComponentCommand = new CloseComponentCommand(Resources);
@@ -167,6 +169,7 @@ namespace TypeDCore
             RemoveNodeCommand.Dispose();
             ComponentMoveCommand.Dispose();
             RestoreNodeCommand.Dispose();
+            TogglePublicNodeCommand.Dispose();
             ChangePropertyCommand.Dispose();
             OpenComponentCommand.Dispose();
             CloseComponentCommand.Dispose();
@@ -601,6 +604,22 @@ namespace TypeDCore
                         Click = (param) =>
                         {
                             EditorCommandRegistry.Execute("node.restore", new RemoveNodeCommandData { Project = param as Project });
+                        }
+                    }
+                );
+            }
+
+            var publicTargets = contextSelection.Where(node => node.CanTogglePublic).ToList();
+            if (publicTargets.Count > 0)
+            {
+                hook.Menu.Items.Add(
+                    new MenuItem()
+                    {
+                        Name = publicTargets.Any(node => !node.Public) ? "Make _Public" : "Make Pri_vate",
+                        ClickParameter = "LoadedProject",
+                        Click = (param) =>
+                        {
+                            EditorCommandRegistry.Execute("node.toggle-public", new RemoveNodeCommandData { Project = param as Project });
                         }
                     }
                 );
