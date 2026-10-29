@@ -1,4 +1,4 @@
-﻿using TypeD.Models.Data;
+using TypeD.Models.Data;
 using TypeOEngine.Typedeaf.Core.Entities.Drawables;
 
 namespace TypeDCore.Components
@@ -19,7 +19,6 @@ namespace TypeDCore.Components
                 ClassName = typeof(Drawable).Name,
                 Namespace = typeof(Drawable).Namespace,
                 Template = new DrawableComponentTemplate(),
-                TypeOBaseType = typeof(Drawable),
                 Icon = "drawable.png"
             };
         }            

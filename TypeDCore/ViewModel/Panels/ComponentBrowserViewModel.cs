@@ -48,7 +48,7 @@ namespace TypeDCore.ViewModel.Panels
             public string Component { 
                 get {
                     var component = Context.Item as Component;
-                    return component == null ? Context.Item.ToString() : component.TypeOBaseType.Name; 
+                    return component == null ? Context.Item.ToString() : component.RootBaseComponent.ClassName; 
                 } 
             }
             public TypeD.View.TreeNodes.Node Context { get; set; }

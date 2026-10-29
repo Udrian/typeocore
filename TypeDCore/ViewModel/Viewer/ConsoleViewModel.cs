@@ -65,7 +65,7 @@ namespace TypeDCore.ViewModel.Viewer
             ActivateConsoleCapture();
             Component = component;
 
-            if (Component.TypeOBaseType == typeof(Drawable))
+            if (Component.IsBasedOn(typeof(Drawable)))
             {
                 DrawableViewer = new DrawableViewer(Project, Component);
             }

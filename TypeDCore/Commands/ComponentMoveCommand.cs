@@ -263,7 +263,7 @@ namespace TypeDCore.Commands
 
             var filter = new FilterHelper();
             newParent.Template?.ChildrenFilter(filter);
-            if (node.TypeOBaseType == null || !(filter.Filters ?? string.Empty).Contains($"{node.TypeOBaseType.FullName};"))
+            if (!(filter.Filters ?? string.Empty).Contains($"{node.RootBaseComponent.FullName};"))
                 return false;
 
             var siblings = newParent.Children.Where(child => !ReferenceEquals(child, node)).ToList();

@@ -61,7 +61,7 @@ namespace TypeDCore.View.Viewer
 
         public DrawableViewer(Project project, Component drawable, List<TypeOEngine.Typedeaf.Core.Engine.Module> modules = null)
         {
-            if (drawable.TypeOBaseType != typeof(Drawable)) return;
+            if (!drawable.IsBasedOn(typeof(Drawable))) return;
             var typeInfo = project.Assembly.GetType(drawable.FullName);
             if (typeInfo == null) return;
 

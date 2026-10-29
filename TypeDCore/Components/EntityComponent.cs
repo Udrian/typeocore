@@ -1,4 +1,4 @@
-﻿using TypeD.Models.Data;
+using TypeD.Models.Data;
 using TypeOEngine.Typedeaf.Core.Entities;
 
 namespace TypeDCore.Components
@@ -19,7 +19,6 @@ namespace TypeDCore.Components
                 ClassName = typeof(Entity).Name,
                 Namespace = typeof(Entity).Namespace,
                 Template = new EntityComponentTemplate(),
-                TypeOBaseType = typeof(Entity),
                 Icon = "entity.png"
             };
         }

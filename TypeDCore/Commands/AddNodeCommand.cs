@@ -82,7 +82,7 @@ namespace TypeDCore.Commands
                     var filter = new TypeD.Helpers.FilterHelper();
                     parent.Template?.ChildrenFilter(filter);
                     if (!ReferenceEquals(parent, parentComponent)
-                        && (selected.TypeOBaseType == null || !(filter.Filters ?? string.Empty).Contains($"{selected.TypeOBaseType.FullName};")))
+                        && !(filter.Filters ?? string.Empty).Contains($"{selected.RootBaseComponent.FullName};"))
                         continue;
 
                     var previousChildren = new HashSet<TypeD.Models.Data.Component>(parent.Children);

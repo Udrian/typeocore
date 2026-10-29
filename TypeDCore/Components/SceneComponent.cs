@@ -1,4 +1,4 @@
-﻿using TypeD.Models.Data;
+using TypeD.Models.Data;
 using TypeOEngine.Typedeaf.Core;
 
 namespace TypeDCore.Components
@@ -19,7 +19,6 @@ namespace TypeDCore.Components
                 ClassName = typeof(Scene).Name,
                 Namespace = typeof(Scene).Namespace,
                 Template = new SceneComponentTemplate(),
-                TypeOBaseType = typeof(Scene),
                 Icon = "scene.png"
             };
         }

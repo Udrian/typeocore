@@ -32,7 +32,7 @@ namespace TypeDCore.Models
                 return false;
 
             if (ViewerDragPayload.Component != null)
-                return ViewerDragPayload.Component.TypeOBaseType != null;
+                return true;
 
             return GetContentAssociation(project) != null;
         }
@@ -185,9 +185,9 @@ namespace TypeDCore.Models
 
         private static bool Accepts(Component parent, Component child)
         {
-            if (parent == null || parent.ReadOnly || parent.Removed || !parent.IsVisible || child?.TypeOBaseType == null)
+            if (parent == null || parent.ReadOnly || parent.Removed || !parent.IsVisible || child == null)
                 return false;
-            if (child.TypeOBaseType == typeof(Game) || child.TypeOBaseType == typeof(Scene))
+            if (child.IsBasedOn(typeof(Game)) || child.IsBasedOn(typeof(Scene)))
                 return false;
 
             var top = parent;
@@ -198,7 +198,7 @@ namespace TypeDCore.Models
 
             var filter = new FilterHelper();
             parent.Template?.ChildrenFilter(filter);
-            return (filter.Filters ?? string.Empty).Contains($"{child.TypeOBaseType.FullName};");
+            return (filter.Filters ?? string.Empty).Contains($"{child.RootBaseComponent.FullName};");
         }
     }
 }

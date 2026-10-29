@@ -58,7 +58,7 @@ namespace TypeDCore.ViewModel.Dialogs.Project
 
             foreach (var component in AllComponents)
             {
-                if (TypeFilter.Filter(ComponentModel.GetBaseType(component).FullName))
+                if (TypeFilter.Filter(component.RootBaseComponent.FullName))
                 {
                     continue;
                 }
