@@ -5,6 +5,7 @@ using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using System.Linq;
+using TypeD.Helpers;
 using TypeD.Models.Data;
 using TypeDCore.Commands.Data;
 using TypeDCore.ViewModel.Panels;
@@ -26,10 +27,12 @@ namespace TypeDCore.View.Panels
             InitializeComponent();
 
             DragDrop.SetAllowDrop(ComponentsTree, true);
+            ViewModel.SelectionRequested += ApplySelection;
             ComponentsTree.AddHandler(PointerPressedEvent, ComponentsTree_PointerPressed, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, true);
             ComponentsTree.AddHandler(PointerMovedEvent, ComponentsTree_PointerMoved, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, true);
-            ComponentsTree.AddHandler(PointerReleasedEvent, (_, _) => _pressed = null, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, true);
+            ComponentsTree.AddHandler(PointerReleasedEvent, (_, _) => { _pressed = null; _dragNode = null; }, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, true);
             ComponentsTree.AddHandler(KeyDownEvent, ComponentsTree_MoveKeyDown, RoutingStrategies.Tunnel);
+            ComponentsTree.AddHandler(KeyDownEvent, ComponentsTree_KeyDown, RoutingStrategies.Tunnel);
             DragDrop.AddDragOverHandler(ComponentsTree, ComponentsTree_DragOver);
             DragDrop.AddDropHandler(ComponentsTree, ComponentsTree_Drop);
         }
@@ -38,6 +41,31 @@ namespace TypeDCore.View.Panels
         private Point _pressedPosition;
         private ComponentExplorerViewModel.Node _dragNode;
         private ComponentExplorerViewModel.Node _dropNode;
+        private System.Collections.Generic.List<Component> _dragSelection;
+        private Component _pressedComponent;
+        private bool _applyingSelection;
+
+        private ComponentExplorerViewModel.Node PrimaryNode()
+        {
+            return ComponentsTree.SelectedItems?.OfType<ComponentExplorerViewModel.Node>()
+                    .FirstOrDefault(node => ReferenceEquals(node.Component, ViewModel.SelectedComponent))
+                ?? ComponentsTree.SelectedItem as ComponentExplorerViewModel.Node;
+        }
+
+        private void ApplySelection(System.Collections.Generic.IReadOnlyList<ComponentExplorerViewModel.Node> nodes)
+        {
+            _applyingSelection = true;
+            try
+            {
+                ComponentsTree.SelectedItems.Clear();
+                foreach (var node in nodes)
+                    ComponentsTree.SelectedItems.Add(node);
+            }
+            finally
+            {
+                _applyingSelection = false;
+            }
+        }
 
         private void ComponentsTree_PointerPressed(object sender, PointerPressedEventArgs e)
         {
@@ -47,7 +75,17 @@ namespace TypeDCore.View.Panels
             var canDrag = node is { IsEditing: false } && row != null && !isTextBox && isLeft && node.Component.ParentComponent != null;
             _pressed = canDrag ? e : null;
             _dragNode = canDrag ? node : null;
+            _pressedComponent = isLeft && row != null ? node?.Component : null;
             _pressedPosition = e.GetPosition(ComponentsTree);
+
+            // Pressing an already selected node must not shrink the selection that is about to be dragged.
+            _dragSelection = null;
+            if (canDrag && (e.KeyModifiers & (KeyModifiers.Control | KeyModifiers.Shift)) == 0)
+            {
+                var selected = ComponentsTree.SelectedItems.OfType<ComponentExplorerViewModel.Node>().Select(n => n.Component).ToList();
+                if (selected.Contains(node.Component))
+                    _dragSelection = selected;
+            }
         }
 
         private async void ComponentsTree_PointerMoved(object sender, PointerEventArgs e)
@@ -67,11 +105,18 @@ namespace TypeDCore.View.Panels
             var pressed = _pressed;
             _pressed = null;
 
+            if (_dragSelection == null)
+            {
+                var selected = ComponentsTree.SelectedItems.OfType<ComponentExplorerViewModel.Node>().Select(n => n.Component).ToList();
+                _dragSelection = selected.Contains(_dragNode.Component) ? selected : new System.Collections.Generic.List<Component> { _dragNode.Component };
+            }
+
             var transfer = new DataTransfer();
             transfer.Add(DataTransferItem.CreateText(_dragNode.Component.ID ?? string.Empty));
             await DragDrop.DoDragDropAsync(pressed, transfer, DragDropEffects.Move);
             ClearDropIndicator();
             _dragNode = null;
+            _dragSelection = null;
         }
 
         private static ComponentExplorerViewModel.Node NodeAt(RoutedEventArgs e, out Control row)
@@ -114,7 +159,9 @@ namespace TypeDCore.View.Panels
             e.Handled = true;
             var target = NodeAt(e, out var row);
             var position = PositionAt(e, row);
-            if (_dragNode == null || target == null || !ViewModel.CanDrop(_dragNode.Component, target.Component, position))
+            if (_dragNode == null || _dragSelection == null || target == null
+                || _dragSelection.Contains(target.Component)
+                || !ViewModel.CanDrop(_dragSelection, target.Component, position))
             {
                 ClearDropIndicator();
                 e.DragEffects = DragDropEffects.None;
@@ -132,13 +179,14 @@ namespace TypeDCore.View.Panels
         {
             e.Handled = true;
             var node = _dragNode;
+            var selection = _dragSelection;
             var target = NodeAt(e, out var row);
             var position = PositionAt(e, row);
             ClearDropIndicator();
-            if (node == null || target == null)
+            if (node == null || selection == null || target == null || selection.Contains(target.Component))
                 return;
 
-            ViewModel.MoveNode(node.Component, target.Component, position);
+            ViewModel.MoveNodes(selection, node.Component, target.Component, position);
             FocusTree();
         }
 
@@ -147,7 +195,7 @@ namespace TypeDCore.View.Panels
             var modifiers = e.KeyModifiers & (KeyModifiers.Control | KeyModifiers.Shift | KeyModifiers.Alt | KeyModifiers.Meta);
             if (modifiers != (KeyModifiers.Control | KeyModifiers.Shift) || e.Source is TextBox)
                 return;
-            if (ComponentsTree.SelectedItem is not ComponentExplorerViewModel.Node { IsEditing: false } node)
+            if (PrimaryNode() is not { IsEditing: false })
                 return;
 
             ComponentExplorerViewModel.MoveDirection direction;
@@ -161,31 +209,43 @@ namespace TypeDCore.View.Panels
             }
 
             e.Handled = true;
-            if (ViewModel.MoveSelected(node.Component, direction))
+            if (ViewModel.MoveSelected(direction))
                 FocusTree();
         }
 
         private void ContextMenu_Opening(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            ViewModel.ContextMenuOpened(sender as ContextMenu, ComponentsTree.SelectedItem as ComponentExplorerViewModel.Node);
+            ViewModel.ContextMenuOpened(sender as ContextMenu, PrimaryNode());
         }
 
         private void ComponentsTree_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            var selectedItem = e.AddedItems.Cast<ComponentExplorerViewModel.Node>().FirstOrDefault();
-            if (selectedItem != null)
-            {
-                ViewModel.SelectionChanged(selectedItem.Component);
-            }
+            if (_applyingSelection)
+                return;
+
+            var selected = ComponentsTree.SelectedItems.OfType<ComponentExplorerViewModel.Node>().Select(node => node.Component).ToList();
+            if (selected.Count == 0)
+                return;
+
+            var added = e.AddedItems.OfType<ComponentExplorerViewModel.Node>().Select(node => node.Component).ToList();
+            var current = ViewModel.SelectedComponent;
+            var focused = _pressedComponent != null && added.Contains(_pressedComponent) ? _pressedComponent
+                : added.LastOrDefault()
+                ?? (current != null && selected.Contains(current) ? current : selected.Last());
+            ViewModel.SelectionChanged(selected, focused);
         }
 
         public void FocusTree()
         {
             Dispatcher.UIThread.Post(() =>
             {
-                var item = ComponentsTree.GetSelfAndVisualDescendants()
+                var items = ComponentsTree.GetSelfAndVisualDescendants()
                     .OfType<TreeViewItem>()
-                    .FirstOrDefault(treeItem => treeItem.IsSelected);
+                    .Where(treeItem => treeItem.IsSelected)
+                    .ToList();
+                var item = items.FirstOrDefault(treeItem => treeItem.DataContext is ComponentExplorerViewModel.Node node
+                        && ReferenceEquals(node.Component, ViewModel.SelectedComponent))
+                    ?? items.FirstOrDefault();
                 (item ?? (Control)ComponentsTree).Focus();
             }, DispatcherPriority.Background);
         }
@@ -197,10 +257,17 @@ namespace TypeDCore.View.Panels
 
         private void ComponentsTree_KeyDown(object sender, KeyEventArgs e)
         {
-            if (ComponentsTree.SelectedItem is not ComponentExplorerViewModel.Node selectedItem)
+            if (e.Source is TextBox || PrimaryNode() is not { } selectedItem)
                 return;
             if (selectedItem.IsEditing)
                 return;
+
+            if (e.Key == Key.A && e.KeyModifiers == KeyModifiers.Control)
+            {
+                SelectAllNodes();
+                e.Handled = true;
+                return;
+            }
 
             if (e.Key == Key.F2)
             {
@@ -218,6 +285,22 @@ namespace TypeDCore.View.Panels
                 e.KeyModifiers.HasFlag(KeyModifiers.Meta));
 
             e.Handled = ViewModel.TryExecuteShortcut(shortcut, selectedItem.Component);
+        }
+
+        private void SelectAllNodes()
+        {
+            var primary = PrimaryNode();
+            var nodes = ViewModel.VisibleNodes
+                .Flatten(node => node.IsExpanded ? node.VisibleNodes : System.Linq.Enumerable.Empty<ComponentExplorerViewModel.Node>())
+                .ToList();
+            if (primary == null || nodes.Count == 0)
+                return;
+
+            _pressedComponent = null;
+            ComponentsTree.SelectedItems.Clear();
+            foreach (var node in nodes)
+                ComponentsTree.SelectedItems.Add(node);
+            ViewModel.SelectionChanged(nodes.Select(node => node.Component).ToList(), primary.Component);
         }
 
         private void NodeName_KeyDown(object sender, KeyEventArgs e)

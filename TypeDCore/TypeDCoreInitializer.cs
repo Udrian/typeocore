@@ -573,16 +573,34 @@ namespace TypeDCore
                 );
             }
 
-            if (hook.SelectedComponent != null && hook.SelectedComponent != hook.OpenedComponent)
+            var contextSelection = NodeSelectionModel.SelectedNodes.Count > 0
+                ? NodeSelectionModel.SelectedNodes
+                : (hook.SelectedComponent != null ? new[] { hook.SelectedComponent } : System.Array.Empty<Component>());
+            if (contextSelection.Any(node => node != hook.OpenedComponent && !node.Removed))
             {
                 hook.Menu.Items.Add(
                     new MenuItem()
                     {
-                        Name = hook.SelectedComponent.Removed ? "_Restore deleted Node" : "_Remove Node",
+                        Name = "_Remove Node",
                         ClickParameter = "LoadedProject",
                         Click = (param) =>
                         {
-                            EditorCommandRegistry.Execute(hook.SelectedComponent.Removed ? "node.restore" : "node.remove", new RemoveNodeCommandData { Project = param as Project });
+                            EditorCommandRegistry.Execute("node.remove", new RemoveNodeCommandData { Project = param as Project });
+                        }
+                    }
+                );
+            }
+
+            if (contextSelection.Any(node => node.Removed))
+            {
+                hook.Menu.Items.Add(
+                    new MenuItem()
+                    {
+                        Name = "_Restore deleted Node",
+                        ClickParameter = "LoadedProject",
+                        Click = (param) =>
+                        {
+                            EditorCommandRegistry.Execute("node.restore", new RemoveNodeCommandData { Project = param as Project });
                         }
                     }
                 );

@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using TypeD.Commands;
 using TypeD.Models.Data;
 using TypeD.Models.Data.Hooks;
@@ -49,17 +51,34 @@ namespace TypeDCore.Commands
         {
             var property = parameter.Property;
             var component = NodeSelectionModel.SelectedNode;
-            var previousValue = property.Value;
             var newValue = parameter.Value;
-            if (Equals(previousValue, newValue))
+
+            var targets = new List<(Component Component, Property Property, object Previous)> { (component, property, property.Value) };
+            if (parameter.ApplyToSelection)
+            {
+                foreach (var other in NodeSelectionModel.SelectedNodes.Where(node => !ReferenceEquals(node, component) && !node.ReadOnly))
+                {
+                    var otherProperty = other.Properties.FirstOrDefault(p => p.Name == property.Name && p.Type == property.Type);
+                    if (otherProperty != null && !otherProperty.ReadOnly)
+                        targets.Add((other, otherProperty, otherProperty.Value));
+                }
+            }
+
+            targets = targets.Where(target => !Equals(target.Previous, newValue)).ToList();
+            if (targets.Count == 0)
                 return;
 
-            ApplyValue(parameter.Project, component, property, newValue);
+            foreach (var target in targets)
+                ApplyValue(parameter.Project, target.Component, target.Property, newValue);
+
+            var description = targets.Count == 1
+                ? $"Changed {targets[0].Component.Name}.{property.Name} from {FormatValue(targets[0].Previous)} to {FormatValue(newValue)}."
+                : $"Changed {property.Name} to {FormatValue(newValue)} on {targets.Count} nodes.";
             CommandHistoryModel.Record(
                 "Change property",
-                $"Changed {component.Name}.{property.Name} from {FormatValue(previousValue)} to {FormatValue(newValue)}.",
-                () => ApplyValue(parameter.Project, component, property, previousValue),
-                () => ApplyValue(parameter.Project, component, property, newValue));
+                description,
+                () => targets.ForEach(target => ApplyValue(parameter.Project, target.Component, target.Property, target.Previous)),
+                () => targets.ForEach(target => ApplyValue(parameter.Project, target.Component, target.Property, newValue)));
         }
 
         private void ApplyValue(Project project, Component component, Property property, object value)

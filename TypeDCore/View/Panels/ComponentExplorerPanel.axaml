@@ -10,10 +10,10 @@
     <DockPanel>
     <TextBox DockPanel.Dock="Top" Text="{Binding FilterText}" Watermark="Filter nodes..." Margin="2"/>
     <TreeView Name="ComponentsTree" ItemsSource="{Binding VisibleNodes}"
+              SelectionMode="Multiple"
               SelectedItem="{Binding SelectedNode}"
               SelectionChanged="ComponentsTree_SelectionChanged"
-              GotFocus="ComponentsTree_GotFocus"
-              KeyDown="ComponentsTree_KeyDown">
+              GotFocus="ComponentsTree_GotFocus">
         <TreeView.Styles>
             <Style Selector="TreeViewItem">
                 <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>

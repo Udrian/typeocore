@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using TypeD.Commands;
 using TypeD.Helpers;
@@ -15,6 +16,14 @@ namespace TypeDCore.Commands
 {
     internal class ComponentMoveCommand : CustomCommand<ComponentMoveCommandData>, IDisposable
     {
+        private sealed class MoveStep
+        {
+            public Action Undo { get; init; }
+            public Action Redo { get; init; }
+            public Component UndoResult { get; init; }
+            public Component RedoResult { get; init; }
+        }
+
         private readonly IComponentModel _componentModel;
         private readonly IComponentProvider _componentProvider;
         private readonly ICommandHistoryModel _commandHistoryModel;
@@ -32,14 +41,15 @@ namespace TypeDCore.Commands
             _registration = resourceModel.Get<IEditorCommandRegistry>().Register(
                 "node.move",
                 "Move node",
-                "Move the selected node to another node.",
+                "Move the selected nodes to another node.",
                 "global",
                 string.Empty,
                 this,
                 () => new ComponentMoveCommandData
                 {
                     Project = _nodeSelectionModel.Project,
-                    Node = _nodeSelectionModel.SelectedNode
+                    Node = _nodeSelectionModel.SelectedNode,
+                    Nodes = _nodeSelectionModel.SelectedNodes
                 });
         }
 
@@ -47,94 +57,149 @@ namespace TypeDCore.Commands
 
         public override bool CanExecute(ComponentMoveCommandData parameter)
         {
-            if (parameter?.Project == null || !CanMove(parameter.Node))
+            if (parameter?.Project == null)
                 return false;
 
-            return parameter.Target == null
-                || TryResolve(parameter.Node, parameter.Target, parameter.Position, out _, out _);
+            if (parameter.Moves != null)
+                return parameter.Moves.Any(move => CanMove(move.Node) && TryResolve(move.Node, move.Target, move.Position, out _, out _));
+
+            var nodes = parameter.Nodes is { Count: > 0 } ? parameter.Nodes : new[] { parameter.Node };
+            if (parameter.Target == null)
+                return nodes.Any(CanMove);
+
+            return nodes.Any(node => CanMove(node) && TryResolve(node, parameter.Target, parameter.Position, out _, out _));
         }
 
         public override async void Execute(ComponentMoveCommandData parameter)
         {
-            var node = parameter.Node;
-            var target = parameter.Target;
-            var position = parameter.Position;
-
-            if (target == null)
+            var moves = parameter.Moves?.ToList();
+            if (moves == null)
             {
-                var dialog = new ComponentMoveTargetDialog(GetRoot(node), node);
-                if (await dialog.ShowDialog<bool>(ViewModelBase.MainWindow) != true || dialog.SelectedComponent == null)
+                var target = parameter.Target;
+                var position = parameter.Position;
+                var primary = parameter.Node ?? parameter.Nodes?.FirstOrDefault();
+                if (primary == null)
                     return;
-                target = dialog.SelectedComponent;
-                position = MovePosition.Child;
+
+                if (target == null)
+                {
+                    var dialog = new ComponentMoveTargetDialog(GetRoot(primary), primary);
+                    if (await dialog.ShowDialog<bool>(ViewModelBase.MainWindow) != true || dialog.SelectedComponent == null)
+                        return;
+                    target = dialog.SelectedComponent;
+                    position = MovePosition.Child;
+                }
+
+                var nodes = (parameter.Nodes is { Count: > 0 } ? parameter.Nodes : new[] { primary }).Distinct().ToList();
+                nodes = nodes.Where(node => !nodes.Any(other => !ReferenceEquals(other, node) && IsWithin(node, other))).ToList();
+                if (position is MovePosition.After or MovePosition.FirstChild)
+                    nodes.Reverse();
+                moves = nodes.Select(node => new ComponentMove { Node = node, Target = target, Position = position }).ToList();
             }
 
-            if (!TryResolve(node, target, position, out var newParent, out var index))
+            var steps = new List<MoveStep>();
+            foreach (var move in moves)
+            {
+                if (!CanMove(move.Node) || !TryResolve(move.Node, move.Target, move.Position, out var newParent, out var index))
+                    continue;
+                steps.Add(Move(parameter.Project, move.Node, newParent, index));
+            }
+
+            if (steps.Count == 0)
                 return;
 
-            Move(parameter.Project, node, newParent, index);
+            var project = parameter.Project;
+            var focus = parameter.Node ?? parameter.Nodes?.FirstOrDefault();
+            Focus(project, steps.Select(step => step.RedoResult).ToList(), focus);
+
+            var undoSteps = steps.AsEnumerable().Reverse().ToList();
+            var first = steps[0].RedoResult;
+            _commandHistoryModel.Record(
+                "Move node",
+                steps.Count == 1
+                    ? $"Moved {first.FullName} to {first.ParentComponent?.FullName}."
+                    : $"Moved {steps.Count} nodes.",
+                () =>
+                {
+                    foreach (var step in undoSteps)
+                        step.Undo();
+                    Focus(project, steps.Select(step => step.UndoResult).ToList(), focus);
+                },
+                () =>
+                {
+                    foreach (var step in steps)
+                        step.Redo();
+                    Focus(project, steps.Select(step => step.RedoResult).ToList(), focus);
+                });
         }
 
-        private void Move(Project project, Component node, Component newParent, int index)
+        private MoveStep Move(Project project, Component node, Component newParent, int index)
         {
             var oldParent = node.ParentComponent;
             var oldIndex = oldParent.Children.IndexOf(node);
-            var title = "Move node";
-            var description = $"Moved {node.FullName} to {newParent.FullName}.";
 
             if (ReferenceEquals(oldParent, newParent))
             {
-                Apply(node, () => _componentModel.Reorder(project, node, index));
-                _commandHistoryModel.Record(title, description,
-                    () => Apply(node, () => _componentModel.Reorder(project, node, oldIndex)),
-                    () => Apply(node, () => _componentModel.Reorder(project, node, index)));
-                return;
+                _componentModel.Reorder(project, node, index);
+                return new MoveStep
+                {
+                    Undo = () => _componentModel.Reorder(project, node, oldIndex),
+                    Redo = () => _componentModel.Reorder(project, node, index),
+                    UndoResult = node,
+                    RedoResult = node
+                };
             }
 
             if (node.IsInherited)
             {
                 var copy = CreateCopy(project, node);
-                Apply(copy, () =>
+                Action redo = () =>
                 {
                     _componentModel.SetRemoved(project, node, true);
                     _componentModel.AddExisting(project, newParent, copy, index);
-                });
-                _commandHistoryModel.Record(title, description,
-                    () => Apply(node, () =>
+                };
+                redo();
+                return new MoveStep
+                {
+                    Undo = () =>
                     {
                         _componentModel.Remove(project, copy);
                         _componentModel.SetRemoved(project, node, false);
-                    }),
-                    () => Apply(copy, () =>
-                    {
-                        _componentModel.SetRemoved(project, node, true);
-                        _componentModel.AddExisting(project, newParent, copy, index);
-                    }));
-                return;
+                    },
+                    Redo = redo,
+                    UndoResult = node,
+                    RedoResult = copy
+                };
             }
 
-            Apply(node, () =>
+            _componentModel.Remove(project, node);
+            _componentModel.AddExisting(project, newParent, node, index);
+            return new MoveStep
             {
-                _componentModel.Remove(project, node);
-                _componentModel.AddExisting(project, newParent, node, index);
-            });
-            _commandHistoryModel.Record(title, description,
-                () => Apply(node, () =>
+                Undo = () =>
                 {
                     _componentModel.Remove(project, node);
                     _componentModel.AddExisting(project, oldParent, node, oldIndex);
-                }),
-                () => Apply(node, () =>
+                },
+                Redo = () =>
                 {
                     _componentModel.Remove(project, node);
                     _componentModel.AddExisting(project, newParent, node, index);
-                }));
+                },
+                UndoResult = node,
+                RedoResult = node
+            };
         }
 
-        private void Apply(Component focus, Action action)
+        private void Focus(Project project, List<Component> results, Component preferred)
         {
-            action();
-            _hookModel.Shoot(new ComponentFocusHook() { Project = _nodeSelectionModel.Project, Component = focus, Root = false });
+            var root = GetRoot(results[0]);
+            var ordered = new[] { root }.Flatten(c => c.Children).Where(results.Contains).ToList();
+            var primary = ordered.FirstOrDefault(c => ReferenceEquals(c, preferred)) ?? ordered.LastOrDefault();
+            if (primary == null)
+                return;
+
+            _hookModel.Shoot(new ComponentFocusHook() { Project = project, Component = primary, Root = false, Selection = ordered });
         }
 
         private Component CreateCopy(Project project, Component node)
@@ -157,6 +222,16 @@ namespace TypeDCore.Commands
                 && node.ParentComponent != null
                 && !node.ParentComponent.ReadOnly
                 && !ReferenceEquals(node, _nodeSelectionModel.OpenedComponent);
+        }
+
+        private static bool IsWithin(Component component, Component ancestor)
+        {
+            for (; component != null; component = component.ParentComponent)
+            {
+                if (ReferenceEquals(component, ancestor))
+                    return true;
+            }
+            return false;
         }
 
         /// <summary>

@@ -8,6 +8,10 @@ namespace TypeDCore.Models.Interfaces
         Project Project { get; }
         Component OpenedComponent { get; }
         Component SelectedNode { get; }
+        /// <summary>
+        /// All selected nodes in tree order. Contains <see cref="SelectedNode"/> when it isn't null.
+        /// </summary>
+        System.Collections.Generic.IReadOnlyList<Component> SelectedNodes { get; }
         Component SelectedComponentType { get; }
         bool IsComponentExplorerActive { get; }
         bool IsComponentBrowserActive { get; }

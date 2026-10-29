@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using TypeD.Models.Data;
 using TypeD.Models.Data.Hooks;
 using TypeD.Models.Interfaces;
@@ -23,6 +25,7 @@ namespace TypeDCore.Models
         public Project Project { get; private set; }
         public Component OpenedComponent { get; private set; }
         public Component SelectedNode { get; private set; }
+        public IReadOnlyList<Component> SelectedNodes { get; private set; } = Array.Empty<Component>();
         public Component SelectedComponentType { get; private set; }
         public bool IsComponentExplorerActive => _activeTree == ActiveTree.ComponentExplorer;
         public bool IsComponentBrowserActive => _activeTree == ActiveTree.ComponentBrowser;
@@ -58,6 +61,7 @@ namespace TypeDCore.Models
                 Project = hook.Project;
                 OpenedComponent = hook.Component;
                 SelectedNode = hook.Component;
+                SelectedNodes = new[] { hook.Component };
                 return;
             }
 
@@ -67,6 +71,9 @@ namespace TypeDCore.Models
             if (ReferenceEquals(GetRootComponent(hook.Component), OpenedComponent))
             {
                 SelectedNode = hook.Component;
+                SelectedNodes = hook.Selection != null && hook.Selection.Contains(hook.Component)
+                    ? hook.Selection.ToList()
+                    : new[] { hook.Component };
                 _activeTree = ActiveTree.ComponentExplorer;
             }
         }
@@ -79,6 +86,7 @@ namespace TypeDCore.Models
             Project = null;
             OpenedComponent = null;
             SelectedNode = null;
+            SelectedNodes = Array.Empty<Component>();
             _activeTree = ActiveTree.None;
         }
 
@@ -86,6 +94,14 @@ namespace TypeDCore.Models
         {
             if (SelectedNode != null && IsWithin(SelectedNode, hook.Child))
                 SelectedNode = OpenedComponent;
+
+            if (SelectedNodes.Any(node => IsWithin(node, hook.Child)))
+            {
+                var remaining = SelectedNodes.Where(node => !IsWithin(node, hook.Child)).ToList();
+                if (remaining.Count == 0 && SelectedNode != null)
+                    remaining.Add(SelectedNode);
+                SelectedNodes = remaining;
+            }
         }
 
         public void SetComponentExplorerActive()

@@ -159,6 +159,15 @@ namespace TypeDCore.ViewModel.Panels
         [ObservableProperty]
         private Node _selectedNode;
 
+        /// <summary>
+        /// Raised when something other than the tree itself changed the selection, the last node is the focused one.
+        /// </summary>
+        public event Action<IReadOnlyList<Node>> SelectionRequested;
+
+        private bool _publishingSelection;
+
+        public IReadOnlyList<Component> SelectedComponents => NodeSelectionModel.SelectedNodes;
+
         // Constructors
         public ComponentExplorerViewModel(Control element, Project project) : base(element)
         {
@@ -180,11 +189,18 @@ namespace TypeDCore.ViewModel.Panels
                     }
                     RefreshFilter();
                 }
-                else if (ReferenceEquals(hook.Project, LoadedProject)
+                else if (!_publishingSelection
+                    && ReferenceEquals(hook.Project, LoadedProject)
                     && Component != null
                     && ReferenceEquals(GetRootComponent(hook.Component), Component))
-                    SelectedNode = Nodes.Flatten(node => node.Nodes)
-                        .FirstOrDefault(node => ReferenceEquals(node.Component, hook.Component));
+                {
+                    var all = Nodes.Flatten(node => node.Nodes).ToList();
+                    var focused = all.FirstOrDefault(node => ReferenceEquals(node.Component, hook.Component));
+                    var others = hook.Selection == null
+                        ? Enumerable.Empty<Node>()
+                        : all.Where(node => !ReferenceEquals(node, focused) && hook.Selection.Contains(node.Component));
+                    SelectionRequested?.Invoke(others.Append(focused).Where(node => node != null).ToList());
+                }
             });
 
             HookModel.AddHook<CloseComponentHook>((hook) =>
@@ -260,8 +276,10 @@ namespace TypeDCore.ViewModel.Panels
         public void ContextMenuOpened(ContextMenu contextMenu, Node node)
         {
             NodeSelectionModel.SetComponentExplorerActive();
-            if (node != null && !ReferenceEquals(SelectedComponent, node.Component))
+            if (node != null && !SelectedComponents.Contains(node.Component))
                 SelectionChanged(node.Component);
+            else if (node != null && !ReferenceEquals(SelectedComponent, node.Component))
+                SelectionChanged(SelectedComponents, node.Component);
 
             var componentContextMenuHook = CreateComponentContextMenu(node?.Component);
 
@@ -275,7 +293,12 @@ namespace TypeDCore.ViewModel.Panels
         public bool TryExecuteShortcut(string shortcut, Component selectedComponent)
         {
             if (selectedComponent != null && !ReferenceEquals(SelectedComponent, selectedComponent))
-                SelectionChanged(selectedComponent);
+            {
+                if (SelectedComponents.Contains(selectedComponent))
+                    SelectionChanged(SelectedComponents, selectedComponent);
+                else
+                    SelectionChanged(selectedComponent);
+            }
             else
                 NodeSelectionModel.SetComponentExplorerActive();
 
@@ -284,8 +307,31 @@ namespace TypeDCore.ViewModel.Panels
 
         public void SelectionChanged(Component component)
         {
+            SelectionChanged(new[] { component }, component);
+        }
+
+        /// <summary>
+        /// Publishes the tree's own selection. The focused component stays the same while it is still selected.
+        /// </summary>
+        public void SelectionChanged(IReadOnlyList<Component> selection, Component focused)
+        {
+            if (focused == null)
+                return;
+
+            var all = Nodes.Flatten(node => node.Nodes).Select(node => node.Component).Where(selection.Contains).ToList();
+            if (!all.Contains(focused))
+                all.Add(focused);
+
             NodeSelectionModel.SetComponentExplorerActive();
-            HookModel.Shoot(new ComponentFocusHook() { Project = LoadedProject, Component = component, Root = false });
+            _publishingSelection = true;
+            try
+            {
+                HookModel.Shoot(new ComponentFocusHook() { Project = LoadedProject, Component = focused, Root = false, Selection = all });
+            }
+            finally
+            {
+                _publishingSelection = false;
+            }
         }
 
         private static Component GetRootComponent(Component component)
@@ -300,12 +346,13 @@ namespace TypeDCore.ViewModel.Panels
             NodeSelectionModel.SetComponentExplorerActive();
         }
 
-        public bool MoveNode(Component node, Component target, MovePosition position)
+        public bool MoveNodes(IReadOnlyList<Component> nodes, Component primary, Component target, MovePosition position)
         {
             return EditorCommandRegistry.Execute("node.move", new ComponentMoveCommandData
             {
                 Project = LoadedProject,
-                Node = node,
+                Node = primary,
+                Nodes = nodes,
                 Target = target,
                 Position = position
             });
@@ -313,34 +360,85 @@ namespace TypeDCore.ViewModel.Panels
 
         public enum MoveDirection { Up, Down, Left, Right }
 
-        public bool MoveSelected(Component node, MoveDirection direction)
+        public bool MoveSelected(MoveDirection direction)
         {
-            var parent = node.ParentComponent;
-            if (parent == null)
+            var selected = SelectedComponents;
+            var ordered = Nodes.Flatten(node => node.Nodes).Select(node => node.Component).Where(selected.Contains).ToList();
+            ordered = ordered.Where(node => !ordered.Any(other => !ReferenceEquals(other, node) && IsWithin(node, other))).ToList();
+            if (direction is MoveDirection.Down or MoveDirection.Left)
+                ordered.Reverse();
+
+            var moves = new List<ComponentMove>();
+            foreach (var node in ordered)
+            {
+                var parent = node.ParentComponent;
+                if (parent == null)
+                    continue;
+
+                var siblings = parent.Children;
+                var index = siblings.IndexOf(node);
+                bool Free(Component sibling) => !ordered.Contains(sibling) && !selected.Contains(sibling);
+                switch (direction)
+                {
+                    case MoveDirection.Up:
+                        var previous = siblings.Take(index).LastOrDefault(Free);
+                        if (previous != null)
+                            moves.Add(new ComponentMove { Node = node, Target = previous, Position = MovePosition.Before });
+                        break;
+                    case MoveDirection.Down:
+                        var next = siblings.Skip(index + 1).FirstOrDefault(Free);
+                        if (next != null)
+                            moves.Add(new ComponentMove { Node = node, Target = next, Position = MovePosition.After });
+                        break;
+                    case MoveDirection.Left:
+                        if (parent.ParentComponent != null && !selected.Contains(parent))
+                            moves.Add(new ComponentMove { Node = node, Target = parent, Position = MovePosition.After });
+                        break;
+                    default:
+                        var below = siblings.Skip(index + 1).FirstOrDefault(sibling => Free(sibling) && !sibling.Removed);
+                        if (below != null)
+                        {
+                            moves.Add(new ComponentMove { Node = node, Target = below, Position = MovePosition.FirstChild });
+                            break;
+                        }
+                        var above = siblings.Take(index).LastOrDefault(sibling => Free(sibling) && !sibling.Removed);
+                        if (above != null)
+                            moves.Add(new ComponentMove { Node = node, Target = above, Position = MovePosition.Child });
+                        break;
+                }
+            }
+
+            if (direction == MoveDirection.Right)
+            {
+                // Nodes moving into the node above must keep their order, the ones moving below were queued in reverse order.
+                moves = moves.Where(m => m.Position == MovePosition.FirstChild).Reverse()
+                    .Concat(moves.Where(m => m.Position == MovePosition.Child)).ToList();
+            }
+
+            if (moves.Count == 0)
                 return false;
 
-            var siblings = parent.Children;
-            var index = siblings.IndexOf(node);
-            switch (direction)
+            return EditorCommandRegistry.Execute("node.move", new ComponentMoveCommandData
             {
-                case MoveDirection.Up:
-                    return index > 0 && MoveNode(node, siblings[index - 1], MovePosition.Before);
-                case MoveDirection.Down:
-                    return index < siblings.Count - 1 && MoveNode(node, siblings[index + 1], MovePosition.After);
-                case MoveDirection.Left:
-                    return parent.ParentComponent != null && MoveNode(node, parent, MovePosition.After);
-                default:
-                    var below = siblings.Skip(index + 1).FirstOrDefault(sibling => !sibling.Removed);
-                    if (below != null)
-                        return MoveNode(node, below, MovePosition.FirstChild);
-                    var above = siblings.Take(index).LastOrDefault(sibling => !sibling.Removed);
-                    return above != null && MoveNode(node, above, MovePosition.Child);
-            }
+                Project = LoadedProject,
+                Node = NodeSelectionModel.SelectedNode,
+                Moves = moves
+            });
         }
 
-        public bool CanDrop(Component node, Component target, MovePosition position)
+        private static bool IsWithin(Component component, Component ancestor)
         {
-            return ComponentMoveCommand.TryResolve(node, target, position, out _, out _);
+            for (; component != null; component = component.ParentComponent)
+            {
+                if (ReferenceEquals(component, ancestor))
+                    return true;
+            }
+            return false;
+        }
+
+        public bool CanDrop(IReadOnlyList<Component> nodes, Component target, MovePosition position)
+        {
+            return nodes.Any(node => ComponentMoveCommand.TryResolve(node, target, position, out _, out _));
         }
 
         public bool CommitRename(Node node)
@@ -356,7 +454,8 @@ namespace TypeDCore.ViewModel.Panels
             {
                 Project = LoadedProject,
                 Property = nameProperty,
-                Value = node.EditName
+                Value = node.EditName,
+                ApplyToSelection = true
             });
             if (executed)
                 node.CancelRename();
