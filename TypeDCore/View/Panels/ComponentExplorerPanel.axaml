@@ -8,7 +8,7 @@
              x:Class="TypeDCore.View.Panels.ComponentExplorerPanel"
              x:DataType="vm:ComponentExplorerViewModel">
     <DockPanel>
-    <TextBox DockPanel.Dock="Top" Text="{Binding FilterText}" Watermark="Filter nodes..." Margin="2"/>
+    <TextBox DockPanel.Dock="Top" Text="{Binding FilterText}" PlaceholderText="Filter nodes..." Margin="2"/>
     <TreeView Name="ComponentsTree" ItemsSource="{Binding VisibleNodes}"
               SelectionMode="Multiple"
               SelectedItem="{Binding SelectedNode}"

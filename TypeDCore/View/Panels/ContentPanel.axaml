@@ -39,7 +39,7 @@
     <GridSplitter Grid.Column="1" Width="5" Background="Transparent"/>
     <Grid Grid.Column="2" RowDefinitions="Auto, *">
         <StackPanel Orientation="Horizontal" Spacing="8">
-            <TextBox Width="300" Watermark="Search..." Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+            <TextBox Width="300" PlaceholderText="Search..." Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
             <Button Content="Clear" Command="{Binding ClearSearchCommand}"/>
         </StackPanel>
 

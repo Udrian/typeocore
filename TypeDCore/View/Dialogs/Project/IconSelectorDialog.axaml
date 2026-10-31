@@ -6,7 +6,7 @@
         Width="520" Height="480">
     <Grid RowDefinitions="Auto,*,Auto" Margin="12">
         <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,8">
-            <TextBox x:Name="tbFilter" Watermark="Filter icons..." TextChanged="Filter_TextChanged"/>
+            <TextBox x:Name="tbFilter" PlaceholderText="Filter icons..." TextChanged="Filter_TextChanged"/>
             <Button Grid.Column="1" Content="_Import..." Margin="8,0,0,0" Click="Import_Click"/>
         </Grid>
         <ListBox x:Name="lbIcons" Grid.Row="1" DoubleTapped="Icons_DoubleTapped" KeyDown="Icons_KeyDown">

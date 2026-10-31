@@ -5,7 +5,7 @@
         WindowStartupLocation="CenterOwner"
         Width="800" Height="520">
     <Grid RowDefinitions="Auto, *" Margin="8">
-        <TextBox x:Name="tbFilter" Watermark="Search..." TextChanged="tbFilter_TextChanged"/>
+        <TextBox x:Name="tbFilter" PlaceholderText="Search..." TextChanged="tbFilter_TextChanged"/>
 
         <ListBox x:Name="lbContent" Grid.Row="1" Margin="0,8,0,0"
                  ItemsSource="{Binding FilteredItems}"

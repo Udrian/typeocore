@@ -1,3 +1,5 @@
+#nullable enable annotations
+
 using System.Reflection;
 using TypeD.Code;
 using TypeD.Helpers;
@@ -21,7 +23,7 @@ public class ComponentBaseTypeTests
     private const string GameName = "TypeOEngine.Typedeaf.Core.Game";
 
     // The only place that reads how the root type is exposed, switch it when the API changes.
-    private static string RootType(Component component) => component.RootBaseComponent?.FullName;
+    private static string? RootType(Component component) => component.RootBaseComponent?.FullName;
 
     public static IEnumerable<object[]> BaseDefinitions()
     {
@@ -64,7 +66,7 @@ public class ComponentBaseTypeTests
     [InlineData("Drawable", false, true)]
     public void ChildFilter_AcceptsExpectedRootTypes(string parentName, bool acceptsEntity, bool acceptsDrawable)
     {
-        var parent = BaseDefinitions().First(d => (string)d[0] == parentName)[1] as Func<Component>;
+        var parent = (Func<Component>)BaseDefinitions().First(d => (string)d[0] == parentName)[1];
         var filter = new FilterHelper();
         parent().Template.ChildrenFilter(filter);
 
@@ -171,7 +173,9 @@ public class ComponentBaseTypeTests
 
     private static Dictionary<Component, string> GetPublicChildNames(ComponentTypeCode code)
     {
-        var method = typeof(ComponentTypeCode).GetMethod("GetPublicChildNames", BindingFlags.NonPublic | BindingFlags.Instance);
-        return (Dictionary<Component, string>)method.Invoke(code, null);
+        var method = typeof(ComponentTypeCode).GetMethod("GetPublicChildNames", BindingFlags.NonPublic | BindingFlags.Instance)
+            ?? throw new InvalidOperationException("Could not find the public-child-name helper.");
+        return method.Invoke(code, null) as Dictionary<Component, string>
+            ?? throw new InvalidOperationException("The public-child-name helper returned an unexpected result.");
     }
 }

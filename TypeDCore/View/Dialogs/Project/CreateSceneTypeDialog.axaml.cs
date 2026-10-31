@@ -35,14 +35,14 @@ namespace TypeDCore.View.Dialogs.Project
             ViewModel.OpenNamespace();
         }
 
-        private void btnOpenInherit_Click(object sender, RoutedEventArgs e)
+        private async void btnOpenInherit_Click(object sender, RoutedEventArgs e)
         {
-            ViewModel.OpenComponents();
+            await ViewModel.OpenComponents();
         }
 
-        private void btnOpenIcon_Click(object sender, RoutedEventArgs e)
+        private async void btnOpenIcon_Click(object sender, RoutedEventArgs e)
         {
-            ViewModel.OpenIcons();
+            await ViewModel.OpenIcons();
         }
     }
 }

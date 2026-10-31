@@ -1,3 +1,5 @@
+#nullable enable annotations
+
 using Avalonia.Controls.Templates;
 using Avalonia.Data.Converters;
 using System;

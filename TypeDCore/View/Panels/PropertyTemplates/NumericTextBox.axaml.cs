@@ -1,3 +1,5 @@
+#nullable enable annotations
+
 using Avalonia.Controls;
 using Avalonia;
 using System;
