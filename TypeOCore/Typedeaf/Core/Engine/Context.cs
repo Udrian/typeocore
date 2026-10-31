@@ -13,19 +13,31 @@ namespace TypeOEngine.Typedeaf.Core
 {
     namespace Engine
     {
+        /// <summary>Holds the runtime state and services for a running TypeO game.</summary>
         public class Context
         {
+            /// <summary>Gets the name assigned to this game context.</summary>
             public string Name { get; internal set; }
+            /// <summary>Gets the game instance associated with this context.</summary>
             public Game Game { get; internal set; }
+            /// <summary>Gets the TypeO runtime that owns this context.</summary>
             public TypeO TypeO { get; internal set; }
+            /// <summary>Gets the elapsed time since the game started.</summary>
             public TimeSpan TimeSinceStart { get; internal set; }
+            /// <summary>Gets the time at which the game started.</summary>
             public DateTime StartTime { get; internal set; }
+            /// <summary>Gets the time of the previous game update.</summary>
             public DateTime LastTick { get; internal set; }
+            /// <summary>Gets the modules loaded into this context.</summary>
             public List<Module> Modules { get; internal set; }
+            /// <summary>Gets the hardware instances registered by interface type.</summary>
             public Dictionary<Type, Hardware> Hardwares { get; internal set; }
+            /// <summary>Gets the registered services, grouped by service type and identifier.</summary>
             public Dictionary<Type, Dictionary<string, Service>> Services { get; internal set; }
+            /// <summary>Gets the mappings from content base types to concrete content types.</summary>
             public Dictionary<Type, Type> ContentBinding { get; internal set; }
             private Dictionary<string, TypeOObject> IDToTypeOObjectMap { get; set; }
+            /// <summary>Gets the logger used by this context.</summary>
             public Logger Logger { get; internal set; }
 
             internal Context(Game game, TypeO typeO, string name) : base()
@@ -84,6 +96,7 @@ namespace TypeOEngine.Typedeaf.Core
             }
 
             private bool ExitApplication = false;
+            /// <summary>Requests that the synchronous game loop stop.</summary>
             public void Exit()
             {
                 ExitApplication = true;
@@ -249,6 +262,7 @@ namespace TypeOEngine.Typedeaf.Core
                 Logger.DoCleanup();
             }
 
+            /// <summary>Injects context dependencies, registers, and initializes a TypeO object.</summary>
             public void InitializeObject(TypeOObject obj, TypeOObject from = null)
             {
                 Logger.Log(LogLevel.Debug, $"Initializing obj '{obj.GetType().FullName}'" + (from != null ? $" from '{from.GetType().FullName}'" : ""));
@@ -343,6 +357,7 @@ namespace TypeOEngine.Typedeaf.Core
                 }
             }
 
+            /// <summary>Removes an initialized object from the context's identifier map.</summary>
             public void DestroyObject(TypeOObject obj)
             {
                 IDToTypeOObjectMap.Remove((obj is IHasParent parent ? parent.FullParentPath : string.Empty) + obj.ID);
@@ -502,6 +517,7 @@ namespace TypeOEngine.Typedeaf.Core
                 DestroyObject(logic);
             }
 
+            /// <summary>Registers a new service instance under the specified identifier.</summary>
             public void AddService<S>(string id = "") where S : Service, new()
             {
                 //Instantiate the Service
@@ -523,6 +539,7 @@ namespace TypeOEngine.Typedeaf.Core
                 Services[ServiceType].Add(id, service);
             }
 
+            /// <summary>Gets a registered service by type and identifier, or <see langword="null"/> if none is registered.</summary>
             public S GetService<S>(string id = "") where S : Service, new()
             {
                 var ServiceType = typeof(S);
@@ -540,6 +557,7 @@ namespace TypeOEngine.Typedeaf.Core
                 return Services[ServiceType][id] as S;
             }
 
+            /// <summary>Gets a registered object by identifier if it is of the requested type.</summary>
             public O GetTypeOObjectByID<O>(string id) where O : TypeOObject
             {
                 if (!IDToTypeOObjectMap.ContainsKey(id))
@@ -554,6 +572,7 @@ namespace TypeOEngine.Typedeaf.Core
                 return typeOObject;
             }
 
+            /// <summary>Returns the objects currently registered with this context.</summary>
             public List<TypeOObject> ListAllTypeOObjects()
             {
                 return IDToTypeOObjectMap.Values.ToList();

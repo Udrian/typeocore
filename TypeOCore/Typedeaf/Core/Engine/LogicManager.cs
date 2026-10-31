@@ -29,10 +29,12 @@ namespace TypeOEngine.Typedeaf.Core
                 Parent = parent;
             }
 
+            /// <summary>Initializes the logic manager.</summary>
             protected override void Initialize()
             {
             }
 
+            /// <summary>Cleans up the logic manager.</summary>
             protected override void Cleanup()
             {
             }

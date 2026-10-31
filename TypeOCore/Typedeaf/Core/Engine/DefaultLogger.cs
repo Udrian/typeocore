@@ -37,10 +37,12 @@ namespace TypeOEngine.Typedeaf.Core
                 Logs = new List<string>();
             }
 
+            /// <summary>Initializes the logger.</summary>
             protected override void Initialize()
             {
             }
 
+            /// <summary>Flushes pending log messages and cleans up the logger.</summary>
             protected override void Cleanup()
             {
                 _ = WriteLogsToDisk();

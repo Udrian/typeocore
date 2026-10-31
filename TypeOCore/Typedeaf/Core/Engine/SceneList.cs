@@ -4,17 +4,23 @@ using TypeOEngine.Typedeaf.Core.Engine.Interfaces;
 
 namespace TypeOEngine.Typedeaf.Core.Engine
 {
+    /// <summary>Creates, stores, and switches between a game's scenes.</summary>
     public class SceneList : TypeOObject, IHasContext //TODO: Maybe change to a "GameContext class"
     {
         Context IHasContext.Context { get; set; }
+        /// <summary>Gets the context associated with this scene list.</summary>
         protected Context Context { get => (this as IHasContext).Context; set => (this as IHasContext).Context = value; }
         private ILogger Logger { get; set; }
 
         private Dictionary<Type, Scene> Scenes { get; set; }
         private Game Game { get; set; }
+        /// <summary>Gets the currently active scene.</summary>
         public Scene CurrentScene { get; private set; }
+        /// <summary>Gets the game's main window.</summary>
         public IWindow Window { get => Game.MainWindow; }
+        /// <summary>Gets the game's main canvas.</summary>
         public ICanvas Canvas { get => Game.MainCanvas; }
+        /// <summary>Gets the game's content loader.</summary>
         public ContentLoader ContentLoader { get => Game.ContentLoader; }
 
         internal SceneList(Game game)
@@ -23,10 +29,12 @@ namespace TypeOEngine.Typedeaf.Core.Engine
             Scenes = new Dictionary<Type, Scene>();
         }
 
+        /// <summary>Initializes the scene list.</summary>
         protected override void Initialize()
         {
         }
 
+        /// <summary>Cleans up the window and scenes owned by this list.</summary>
         protected override void Cleanup()
         {
             if(Window is TypeOObject typeObject)
@@ -39,6 +47,7 @@ namespace TypeOEngine.Typedeaf.Core.Engine
             //TODO: Should we cleanup Canvas as well?
         }
 
+        /// <summary>Creates and returns a scene of the specified type.</summary>
         public Scene CreateScene(Type type)
         {
             if (!Scenes.ContainsKey(type))
@@ -50,6 +59,7 @@ namespace TypeOEngine.Typedeaf.Core.Engine
             return Scenes[type];
         }
 
+        /// <summary>Creates and returns a scene of the specified type.</summary>
         public S CreateScene<S>() where S : Scene, new()
         {
             if(!Scenes.ContainsKey(typeof(S)))
@@ -79,6 +89,7 @@ namespace TypeOEngine.Typedeaf.Core.Engine
         }
 
         //TODO: Destroy Scene?
+        /// <summary>Activates the scene of the specified type and returns it.</summary>
         public Scene SetScene(Type type)
         {
             var init = false;
@@ -101,6 +112,7 @@ namespace TypeOEngine.Typedeaf.Core.Engine
             return Scenes[type];
         }
 
+        /// <summary>Activates a scene of the specified type and returns it.</summary>
         public S SetScene<S>() where S : Scene, new()
         {
             var init = false;
@@ -123,11 +135,13 @@ namespace TypeOEngine.Typedeaf.Core.Engine
             return Scenes[typeof(S)] as S;
         }
 
+        /// <summary>Updates the active scene.</summary>
         public virtual void Update(double dt)
         {
             CurrentScene?.Update(dt);
         }
 
+        /// <summary>Draws the active scene to the game's canvas.</summary>
         public virtual void Draw()
         {
             Canvas?.PreDraw();

@@ -51,10 +51,12 @@ namespace TypeOEngine.Typedeaf.Core
                 RemoveQueue = new Queue<Entity>();
             }
 
+            /// <summary>Initializes the entity list.</summary>
             protected override void Initialize()
             {
             }
 
+            /// <summary>Cleans up the entity list.</summary>
             protected override void Cleanup()
             {
             }
@@ -131,6 +133,7 @@ namespace TypeOEngine.Typedeaf.Core
             /// context.
             /// </summary>
             /// <param name="type">The <see cref="Type"/> of the entity to create. The type must derive from <see cref="Entity"/>.</param>
+            /// <param name="id">An optional identifier for the created entity.</param>
             /// <param name="pushToUpdateLoop">A value indicating whether the created entity should be automatically added to the update loop. 
             /// Defaults to <see langword="true"/>.</param>
             /// <param name="pushToDrawStack">A value indicating whether the created entity should be automatically added to the draw stack. Defaults
@@ -151,6 +154,7 @@ namespace TypeOEngine.Typedeaf.Core
             /// entity, scene, and relevant stacks (draw and update) based on the current context.</remarks>
             /// <typeparam name="E">The type of entity to create. Must inherit from <see cref="Entity"/> and have a parameterless
             /// constructor.</typeparam>
+            /// <param name="id">An optional identifier for the created entity.</param>
             /// <param name="pushToUpdateLoop">Indicates whether the created entity should be automatically added to the update loop. The default value
             /// is <see langword="true"/>.</param>
             /// <param name="pushToDrawStack">Indicates whether the created entity should be automatically added to the draw stack. The default value

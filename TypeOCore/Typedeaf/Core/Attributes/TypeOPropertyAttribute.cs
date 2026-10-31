@@ -11,12 +11,14 @@ namespace TypeOEngine.Typedeaf.Core.Attributes
         /// </summary>
         public string Description { get; }
 
+        /// <summary>Gets or sets the default value associated with the property.</summary>
         public object DefaultValue { get; set; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TypeOPropertyAttribute"/> class.
         /// </summary>
         /// <param name="description">The description of the property.</param>
+        /// <param name="defaultValue">The default value associated with the property.</param>
         public TypeOPropertyAttribute(string description = null, object defaultValue = null)
         {
             Description = description;

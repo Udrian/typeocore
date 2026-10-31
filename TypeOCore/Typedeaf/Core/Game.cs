@@ -88,6 +88,7 @@ namespace TypeOEngine.Typedeaf.Core
             Context.InitializeObject(Scenes);
         }
 
+        /// <summary>Cleans up the game's managers, content loader, scenes, and canvas.</summary>
         protected override void Cleanup()
         {
             Drawables.DoCleanup();

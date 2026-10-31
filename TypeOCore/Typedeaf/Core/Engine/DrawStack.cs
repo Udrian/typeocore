@@ -6,6 +6,7 @@ namespace TypeOEngine.Typedeaf.Core
 {
     namespace Engine
     {
+        /// <summary>Maintains and draws visible components in draw-order sequence.</summary>
         public class DrawStack
         {
             private SortedDelayedList<IDrawable> Drawables { get; set; }
@@ -15,6 +16,7 @@ namespace TypeOEngine.Typedeaf.Core
                 Drawables = new SortedDelayedList<IDrawable>();
             }
 
+            /// <summary>Draws visible components to the specified canvas and applies queued changes.</summary>
             public void Draw(ICanvas canvas)
             {
                 var needSort = false;
@@ -45,12 +47,14 @@ namespace TypeOEngine.Typedeaf.Core
                 Drawables.Process();
             }
 
+            /// <summary>Queues a drawable component to be added to the stack.</summary>
             public void Push(IDrawable drawable)
             {
                 if(drawable == null) return;
                 Drawables.Add(drawable);
             }
 
+            /// <summary>Queues a drawable component to be removed from the stack.</summary>
             public void Pop(IDrawable drawable)
             {
                 if(drawable == null) return;

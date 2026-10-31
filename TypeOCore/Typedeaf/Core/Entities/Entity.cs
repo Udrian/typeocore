@@ -80,6 +80,7 @@ namespace TypeOEngine.Typedeaf.Core
                 Context.InitializeObject(Logics, this);
             }
 
+            /// <summary>Cleans up this entity's drawable, logic, and child entities.</summary>
             protected override void Cleanup()
             {
                 Drawables?.DoCleanup();

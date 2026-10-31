@@ -26,10 +26,12 @@ namespace TypeOEngine.Typedeaf.Core
                 ContentBinding = contentBinding;
             }
 
+            /// <summary>Initializes the content loader.</summary>
             protected override void Initialize()
             {
             }
 
+            /// <summary>Cleans up the content loader.</summary>
             protected override void Cleanup()
             {
             }

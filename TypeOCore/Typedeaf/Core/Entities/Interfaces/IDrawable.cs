@@ -5,6 +5,7 @@ namespace TypeOEngine.Typedeaf.Core
 {
     namespace Entities.Interfaces
     {
+        /// <summary>Defines an object that can be drawn in a specified order.</summary>
         public interface IDrawable : IComparable<IDrawable>
         {
 
@@ -20,6 +21,7 @@ namespace TypeOEngine.Typedeaf.Core
             [TypeOProperty("Gets or sets the draw order of the object.", 0)]
             public int DrawOrder { get; set; }
             
+            /// <summary>Draws the object to the specified canvas.</summary>
             public void Draw(ICanvas canvas);
 
             int IComparable<IDrawable>.CompareTo(IDrawable other)

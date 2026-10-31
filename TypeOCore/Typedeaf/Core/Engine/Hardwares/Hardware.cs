@@ -13,6 +13,7 @@ namespace TypeOEngine.Typedeaf.Core
         public abstract class Hardware : TypeOObject, IHasContext
         {
             Context IHasContext.Context { get; set; }
+            /// <summary>Gets or sets the context associated with this hardware instance.</summary>
             protected Context Context { get => (this as IHasContext).Context; set => (this as IHasContext).Context = value; }
 
             /// <summary>

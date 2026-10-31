@@ -4,7 +4,8 @@
     "externals": ["Mock/Content/Lato-Black.ttf;test", "Mock/Content/texture.png;test"],
     "dependencies": [
         "Udrian@TypeD-0.1.0.dev;dev",
-        "MathNet.Numerics-5.0.0;nuget"
+        "MathNet.Numerics-5.0.0;nuget",
+        "MessageBox.Avalonia-12.1.0;nuget;dev"
     ],
     "type": "module",
     "devModuleName": "TypeDCore",

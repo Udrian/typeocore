@@ -17,6 +17,7 @@ namespace TypeOEngine.Typedeaf.Core
         /// <see cref="Draw(ICanvas)"/> method to define the specific drawing behavior.</remarks>
         public abstract class Drawable : TypeOObject, IDrawable, IHasParent<Entity>
         {
+            /// <summary>Gets the parent entity that owns this drawable.</summary>
             public Entity Parent { get; internal set; }
 
             /// <summary>
@@ -24,8 +25,10 @@ namespace TypeOEngine.Typedeaf.Core
             /// </summary>
             public ContentLoader ContentLoader { get; internal set; }
 
+            /// <summary>Gets or sets whether this drawable is hidden.</summary>
             public bool Hidden { get; set; }
 
+            /// <summary>Gets or sets this drawable's position in draw order.</summary>
             public int DrawOrder { get; set; }
 
             /// <summary>

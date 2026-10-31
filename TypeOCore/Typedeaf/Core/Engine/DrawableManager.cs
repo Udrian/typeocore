@@ -30,10 +30,12 @@ namespace TypeOEngine.Typedeaf.Core
                 Parent = parent;
             }
 
+            /// <summary>Initializes the drawable manager.</summary>
             protected override void Initialize()
             {
             }
 
+            /// <summary>Cleans up the drawable manager.</summary>
             protected override void Cleanup()
             {
             }
@@ -42,6 +44,7 @@ namespace TypeOEngine.Typedeaf.Core
             /// Creates a new drawable of the specified type and optionally adds it to the draw stack.
             /// </summary>
             /// <param name="type">The type of the drawable to create. Must derive from <see cref="Drawable"/>.</param>
+            /// <param name="id">An optional identifier for the created drawable.</param>
             /// <param name="option">Optional configuration for the drawable being created. Can be <see langword="null"/>.</param>
             /// <param name="pushToDrawStack">A value indicating whether the created drawable should be added to the draw stack.  <see
             /// langword="true"/> to add it to the draw stack; otherwise, <see langword="false"/>.</param>
@@ -59,6 +62,7 @@ namespace TypeOEngine.Typedeaf.Core
             /// </summary>
             /// <typeparam name="D">The type of the drawable object to create. Must derive from <typeparamref name="T"/> and have a
             /// parameterless constructor.</typeparam>
+            /// <param name="id">An optional identifier for the created drawable.</param>
             /// <param name="option">An optional configuration object used to customize the creation of the drawable. If null, default
             /// settings are applied.</param>
             /// <param name="pushToDrawStack">A value indicating whether the created drawable should be added to the draw stack. Defaults to <see

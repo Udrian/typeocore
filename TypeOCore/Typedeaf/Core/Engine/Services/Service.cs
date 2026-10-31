@@ -12,6 +12,7 @@ namespace TypeOEngine.Typedeaf.Core
         public abstract class Service : TypeOObject, IHasContext
         {
             Context IHasContext.Context { get; set; }
+            /// <summary>Gets the context in which this service operates.</summary>
             protected Context Context { get => (this as IHasContext).Context; }
 
             /// <summary>
