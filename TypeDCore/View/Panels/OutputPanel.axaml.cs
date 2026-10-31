@@ -13,6 +13,7 @@ namespace TypeDCore.View.Panels
         OutputViewModel OutputViewModel { get; set; }
 
         // Constructors
+        /// <summary>Initializes an output panel.</summary>
         public OutputPanel()
         {
             InitializeComponent();

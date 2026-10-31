@@ -9,6 +9,7 @@ using TypeOEngine.Typedeaf.Core.Entities.Drawables;
 
 namespace TypeDCore.View.Viewer
 {
+    /// <summary>Runs a drawable component in an isolated game instance for preview.</summary>
     public class DrawableViewer
     {
         readonly TypeO FakeTypeO;
@@ -59,6 +60,7 @@ namespace TypeDCore.View.Viewer
 
         private FakeGame Game { get; set; }
 
+        /// <summary>Creates a drawable preview using the project's assembly and optional modules.</summary>
         public DrawableViewer(Project project, Component drawable, List<TypeOEngine.Typedeaf.Core.Engine.Module> modules = null)
         {
             if (!drawable.IsBasedOn(typeof(Drawable))) return;
@@ -98,6 +100,7 @@ namespace TypeDCore.View.Viewer
             }
         }
 
+        /// <summary>Stops the preview game and releases its resources.</summary>
         public void Close()
         {
             if (Interlocked.Exchange(ref IsClosed, 1) != 0)

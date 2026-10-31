@@ -14,6 +14,7 @@ namespace TypeDCore.View.Dialogs.Project
         internal RenameComponentTypeViewModel ViewModel { get; set; }
 
         // Constructors
+        /// <summary>Creates a dialog for renaming the specified component.</summary>
         public RenameComponentTypeDialog(Component component)
         {
             InitializeComponent();

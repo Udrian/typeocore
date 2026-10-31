@@ -18,13 +18,18 @@ namespace TypeDCore.View.Dialogs.Project
     /// </summary>
     public partial class ContentSelectorDialog : Window, INotifyPropertyChanged
     {
+        /// <summary>Represents a content file shown in the selection dialog.</summary>
         public class Item : INotifyPropertyChanged
         {
             private Bitmap _thumbnail;
 
+            /// <summary>Raised when a displayed item property changes.</summary>
             public event PropertyChangedEventHandler PropertyChanged;
+            /// <summary>Gets the file name displayed in the list.</summary>
             public string Title { get; init; }
+            /// <summary>Gets the file path relative to the project's content directory.</summary>
             public string RelativePath { get; init; }
+            /// <summary>Gets or sets the preview image for the content file.</summary>
             public Bitmap Thumbnail
             {
                 get => _thumbnail;
@@ -39,6 +44,7 @@ namespace TypeDCore.View.Dialogs.Project
         private readonly List<Item> _items = new();
         private string _searchText = string.Empty;
 
+        /// <summary>Gets the content items currently shown in the dialog.</summary>
         public ObservableCollection<Item> FilteredItems { get; } = new();
 
         /// <summary>
@@ -46,6 +52,7 @@ namespace TypeDCore.View.Dialogs.Project
         /// </summary>
         public string SelectedPath { get; private set; }
 
+        /// <summary>Creates a content selection dialog filtered to the specified file extensions.</summary>
         public ContentSelectorDialog(TypeD.Models.Data.Project project, IEnumerable<string> extensions)
         {
             InitializeComponent();

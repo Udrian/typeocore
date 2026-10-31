@@ -4,11 +4,13 @@ using TypeDCore.ViewModel.Panels;
 
 namespace TypeDCore.View.Panels
 {
+    /// <summary>Displays the editor command history and provides undo and redo controls.</summary>
     public partial class CommandHistoryPanel : UserControl
     {
         // ViewModel
         CommandHistoryViewModel ViewModel { get; set; }
 
+        /// <summary>Initializes a command history panel.</summary>
         public CommandHistoryPanel()
         {
             InitializeComponent();

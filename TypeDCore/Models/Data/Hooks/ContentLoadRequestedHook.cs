@@ -9,7 +9,13 @@ namespace TypeDCore.Models.Data.Hooks
     /// </summary>
     public class ContentLoadRequestedHook : Hook
     {
+        /// <summary>
+        /// The component whose content property changed.
+        /// </summary>
         public Component Component { get; set; }
+        /// <summary>
+        /// The content property to load.
+        /// </summary>
         public Property Property { get; set; }
 
         /// <summary>
@@ -27,6 +33,9 @@ namespace TypeDCore.Models.Data.Hooks
         /// </summary>
         public Action<object> Loaded { get; set; }
 
+        /// <summary>
+        /// Creates a content-load request.
+        /// </summary>
         public ContentLoadRequestedHook() { }
     }
 }

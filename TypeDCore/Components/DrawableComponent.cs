@@ -3,6 +3,9 @@ using TypeOEngine.Typedeaf.Core.Entities.Drawables;
 
 namespace TypeDCore.Components
 {
+    /// <summary>
+    /// Provides factory methods for built-in component types.
+    /// </summary>
     public static partial class CoreComponent
     {
         /// <summary>

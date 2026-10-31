@@ -16,6 +16,7 @@ using System.Linq;
 
 namespace TypeDCore.ViewModel.Panels
 {
+    /// <summary>Converts property values to templates selected by their runtime type.</summary>
     public class TypeToDataTemplateConverter : IValueConverter
     {
         private Dictionary<Type, IDataTemplate> TemplateCache { get; } = new Dictionary<Type, IDataTemplate>();
@@ -25,8 +26,10 @@ namespace TypeDCore.ViewModel.Panels
         /// </summary>
         public Func<Type, IDataTemplate?>? TemplateResolver { get; set; }
 
+        /// <summary>Gets or sets the fallback template used when no type-specific template is found.</summary>
         public IDataTemplate? DefaultTemplate { get; set; }
 
+        /// <summary>Returns the template for the value's type, or the default template if none is registered.</summary>
         public object? Convert(object? value, Type targetType, object? parameter, CultureInfo? culture)
         {
             Type type = null;
@@ -50,6 +53,7 @@ namespace TypeDCore.ViewModel.Panels
             return DefaultTemplate;
         }
 
+        /// <summary>Converts a template value back to its source representation.</summary>
         public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo? culture)
         {
             throw new NotImplementedException();

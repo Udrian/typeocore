@@ -15,17 +15,32 @@ using EngineContent = TypeOEngine.Typedeaf.Core.Engine.Contents.Content;
 
 namespace TypeDCore.Models.Data.PropertyDefinitions
 {
+    /// <summary>
+    /// Exposes a content path and browse and clear commands to the property editor.
+    /// </summary>
     public class ContentPropertyNode : PropertyNode
     {
+        /// <summary>
+        /// Creates a node for a content component property.
+        /// </summary>
         public ContentPropertyNode(Component component, Property property, Action<PropertyNode, object> value_changed) : base(component, property, value_changed)
         {
             BrowseCommand = new AsyncRelayCommand(BrowseAsync);
             ClearCommand = new RelayCommand(() => Value = null);
         }
 
+        /// <summary>
+        /// Gets the command that opens the content picker.
+        /// </summary>
         public ICommand BrowseCommand { get; }
+        /// <summary>
+        /// Gets the command that clears the content path.
+        /// </summary>
         public ICommand ClearCommand { get; }
 
+        /// <summary>
+        /// Gets or sets the content path, using an empty string when no path is set.
+        /// </summary>
         public override object Value
         {
             get => base.Value ?? string.Empty;
@@ -63,16 +78,31 @@ namespace TypeDCore.Models.Data.PropertyDefinitions
     {
         private readonly IContentProvider ContentProvider;
 
+        /// <summary>
+        /// Creates a definition that uses the supplied content associations.
+        /// </summary>
         public ContentPropertyDefinition(IContentProvider contentProvider)
         {
             ContentProvider = contentProvider;
         }
 
+        /// <summary>
+        /// Gets the engine content base type handled by this definition.
+        /// </summary>
         public override Type Type => typeof(EngineContent);
 
+        /// <summary>
+        /// Gets the content property editor template URI.
+        /// </summary>
         protected override string TemplateUri => "avares://TypeDCore/View/Panels/PropertyTemplates/ContentPropertyTemplate.axaml";
+        /// <summary>
+        /// Gets the content property editor template key.
+        /// </summary>
         protected override string TemplateKey => "ContentPropertyTemplate";
 
+        /// <summary>
+        /// Converts a content path to a C# content-loading expression.
+        /// </summary>
         public override string ToCode(string value)
         {
             var association = GetAssociation(value);
@@ -83,6 +113,9 @@ namespace TypeDCore.Models.Data.PropertyDefinitions
             return $"ContentLoader.LoadContent<{association.EngineImplementationType.FullName.Replace('+', '.')}>(\"{path}\")";
         }
 
+        /// <summary>
+        /// Finds the content association for a path's file extension.
+        /// </summary>
         public ContentTypeAssociation GetAssociation(string path)
         {
             if (string.IsNullOrEmpty(path))

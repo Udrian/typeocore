@@ -13,10 +13,19 @@ namespace TypeDCore.Models.Data.PropertyDefinitions
     /// </summary>
     public class ContentDropBehavior : AvaloniaObject
     {
+        /// <summary>
+        /// Identifies whether content drops are enabled on a control.
+        /// </summary>
         public static readonly AttachedProperty<bool> EnabledProperty =
             AvaloniaProperty.RegisterAttached<ContentDropBehavior, Control, bool>("Enabled");
 
+        /// <summary>
+        /// Gets whether content drops are enabled on a control.
+        /// </summary>
         public static bool GetEnabled(Control control) => control.GetValue(EnabledProperty);
+        /// <summary>
+        /// Enables or disables content drops on a control.
+        /// </summary>
         public static void SetEnabled(Control control, bool value) => control.SetValue(EnabledProperty, value);
 
         static ContentDropBehavior()

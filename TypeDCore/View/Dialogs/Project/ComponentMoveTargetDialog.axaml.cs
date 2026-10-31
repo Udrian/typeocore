@@ -16,14 +16,20 @@ namespace TypeDCore.View.Dialogs.Project
     /// </summary>
     public partial class ComponentMoveTargetDialog : Window
     {
+        /// <summary>Represents a component target and its children in the move dialog.</summary>
         public class TargetNode
         {
+            /// <summary>Gets the component represented by this node.</summary>
             public Component Component { get; init; }
+            /// <summary>Gets the component name displayed in the tree.</summary>
             public string Title { get; init; }
+            /// <summary>Gets whether this component is a valid move target.</summary>
             public bool IsEnabled { get; init; }
+            /// <summary>Gets the child targets displayed beneath this node.</summary>
             public List<TargetNode> Children { get; } = new List<TargetNode>();
         }
 
+        /// <summary>Gets the component selected as the move destination.</summary>
         public Component SelectedComponent { get; private set; }
 
         private readonly TargetNode _root;

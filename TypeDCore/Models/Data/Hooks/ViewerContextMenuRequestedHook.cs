@@ -7,9 +7,18 @@ namespace TypeDCore.Models.Data.Hooks
     /// </summary>
     public class ViewerContextMenuRequestedHook : Hook
     {
+        /// <summary>
+        /// The project displayed in the viewer.
+        /// </summary>
         public Project Project { get; set; }
+        /// <summary>
+        /// The component whose context menu was requested.
+        /// </summary>
         public Component Component { get; set; }
 
+        /// <summary>
+        /// Creates a viewer context-menu request.
+        /// </summary>
         public ViewerContextMenuRequestedHook() { }
     }
 }

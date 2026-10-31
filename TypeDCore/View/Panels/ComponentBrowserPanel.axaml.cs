@@ -19,6 +19,7 @@ namespace TypeDCore.View.Panels
         ComponentBrowserViewModel ViewModel { get; set; }
 
         // Constructors
+        /// <summary>Creates a component browser for the specified project.</summary>
         public ComponentBrowserPanel(Project project)
         {
             InitializeComponent();

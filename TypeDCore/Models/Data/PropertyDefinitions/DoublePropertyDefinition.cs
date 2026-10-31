@@ -5,10 +5,19 @@ using TypeD.ViewModel;
 
 namespace TypeDCore.Models.Data.PropertyDefinitions
 {
+    /// <summary>
+    /// Exposes a double property value to the property editor.
+    /// </summary>
     public class DoublePropertyNode : PropertyNode
     {
+        /// <summary>
+        /// Creates a node for a double component property.
+        /// </summary>
         public DoublePropertyNode(Component component, Property property, Action<PropertyNode, object> value_changed) : base(component, property, value_changed) { }
 
+        /// <summary>
+        /// Gets or sets the property value, converting unrecognized values to zero.
+        /// </summary>
         public override object Value
         {
             get
@@ -27,11 +36,23 @@ namespace TypeDCore.Models.Data.PropertyDefinitions
         }
     }
 
+    /// <summary>
+    /// Defines the editor and code representation for double properties.
+    /// </summary>
     public class DoublePropertyDefinition : PropertyDefinition<double, DoublePropertyNode>
     {
+        /// <summary>
+        /// Gets the double property editor template URI.
+        /// </summary>
         protected override string TemplateUri => "avares://TypeDCore/View/Panels/PropertyTemplates/DoublePropertyTemplate.axaml";
+        /// <summary>
+        /// Gets the double property editor template key.
+        /// </summary>
         protected override string TemplateKey => "DoublePropertyTemplate";
 
+        /// <summary>
+        /// Converts a double to its C# expression.
+        /// </summary>
         public override string ToCode(double value) => DoubleToCode(value);
 
         /// <summary>

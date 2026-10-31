@@ -16,6 +16,7 @@ namespace TypeDCore.View.Dialogs.Project
         internal ComponentSelectorViewModel ViewModel { get; set; }
 
         // Constructors
+        /// <summary>Creates a dialog for selecting a component in the specified project.</summary>
         public ComponentSelectorDialog(TypeD.Models.Data.Project project)
         {
             InitializeComponent();

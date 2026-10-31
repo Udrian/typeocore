@@ -11,11 +11,13 @@ using TypeDCore.ViewModel.Panels;
 
 namespace TypeDCore;
 
+/// <summary>Displays and manages a project's content files.</summary>
 public partial class ContentPanel : UserControl
 {
     // ViewModel
     ContentPanelViewModel ViewModel { get; set; }
 
+    /// <summary>Creates a content panel for the specified project.</summary>
     public ContentPanel(Project project)
     {
         DataContext = ViewModel = new ContentPanelViewModel(this, project);

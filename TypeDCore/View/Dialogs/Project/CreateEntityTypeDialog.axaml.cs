@@ -14,6 +14,7 @@ namespace TypeDCore.View.Dialogs.Project
         internal CreateEntityTypeViewModel ViewModel { get; set; }
 
         // Constructors
+        /// <summary>Creates a dialog for defining an entity component in the specified project and namespace.</summary>
         public CreateEntityTypeDialog(TypeD.Models.Data.Project project, string @namespace)
         {
             InitializeComponent();

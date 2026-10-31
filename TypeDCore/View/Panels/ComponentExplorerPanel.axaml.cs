@@ -21,6 +21,7 @@ namespace TypeDCore.View.Panels
         ComponentExplorerViewModel ViewModel { get; set; }
         
         // Constructors
+        /// <summary>Creates a component explorer for the specified project.</summary>
         public ComponentExplorerPanel(Project project)
         {
             DataContext = ViewModel = new ComponentExplorerViewModel(this, project);
@@ -235,6 +236,7 @@ namespace TypeDCore.View.Panels
             ViewModel.SelectionChanged(selected, focused);
         }
 
+        /// <summary>Moves keyboard focus to the selected component in the tree.</summary>
         public void FocusTree()
         {
             Dispatcher.UIThread.Post(() =>

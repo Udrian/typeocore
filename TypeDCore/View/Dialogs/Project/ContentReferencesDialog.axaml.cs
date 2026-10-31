@@ -5,10 +5,14 @@ using Avalonia.Interactivity;
 
 namespace TypeDCore.View.Dialogs.Project
 {
+    /// <summary>Specifies the user's choice when a content file has references.</summary>
     public enum ContentReferencesResult
     {
+        /// <summary>Cancel the operation.</summary>
         Cancel,
+        /// <summary>Continue without changing the referenced components.</summary>
         Ignore,
+        /// <summary>Confirm the operation.</summary>
         Confirm
     }
 
@@ -17,8 +21,10 @@ namespace TypeDCore.View.Dialogs.Project
     /// </summary>
     public partial class ContentReferencesDialog : Window
     {
+        /// <summary>Gets the choice made in the dialog.</summary>
         public ContentReferencesResult Result { get; private set; } = ContentReferencesResult.Cancel;
 
+        /// <summary>Creates a dialog showing references to content and the available actions.</summary>
         public ContentReferencesDialog(string message, string confirmText, IEnumerable<string> references)
         {
             InitializeComponent();

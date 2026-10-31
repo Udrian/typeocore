@@ -14,6 +14,7 @@ namespace TypeDCore.View.Dialogs.Project
         internal CreateComponentTypeBaseViewModel ViewModel { get; set; }
 
         // Constructors
+        /// <summary>Creates a dialog for defining a scene component in the specified project and namespace.</summary>
         public CreateSceneTypeDialog(TypeD.Models.Data.Project project, string @namespace)
         {
             InitializeComponent();

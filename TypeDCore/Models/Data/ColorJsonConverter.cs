@@ -10,6 +10,9 @@ namespace TypeDCore.Models.Data
     /// </summary>
     public class ColorJsonConverter : JsonConverter<Color>
     {
+        /// <summary>
+        /// Reads a color from its A, R, G, and B channel values.
+        /// </summary>
         public override Color Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
             if (reader.TokenType != JsonTokenType.StartObject)
@@ -39,6 +42,9 @@ namespace TypeDCore.Models.Data
             throw new JsonException("Unexpected end of color object.");
         }
 
+        /// <summary>
+        /// Writes a color as its A, R, G, and B channel values.
+        /// </summary>
         public override void Write(Utf8JsonWriter writer, Color value, JsonSerializerOptions options)
         {
             writer.WriteStartObject();

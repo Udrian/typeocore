@@ -8,13 +8,22 @@ using TypeD.Models.Data;
 
 namespace TypeDCore.Models.Data
 {
+    /// <summary>
+    /// Represents texture content with a bitmap thumbnail and image metadata.
+    /// </summary>
     public class Texture2dContent : Content
     {
+        /// <summary>
+        /// Creates a thumbnail bitmap from the content data.
+        /// </summary>
         public override void Initialize()
         {
             Thumbnail = new Bitmap(new MemoryStream(Data));
         }
 
+        /// <summary>
+        /// Creates a tooltip containing the texture thumbnail and metadata.
+        /// </summary>
         public override Control CreateToolTip()
         {
             var panel = CreateToolTipPanel();
@@ -41,6 +50,9 @@ namespace TypeDCore.Models.Data
             return panel;
         }
 
+        /// <summary>
+        /// Gets the file and image metadata displayed in the tooltip.
+        /// </summary>
         protected override List<KeyValuePair<string, string>> GetToolTipProperties()
         {
             var properties = new List<KeyValuePair<string, string>>

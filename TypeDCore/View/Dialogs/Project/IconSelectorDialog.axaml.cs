@@ -17,12 +17,16 @@ namespace TypeDCore.View.Dialogs.Project
     /// </summary>
     public partial class IconSelectorDialog : Window
     {
+        /// <summary>Represents an icon and its preview image in the selection dialog.</summary>
         public class IconItem
         {
+            /// <summary>Gets the icon's project name.</summary>
             public string Name { get; init; }
+            /// <summary>Gets the icon preview image.</summary>
             public Bitmap Image { get; init; }
         }
 
+        /// <summary>Gets the selected icon name, or <see langword="null"/> if no icon was selected.</summary>
         public string SelectedIcon { get; private set; }
 
         private readonly TypeD.Models.Data.Project Project;

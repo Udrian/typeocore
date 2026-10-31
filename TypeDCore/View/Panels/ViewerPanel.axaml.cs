@@ -17,6 +17,7 @@ namespace TypeDCore.View.Panels
     {
         ViewerViewModel ViewerViewModel { get; set; }
 
+        /// <summary>Creates a viewer panel for the specified project.</summary>
         public ViewerPanel(Project project)
         {
             InitializeComponent();
