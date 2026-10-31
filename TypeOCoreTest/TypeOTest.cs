@@ -34,6 +34,15 @@ namespace TypeOCoreTest
             public override void Update(double dt) { Exit(); }
             public override void Draw() { }
         }
+        public class TestGameWithNamedService : Game
+        {
+            [ServiceId("primary")]
+            public TestService TestService { get; set; }
+            protected override void Initialize() { base.Initialize(); }
+            protected override void Cleanup() { }
+            public override void Update(double dt) { Exit(); }
+            public override void Draw() { }
+        }
         public class TestService : Service
         {
             protected override void Initialize() { }
@@ -103,6 +112,21 @@ namespace TypeOCoreTest
             typeO = TypeO.Create<TestGameWithService>(GameName)
                 .AddService<TestServiceWithHardware>() as TypeO;
             Assert.Throws<InvalidOperationException>(() => typeO.Start());
+        }
+
+        [Fact]
+        public void AddServiceWithId_InjectsAndCanBeRetrievedById()
+        {
+            var typeO = Assert.IsType<TypeO>(
+                TypeO.Create<TestGameWithNamedService>(GameName).AddService<TestService>("primary"));
+
+            typeO.Start();
+
+            var game = Assert.IsType<TestGameWithNamedService>(typeO.Context.Game);
+            Assert.NotNull(game.TestService);
+            Assert.Same(game.TestService, typeO.Context.GetService<TestService>("primary"));
+            Assert.Null(typeO.Context.GetService<TestService>());
+            Assert.Null(typeO.Context.GetService<TestService>("missing"));
         }
 
         [Fact]

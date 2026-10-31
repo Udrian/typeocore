@@ -239,10 +239,10 @@ namespace TypeOEngine.Typedeaf.Core
                 return new Vec3(a.X * b.X, a.Y * b.Y, a.Z * b.Z);
             }
 
-            /// <summary>Returns the component-wise product of the two vectors.</summary>
+            /// <summary>Divides the corresponding components of the two vectors.</summary>
             public static Vec3 operator /(Vec3 a, Vec3 b)
             {
-                return new Vec3(a.X * b.X, a.Y * b.Y, a.Z * b.Z);
+                return new Vec3(a.X / b.X, a.Y / b.Y, a.Z / b.Z);
             }
 
             /// <summary>Multiplies each component by a scalar.</summary>
@@ -266,7 +266,7 @@ namespace TypeOEngine.Typedeaf.Core
             /// <summary>Divides a scalar by each component of a vector.</summary>
             public static Vec3 operator /(double scalar, Vec3 a)
             {
-                return new Vec3(a.X / scalar, a.Y / scalar, a.Z / scalar);
+                return new Vec3(scalar / a.X, scalar / a.Y, scalar / a.Z);
             }
 
             /// <summary>Determines whether two vectors have equal components.</summary>

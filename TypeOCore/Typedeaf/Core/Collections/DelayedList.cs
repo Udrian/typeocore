@@ -60,7 +60,8 @@ namespace TypeOEngine.Typedeaf.Core
             {
                 if(ToBeCleared)
                 {
-                    Clear();
+                    base.Clear();
+                    ToBeCleared = false;
                     AddQueue.Clear();
                     RemoveQueue.Clear();
                     return;
