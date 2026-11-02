@@ -5,7 +5,7 @@ namespace TypeOCoreTest.Mock
 {
     internal class MockTexture : Texture
     {
-        protected override void Create(Vec2i size, ReadOnlySpan<byte> data) { }
+        protected override void Create(Vec2i size, byte[] data) { }
 
         protected override void Load(string path) { }
 

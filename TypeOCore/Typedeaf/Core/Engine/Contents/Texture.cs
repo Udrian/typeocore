@@ -24,8 +24,8 @@ namespace TypeOEngine.Typedeaf.Core
             /// </summary>
             /// <param name="size">Size of the texture</param>
             /// <param name="data">Data containing the actual image</param>
-            protected abstract void Create(Vec2i size, ReadOnlySpan<byte> data);
-            internal void InternalCreate(Vec2i size, ReadOnlySpan<byte> data)
+            protected abstract void Create(Vec2i size, byte[] data);
+            internal void InternalCreate(Vec2i size, byte[] data)
             {
                 Size = size;
                 Create(size, data);

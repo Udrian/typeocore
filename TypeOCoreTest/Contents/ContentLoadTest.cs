@@ -3,7 +3,6 @@ using TypeOEngine.Typedeaf.Core.Engine;
 using TypeOEngine.Typedeaf.Core.Engine.Contents;
 using TypeOEngine.Typedeaf.Core.Engine.Contents.ContentExtensions;
 using TypeOEngine.Typedeaf.Core.Common;
-using System.IO;
 using TypeOCoreTest.Mock;
 
 namespace TypeOCoreTest.Contents
@@ -37,7 +36,7 @@ namespace TypeOCoreTest.Contents
 
             Assert.NotNull(typeO.Context.ContentBinding[typeof(Texture)]);
 
-            var texture = typeO.Context.Game.ContentLoader.CreateTexture<Texture>(new Vec2i(100, 100), new ReadOnlySpan<byte>());
+            var texture = typeO.Context.Game.ContentLoader.CreateTexture<Texture>(new Vec2i(100, 100), new byte[100 * 100 * 4]);
             Assert.NotNull(texture);
             Assert.IsType<MockTexture>(texture);
             Assert.Null(texture.FilePath);

@@ -17,7 +17,7 @@ namespace TypeOEngine.Typedeaf.Core
             /// <param name="size">Size of the texture</param>
             /// <param name="data">Data containing the actual image</param>
             /// <returns>The newly created Texture</returns>
-            public static T CreateTexture<T>(this ContentLoader contentLoader, Vec2i size, ReadOnlySpan<byte> data) where T : Texture
+            public static T CreateTexture<T>(this ContentLoader contentLoader, Vec2i size, byte[] data) where T : Texture
             {
                 var texture = contentLoader.CreateContent<T>(null);
                 if (texture == null) return null;
