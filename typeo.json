@@ -1,13 +1,36 @@
 {
-    "name": "TypeOCore",
-    "version": "0.1.0",
-    "externals": ["Mock/Content/Lato-Black.ttf;test", "Mock/Content/texture.png;test"],
-    "dependencies": [
-        "Udrian@TypeD-0.1.0.dev;dev",
-        "MathNet.Numerics-5.0.0;nuget",
-        "MessageBox.Avalonia-12.1.0;nuget;dev"
-    ],
-    "type": "module",
-    "devModuleName": "TypeDCore",
-    "testName": "TypeOCoreTest"
+  "name": "TypeOCore",
+  "version": "0.1.0",
+  "externals": [
+    "Mock/Content/Lato-Black.ttf;test",
+    "Mock/Content/texture.png;test"
+  ],
+  "dependencies": [
+    "Udrian@TypeD-0.1.0.dev;dev",
+    "MathNet.Numerics-5.0.0;nuget",
+    "MessageBox.Avalonia-12.1.0;nuget;dev"
+  ],
+  "type": "module",
+  "project": [
+    {
+      "Name": "TypeOCore",
+      "type": "",
+      "depends_on": []
+    },
+    {
+      "Name": "TypeDCore",
+      "type": "dev",
+      "depends_on": [
+        "TypeOCore"
+      ]
+    },
+    {
+      "Name": "TypeOCoreTest",
+      "type": "test",
+      "depends_on": [
+        "TypeOCore",
+        "TypeDCore"
+      ]
+    }
+  ]
 }
