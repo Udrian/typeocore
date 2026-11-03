@@ -8,7 +8,16 @@
   "dependencies": [
     "Udrian@TypeD-0.1.0.dev;dev",
     "MathNet.Numerics-5.0.0;nuget",
-    "MessageBox.Avalonia-12.1.0;nuget;dev"
+    "MessageBox.Avalonia-12.1.0;nuget;dev",
+    "Avalonia-12.1.4;nuget;dev",
+    "Avalonia.Desktop-12.1.4;nuget;dev",
+    "Avalonia.Themes.Fluent-12.1.4;nuget;dev",
+    "Avalonia.Fonts.Inter-12.1.4;nuget;dev",
+    "Avalonia.Diagnostics-11.3.22;nuget;dev",
+    "coverlet.collector-10.1.0;nuget;test",
+    "Microsoft.NET.Test.Sdk-18.11.0;nuget;test",
+    "xunit-2.9.3;nuget;test",
+    "xunit.runner.visualstudio-4.0.1;nuget;test"
   ],
   "type": "module",
   "project": [
