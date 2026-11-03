@@ -21,6 +21,7 @@ namespace TypeDCore.Models.Data.PropertyDefinitions
         public override void RefreshValue()
         {
             base.RefreshValue();
+            ValidationError = null;
             OnPropertyChanged(nameof(ValueX));
             OnPropertyChanged(nameof(ValueY));
         }
@@ -41,6 +42,7 @@ namespace TypeDCore.Models.Data.PropertyDefinitions
                 if (value is Vec2 vec2Value)
                 {
                     base.Value = vec2Value;
+                    ValidationError = null;
                 }
                 else if (value != null)
                 {
@@ -50,6 +52,11 @@ namespace TypeDCore.Models.Data.PropertyDefinitions
                         double.TryParse(parts[1], out double y))
                     {
                         base.Value = new Vec2(x, y);
+                        ValidationError = null;
+                    }
+                    else
+                    {
+                        ValidationError = $"Invalid vector format. Expected 'X, Y' (e.g., '10.5, 20.3')";
                     }
                 }
             }
@@ -63,9 +70,16 @@ namespace TypeDCore.Models.Data.PropertyDefinitions
             get => Value is Vec2 vec2 ? vec2.X : 0;
             set
             {
+                if (double.IsNaN(value) || double.IsInfinity(value))
+                {
+                    ValidationError = "Invalid X value: must be a valid number";
+                    return;
+                }
+
                 Vec2 val = new Vec2(value, 0);
                 val.Y = Value is Vec2 vec2 ? vec2.Y : 0;
                 Value = val;
+                ValidationError = null;
             }
         }
 
@@ -77,9 +91,16 @@ namespace TypeDCore.Models.Data.PropertyDefinitions
             get => Value is Vec2 vec2 ? vec2.Y : 0;
             set
             {
+                if (double.IsNaN(value) || double.IsInfinity(value))
+                {
+                    ValidationError = "Invalid Y value: must be a valid number";
+                    return;
+                }
+
                 Vec2 val = new Vec2(0, value);
                 val.X = Value is Vec2 vec2 ? vec2.X : 0;
                 Value = val;
+                ValidationError = null;
             }
         }
     }

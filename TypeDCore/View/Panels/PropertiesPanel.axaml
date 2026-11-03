@@ -59,7 +59,9 @@
                     <Border Grid.Column="0"
                             BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
                             BorderThickness="0,0,1,1"
-                            Padding="8,0">
+                            Padding="8,0"
+                            Background="{Binding HasValidationError, Converter={x:Static local:PropertyErrorBackgroundConverter.Instance}, ConverterParameter=HasValidationError}"
+                            ToolTip.Tip="{Binding ValidationError}">
                         <TextBlock Text="{Binding Name}"
                                    VerticalAlignment="Center"
                                    FontSize="12"

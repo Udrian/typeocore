@@ -3,6 +3,7 @@
 using Avalonia.Controls;
 using Avalonia;
 using System;
+using Avalonia.Data;
 
 namespace TypeDCore.View.Panels.PropertyTemplates
 {
@@ -86,6 +87,10 @@ namespace TypeDCore.View.Panels.PropertyTemplates
 
                 _isUpdating = false;
             }
+
+            // Clear any data validation errors since we're handling input filtering ourselves
+            ClearValue(DataValidationErrors.ErrorsProperty);
         }
     }
 }
+
