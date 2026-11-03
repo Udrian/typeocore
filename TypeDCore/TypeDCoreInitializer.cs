@@ -240,6 +240,7 @@ namespace TypeDCore
             AddToolbarTool(hook, "Select", EditorTool.Selection, "M5,3 L5,19 L9.5,15 L12.5,21 L15,20 L12,14 L18,14 Z");
             AddToolbarTool(hook, "Move", EditorTool.Move, "M12,2 L16,6 L13,6 L13,11 L18,11 L18,8 L22,12 L18,16 L18,13 L13,13 L13,18 L16,18 L12,22 L8,18 L11,18 L11,13 L6,13 L6,16 L2,12 L6,8 L6,11 L11,11 L11,6 L8,6 Z");
             AddToolbarTool(hook, "Resize", EditorTool.Resize, "M14,3 L21,3 L21,10 L18.5,7.5 L7.5,18.5 L10,21 L3,21 L3,14 L5.5,16.5 L16.5,5.5 Z");
+            AddToolbarTool(hook, "Origin", EditorTool.Origin, "M12,3 C6.48,3 2,7.48 2,13 C2,18.52 6.48,23 12,23 C17.52,23 22,18.52 22,13 C22,7.48 17.52,3 12,3 M12,5 L12,21 M3,13 L21,13");
 
             hook.Menu.Items.Add(
                 new MenuItem() {

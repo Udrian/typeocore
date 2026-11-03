@@ -16,6 +16,11 @@ namespace TypeDCore.Models.Data
         /// <summary>
         /// Resizes the selected component.
         /// </summary>
-        Resize
+        Resize,
+        /// <summary>
+        /// Changes the origin point of the selected component.
+        /// </summary>
+        Origin
     }
 }
+
