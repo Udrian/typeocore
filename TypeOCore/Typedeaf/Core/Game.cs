@@ -48,7 +48,7 @@ namespace TypeOEngine.Typedeaf.Core
         /// <summary>
         /// Gets the collection of scenes available in the application.
         /// </summary>
-        public SceneList Scenes { get; private set; }
+        public SceneManager Scenes { get; private set; }
 
         /// <summary>
         /// Gets or sets the main application window.
@@ -84,7 +84,7 @@ namespace TypeOEngine.Typedeaf.Core
             Context.InitializeObject(Logics, this);
             ContentLoader = new ContentLoader(Context.ContentBinding);
             Context.InitializeObject(ContentLoader);
-            Scenes = new SceneList(this);
+            Scenes = new SceneManager(this);
             Context.InitializeObject(Scenes);
         }
 

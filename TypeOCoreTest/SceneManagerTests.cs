@@ -3,7 +3,7 @@ using TypeOEngine.Typedeaf.Core.Engine;
 
 namespace TypeOCoreTest;
 
-public class SceneListTests
+public class SceneManagerTests
 {
     public sealed class SceneTestGame : Game
     {
@@ -59,7 +59,7 @@ public class SceneListTests
     [Fact]
     public void SetSceneInitializesAndNotifiesScenesAcrossTransitions()
     {
-        var typeO = Assert.IsType<TypeO>(TypeO.Create<SceneTestGame>("scene-list-test"));
+        var typeO = Assert.IsType<TypeO>(TypeO.Create<SceneTestGame>("scene-manager-test"));
         typeO.Start();
 
         var game = Assert.IsType<SceneTestGame>(typeO.Context.Game);

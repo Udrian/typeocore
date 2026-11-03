@@ -1,14 +1,14 @@
-﻿using TypeOEngine.Typedeaf.Core.Engine.Contents;
+using TypeOEngine.Typedeaf.Core.Engine.Contents;
 using TypeOEngine.Typedeaf.Core.Engine.Graphics.Interfaces;
 using TypeOEngine.Typedeaf.Core.Engine.Interfaces;
 
 namespace TypeOEngine.Typedeaf.Core.Engine
 {
     /// <summary>Creates, stores, and switches between a game's scenes.</summary>
-    public class SceneList : TypeOObject, IHasContext //TODO: Maybe change to a "GameContext class"
+    public class SceneManager : TypeOObject, IHasContext //TODO: Maybe change to a "GameContext class"
     {
         Context IHasContext.Context { get; set; }
-        /// <summary>Gets the context associated with this scene list.</summary>
+        /// <summary>Gets the context associated with this scene manager.</summary>
         protected Context Context { get => (this as IHasContext).Context; set => (this as IHasContext).Context = value; }
         private ILogger Logger { get; set; }
 
@@ -23,18 +23,18 @@ namespace TypeOEngine.Typedeaf.Core.Engine
         /// <summary>Gets the game's content loader.</summary>
         public ContentLoader ContentLoader { get => Game.ContentLoader; }
 
-        internal SceneList(Game game)
+        internal SceneManager(Game game)
         {
             Game = game;
             Scenes = new Dictionary<Type, Scene>();
         }
 
-        /// <summary>Initializes the scene list.</summary>
+        /// <summary>Initializes the scene manager.</summary>
         protected override void Initialize()
         {
         }
 
-        /// <summary>Cleans up the window and scenes owned by this list.</summary>
+        /// <summary>Cleans up the window and scenes owned by this manager.</summary>
         protected override void Cleanup()
         {
             if(Window is TypeOObject typeObject)
@@ -76,11 +76,11 @@ namespace TypeOEngine.Typedeaf.Core.Engine
             Scenes.Add(scene.GetType(), scene);
 
             if (Window == null)
-                Logger.Log(LogLevel.Warning, $"Window have not been instantiated to SceneList on '{Context.Game.GetType().FullName}'");
+                Logger.Log(LogLevel.Warning, $"Window have not been instantiated to SceneManager on '{Context.Game.GetType().FullName}'");
             if (Canvas == null)
-                Logger.Log(LogLevel.Warning, $"Canvas have not been instantiated to SceneList on '{Context.Game.GetType().FullName}'");
+                Logger.Log(LogLevel.Warning, $"Canvas have not been instantiated to SceneManager on '{Context.Game.GetType().FullName}'");
             if (ContentLoader == null)
-                Logger.Log(LogLevel.Warning, $"ContentLoader have not been instantiated to SceneList on '{Context.Game.GetType().FullName}'");
+                Logger.Log(LogLevel.Warning, $"ContentLoader have not been instantiated to SceneManager on '{Context.Game.GetType().FullName}'");
 
             scene.Scenes = this;
             scene.Window = Window;

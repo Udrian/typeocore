@@ -26,7 +26,7 @@ namespace TypeOEngine.Typedeaf.Core
         /// <summary>
         /// Gets the collection of scenes available in the application.
         /// </summary>
-        public SceneList Scenes { get; internal set; }
+        public SceneManager Scenes { get; internal set; }
 
         /// <summary>
         /// Gets the window associated with the current context.
