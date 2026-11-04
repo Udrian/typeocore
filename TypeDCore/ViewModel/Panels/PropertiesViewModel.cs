@@ -152,7 +152,7 @@ namespace TypeDCore.ViewModel.Panels
             EditorCommandRegistry = ResourceModel.Get<IEditorCommandRegistry>();
             PropertyModel = ResourceModel.Get<IPropertyModel>();
             _settingModel = ResourceModel.Get<ISettingModel>();
-            var settings = _settingModel.GetContext<MainWindowSettingContext>(SettingLevel.Local);
+            var settings = _settingModel.GetContext<MainWindowSettingContext>(SettingLevel.User);
             _sortAlphabetically = settings.SortPropertyGroupsAlphabetically.Value;
             var savedOrder = settings.PropertyGroupOrder.Value;
             try
@@ -341,11 +341,11 @@ namespace TypeDCore.ViewModel.Panels
 
         private void SaveGroupOrder()
         {
-            var settings = _settingModel.GetContext<MainWindowSettingContext>(SettingLevel.Local);
+            var settings = _settingModel.GetContext<MainWindowSettingContext>(SettingLevel.User);
             settings.PropertyGroupOrder.Value = JsonSerializer.Serialize(_customGroupOrder);
             settings.PropertyOrder.Value = JsonSerializer.Serialize(_customPropertyOrder);
             settings.SortPropertyGroupsAlphabetically.Value = SortAlphabetically;
-            _settingModel.SetContext(settings, SettingLevel.Local);
+            _settingModel.SetContext(settings, SettingLevel.User);
         }
     }
 }
