@@ -21,6 +21,7 @@ using TypeDCore.Models.Data.Hooks;
 using TypeOEngine.Typedeaf.Core.Common;
 using TypeDCore.Models.Interfaces;
 using TypeDCore.View.Panels;
+using TypeDCore.View.Toolbars;
 using TypeDCore.View.Viewer;
 using TypeOEngine.Typedeaf.Core;
 using TypeOEngine.Typedeaf.Core.Attributes;
@@ -47,6 +48,7 @@ namespace TypeDCore
         IEditorCommandRegistry EditorCommandRegistry { get; set; }
         NodeSelectionModel NodeSelectionModel { get; set; }
         EditorToolModel EditorToolModel { get; set; }
+        ViewerCameraModel ViewerCameraModel { get; set; }
 
         // Commands
         CreateEntityTypeCommand CreateEntityTypeCommand { get; set; }
@@ -65,6 +67,8 @@ namespace TypeDCore
         OpenComponentCommand OpenComponentCommand { get; set; }
         CloseComponentCommand CloseComponentCommand { get; set; }
         OpenInExternalCommand OpenInExternalCommand { get; set; }
+        TeleportToSelectionCommand TeleportToSelectionCommand { get; set; }
+        ResetViewCommand ResetViewCommand { get; set; }
 
         // Functions
         public override void Initializer(Project project)
@@ -90,13 +94,15 @@ namespace TypeDCore
             CommandHistoryModel = new CommandHistoryModel();
             NodeSelectionModel = new NodeSelectionModel();
             EditorToolModel = new EditorToolModel();
+            ViewerCameraModel = new ViewerCameraModel();
 
             Resources.Add(new List<object>() {
                  TypeDCoreProjectModel,
                  TypeDCoreRestoreModel,
                  CommandHistoryModel,
                  NodeSelectionModel,
-                 EditorToolModel
+                 EditorToolModel,
+                 ViewerCameraModel
             });
 
             // Providers
@@ -125,6 +131,8 @@ namespace TypeDCore
             OpenComponentCommand = new OpenComponentCommand(project, Resources);
             CloseComponentCommand = new CloseComponentCommand(Resources);
             OpenInExternalCommand = new OpenInExternalCommand(project, Resources);
+            TeleportToSelectionCommand = new TeleportToSelectionCommand(Resources);
+            ResetViewCommand = new ResetViewCommand(Resources);
 
             // Hooks
             Hooks.AddHook<ProjectCreateHook>(ProjectCreate);
@@ -178,6 +186,8 @@ namespace TypeDCore
             OpenComponentCommand.Dispose();
             CloseComponentCommand.Dispose();
             OpenInExternalCommand.Dispose();
+            TeleportToSelectionCommand.Dispose();
+            ResetViewCommand.Dispose();
 
             // Panels
             PanelModel.DetachPanel("typed_viewer");
@@ -194,6 +204,7 @@ namespace TypeDCore
             Resources.Remove("CommandHistoryModel");
             Resources.Remove("NodeSelectionModel");
             Resources.Remove("EditorToolModel");
+            Resources.Remove("ViewerCameraModel");
 
             // Hooks
             Hooks.RemoveHook<ProjectCreateHook>();
@@ -241,6 +252,11 @@ namespace TypeDCore
             AddToolbarTool(hook, "Move", EditorTool.Move, "M12,2 L16,6 L13,6 L13,11 L18,11 L18,8 L22,12 L18,16 L18,13 L13,13 L13,18 L16,18 L12,22 L8,18 L11,18 L11,13 L6,13 L6,16 L2,12 L6,8 L6,11 L11,11 L11,6 L8,6 Z");
             AddToolbarTool(hook, "Resize", EditorTool.Resize, "M14,3 L21,3 L21,10 L18.5,7.5 L7.5,18.5 L10,21 L3,21 L3,14 L5.5,16.5 L16.5,5.5 Z");
             AddToolbarTool(hook, "Origin", EditorTool.Origin, "M12,3 C6.48,3 2,7.48 2,13 C2,18.52 6.48,23 12,23 C17.52,23 22,18.52 22,13 C22,7.48 17.52,3 12,3 M12,5 L12,21 M3,13 L21,13");
+            hook.Toolbar.Add("Camera Control", new ToolbarItem()
+            {
+                Name = "Camera Control",
+                CreateControl = () => new CameraToolbar(Resources)
+            });
 
             hook.Menu.Items.Add(
                 new MenuItem() {
@@ -579,6 +595,19 @@ namespace TypeDCore
 
                 return;
             }
+
+            var teleportTarget = hook.SelectedComponent;
+            hook.Menu.Items.Add(
+                new MenuItem()
+                {
+                    Name = "_Teleport to selection",
+                    ClickParameter = "LoadedProject",
+                    Click = (param) =>
+                    {
+                        EditorCommandRegistry.Execute(TeleportToSelectionCommand.Id, new ViewerCameraCommandData { Project = param as Project ?? hook.Project, Component = teleportTarget });
+                    }
+                }
+            );
 
             if (hook.SelectedComponent?.ReadOnly != true)
             {

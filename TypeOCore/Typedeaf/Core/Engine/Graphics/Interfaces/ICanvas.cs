@@ -26,6 +26,11 @@ namespace TypeOEngine.Typedeaf.Core
             public Vec3 WorldTranslation { get; set; }
 
             /// <summary>
+            /// Gets or sets the world-space scale (zoom) of the Canvas, applied after the translation. 1 draws the world unscaled.
+            /// </summary>
+            public double WorldScale { get; set; }
+
+            /// <summary>
             /// Clears the Canvas.
             /// </summary>
             /// <param name="clearColor">Color to clear with.</param>

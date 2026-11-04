@@ -16,6 +16,9 @@ namespace TypeOEngine.Typedeaf.Core.Engine.Graphics
         /// <inheritdoc/>
         public Vec3 WorldTranslation { get; set; }
 
+        /// <inheritdoc/>
+        public double WorldScale { get; set; } = 1;
+
         /// <summary>
         /// Canvas constructor.
         /// </summary>
