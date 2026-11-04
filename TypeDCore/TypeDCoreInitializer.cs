@@ -17,6 +17,7 @@ using TypeDCore.Components;
 using TypeDCore.Models;
 using TypeDCore.Models.Data;
 using TypeDCore.Models.Data.PropertyDefinitions;
+using TypeDCore.Models.Data.SettingContexts;
 using TypeDCore.Models.Data.Hooks;
 using TypeOEngine.Typedeaf.Core.Common;
 using TypeDCore.Models.Interfaces;
@@ -88,6 +89,7 @@ namespace TypeDCore
             PropertyModel.Register(new ColorPropertyDefinition());
             PropertyModel.Register(new EnumPropertyDefinition());
             PropertyModel.Register(new ContentPropertyDefinition(Resources.Get<IContentProvider>()));
+            Resources.Get<ISettingModel>().InitContext<ViewerSettingContext>(project);
 
             // Internal Models
             TypeDCoreProjectModel = new TypeDCoreProjectModel();
@@ -770,6 +772,7 @@ namespace TypeDCore
         void OptionsWindowOpened(OptionsHook hook)
         {
             var mainWindowSettingContext = SettingModel.GetContext<MainWindowSettingContext>(hook.Level);
+            var viewerSettingContext = SettingModel.GetContext<ViewerSettingContext>(hook.Level);
 
             hook.Items.AddRange(new List<SettingItem>()
             { 
@@ -784,6 +787,13 @@ namespace TypeDCore
                         mainWindowSettingContext.ViewerType.Value = viewerType;
                         SettingModel.SetContext(mainWindowSettingContext);
                     }
+                }, "Viewer"),
+                new SettingItem("Viewer Clear Color", "Background color of the editor scene.", viewerSettingContext.ClearColor, (value) => {
+                    viewerSettingContext.ClearColor.Value = (Color)value;
+                    SettingModel.SetContext(viewerSettingContext);
+                    Hooks.Shoot(new ViewerClearColorChangedHook {
+                        Color = SettingModel.GetContext<ViewerSettingContext>().ClearColor.Value
+                    });
                 }, "Viewer")
             });
         }
