@@ -1,4 +1,5 @@
 ﻿using TypeOEngine.Typedeaf.Core.Attributes;
+using TypeOEngine.Typedeaf.Core.Common;
 using TypeOEngine.Typedeaf.Core.Engine;
 using TypeOEngine.Typedeaf.Core.Engine.Contents;
 using TypeOEngine.Typedeaf.Core.Engine.Graphics.Interfaces;
@@ -79,6 +80,12 @@ namespace TypeOEngine.Typedeaf.Core
         /// </summary>
         [TypeOProperty("Gets or sets a value indicating whether the scene should be hidden.", Group = "Rendering")]
         public bool Hide          { get; set; } = false;
+        
+        /// <summary>
+        /// Gets or sets the clear color for the scene.
+        /// </summary>
+        [TypeOProperty("Gets or sets the clear color for the scene.", Group = "Rendering")]
+        public Color ClearColor { get; set; } = Color.Black;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Scene"/> class.

@@ -56,7 +56,7 @@ namespace TypeDCore.Code.Scene
             AddFunction(new Function("public override void Draw()", () => {
                 if (IsBaseComponentType)
                 {
-                    Writer.AddLine("Canvas?.Clear(Color.Black);");
+                    Writer.AddLine("Canvas?.Clear(ClearColor);");
                     Writer.AddLine("DrawStack.Draw(Canvas);");
                     Writer.AddLine("Canvas?.Present();");
                 }

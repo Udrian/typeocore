@@ -88,7 +88,21 @@ namespace TypeOEngine.Typedeaf.Core.Engine
             scene.ContentLoader = ContentLoader;
         }
 
-        //TODO: Destroy Scene?
+        /// <summary>
+        /// Performs cleanup for each scene in the collection and then removes all scenes.
+        /// Does not call OnExit for the current scene. Use SetScene to switch scenes before calling this method if you want to trigger OnExit.
+        /// </summary>
+        /// <remarks>Calls cleanup on each non-null scene before clearing the collection.</remarks>
+        public void ClearScenes()
+        {
+            foreach (var scene in Scenes)
+            {
+                scene.Value?.DoCleanup();
+                Context.DestroyObject(scene.Value);
+            }
+            Scenes.Clear();
+        }
+
         /// <summary>Activates the scene of the specified type and returns it.</summary>
         public Scene SetScene(Type type)
         {

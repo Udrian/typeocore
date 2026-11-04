@@ -563,7 +563,6 @@ namespace TypeOEngine.Typedeaf.Core
                 if (!IDToTypeOObjectMap.ContainsKey(id))
                 {
                     Logger.Log(LogLevel.Warning, $"TypeOObject with id '{id}' does not exist");
-                    throw new Exception($"TypeOObject with id '{id}' does not exist");
                     return null;
                 }
 
