@@ -144,6 +144,9 @@ namespace TypeDCore.ViewModel.Panels
 
         private void BuildTree(ComponentTreeBuiltHook hook)
         {
+            if (hook.Tree != LoadedProject.ComponentTree)
+                return;
+
             Dispatcher.UIThread.Invoke(() =>
             {
                 var treeNodes = TreeToNodeList(LoadedProject.ComponentTree.Nodes);
@@ -151,69 +154,35 @@ namespace TypeDCore.ViewModel.Panels
             });
         }
 
-        private void Buildtree(IList<Node> treeNodes, IList<Node> nodes)
+        private static void Buildtree(IList<Node> treeNodes, IList<Node> nodes)
         {
-            var shouldBeDeleted = new List<Node>();
-            var i = 0;
-            foreach (var treeNode in treeNodes)
+            for (var i = 0; i < treeNodes.Count; i++)
             {
-                Node foundNode = null;
-                foreach (var node in nodes)
+                var treeNode = treeNodes[i];
+                var existingIndex = -1;
+                for (var j = i; j < nodes.Count; j++)
                 {
-                    if (node.Key == treeNode.Key)
+                    if (nodes[j].Key == treeNode.Key)
                     {
-                        foundNode = node;
+                        existingIndex = j;
                         break;
                     }
-
-                    var delFound = false;
-                    foreach(var delTreeNode in treeNodes)
-                    {
-                        if(delTreeNode.Key == node.Key)
-                        {
-                            delFound = true;
-                            break;
-                        }
-                    }
-                    if(!delFound)
-                    {
-                        shouldBeDeleted.Add(node);
-                    }
                 }
-                if (foundNode == null)
+
+                if (existingIndex == i)
                 {
-                    nodes.Insert(i, treeNode);
+                    nodes[i] = treeNode;
                 }
                 else
                 {
-                    if(foundNode != treeNode)
-                    {
-                        nodes[i] = treeNode;
-                    }
-                    Buildtree(treeNode.Nodes, foundNode.Nodes);
-                }
-                i++;
-            }
-            foreach (var node in nodes)
-            {
-                var delFound = false;
-                foreach (var delTreeNode in treeNodes)
-                {
-                    if (delTreeNode.Key == node.Key)
-                    {
-                        delFound = true;
-                        break;
-                    }
-                }
-                if (!delFound && !shouldBeDeleted.Contains(node))
-                {
-                    shouldBeDeleted.Add(node);
+                    if (existingIndex >= 0)
+                        nodes.RemoveAt(existingIndex);
+                    nodes.Insert(i, treeNode);
                 }
             }
-            foreach (var delNode in shouldBeDeleted)
-            {
-                nodes.Remove(delNode);
-            }
+
+            while (nodes.Count > treeNodes.Count)
+                nodes.RemoveAt(nodes.Count - 1);
         }
     }
 }
