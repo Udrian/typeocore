@@ -227,6 +227,10 @@ namespace TypeDCore.ViewModel.Panels
 
             if (hook.IsBuilding)
             {
+                // Progress updates of a running build are published as building as well
+                if (IsBuildInProgress)
+                    return;
+
                 Action beginBuild = () =>
                 {
                     IsBuildInProgress = true;
