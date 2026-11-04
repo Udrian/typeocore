@@ -217,8 +217,37 @@ namespace TypeDCore.ViewModel.Panels
 
         public async Task LoadAllContent()
         {
-            await SyncWithDisk();
+            if (_isLoaded)
+                return;
+            _isLoaded = true;
+            _reloadContent = true;
+            ContentProvider.ContentTypesChanged += ContentTypesChanged;
             StartWatching();
+            await SyncWithDisk();
+        }
+
+        public void Unload()
+        {
+            _isLoaded = false;
+            ContentProvider.ContentTypesChanged -= ContentTypesChanged;
+            _debounce?.Stop();
+            _watcher?.Dispose();
+            _watcher = null;
+        }
+
+        private bool _isLoaded;
+        private bool _reloadContent;
+
+        private void ContentTypesChanged()
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                if (!_isLoaded)
+                    return;
+                _reloadContent = true;
+                _debounce.Stop();
+                _debounce.Start();
+            });
         }
 
         private readonly System.Threading.SemaphoreSlim _syncLock = new(1, 1);
@@ -256,7 +285,7 @@ namespace TypeDCore.ViewModel.Panels
 
         private void StartWatching()
         {
-            if (_watcher != null || !System.IO.Directory.Exists(Project.ProjectContentPath))
+            if (_watcher != null)
                 return;
 
             // File events come in bursts, so they are collapsed into one sync on the UI thread.
@@ -266,6 +295,9 @@ namespace TypeDCore.ViewModel.Panels
                 _debounce.Stop();
                 await SyncWithDisk();
             };
+
+            if (!System.IO.Directory.Exists(Project.ProjectContentPath))
+                return;
 
             _watcher = new System.IO.FileSystemWatcher(Project.ProjectContentPath)
             {
@@ -283,16 +315,14 @@ namespace TypeDCore.ViewModel.Panels
         // Adds new files, removes missing ones and reloads files that changed on disk.
         private async Task SyncWithDisk()
         {
-            if (!await _syncLock.WaitAsync(0))
-            {
-                // A sync is running; run again afterwards so this change is not lost.
-                _debounce?.Stop();
-                _debounce?.Start();
-                return;
-            }
+            await _syncLock.WaitAsync();
 
             try
             {
+                if (!_isLoaded)
+                    return;
+                var reloadContent = _reloadContent;
+                _reloadContent = false;
                 var paths = System.IO.Directory.Exists(Project.ProjectContentPath)
                     ? ContentProvider.ListAllPaths(Project)
                     : new List<string>();
@@ -305,12 +335,14 @@ namespace TypeDCore.ViewModel.Panels
                 {
                     var existing = Items.FirstOrDefault(i => string.Equals(i.Path, path, StringComparison.OrdinalIgnoreCase));
                     var lastWrite = System.IO.File.GetLastWriteTimeUtc(path);
-                    if (existing != null && existing.LastWrite == lastWrite)
+                    if (!reloadContent && existing != null && existing.LastWrite == lastWrite)
                         continue;
 
                     try
                     {
                         var content = await ContentProvider.GetContentAsync(path);
+                        if (!_isLoaded)
+                            return;
                         if (existing != null)
                         {
                             existing.SetContent(content);
@@ -325,9 +357,9 @@ namespace TypeDCore.ViewModel.Panels
                             Items.Add(item);
                         }
                     }
-                    catch (Exception)
+                    catch (Exception exception)
                     {
-                        // Probably still being written; the next change event syncs it again.
+                        ResourceModel.Get<ILogModel>().Log($"Could not load content preview '{path}': {exception}");
                     }
                 }
 

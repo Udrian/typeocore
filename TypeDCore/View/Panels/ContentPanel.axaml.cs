@@ -29,7 +29,20 @@ public partial class ContentPanel : UserControl
         DragDrop.AddDragOverHandler(FolderTree, FolderTree_DragOver);
         DragDrop.AddDropHandler(FolderTree, FolderTree_Drop);
 
+    }
+
+    /// <inheritdoc/>
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
         LoadContentAsync();
+    }
+
+    /// <inheritdoc/>
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        ViewModel.Unload();
+        base.OnDetachedFromVisualTree(e);
     }
 
     private PointerPressedEventArgs _pressed;
