@@ -12,11 +12,11 @@ namespace TypeDCore.View.Viewer
     /// <summary>Runs a drawable component in an isolated game instance for preview.</summary>
     public class DrawableViewer
     {
-        readonly TypeO FakeTypeO;
+        readonly TypeO EditorTypeO;
         private readonly Task GameTask;
         private int IsClosed;
 
-        private class FakeGame : Game
+        private class EditorGame : Game
         {
             private readonly object DrawablesLock = new();
 
@@ -58,7 +58,7 @@ namespace TypeDCore.View.Viewer
             }
         }
 
-        private FakeGame Game { get; set; }
+        private EditorGame Game { get; set; }
 
         /// <summary>Creates a drawable preview using the project's assembly and optional modules.</summary>
         public DrawableViewer(Project project, Component drawable, List<TypeOEngine.Typedeaf.Core.Engine.Module> modules = null)
@@ -67,16 +67,16 @@ namespace TypeDCore.View.Viewer
             var typeInfo = project.Assembly.GetType(drawable.FullName);
             if (typeInfo == null) return;
 
-            FakeTypeO = TypeO.Create<FakeGame>("Drawable Viewer") as TypeO;
-            Game = FakeTypeO.Context.Game as FakeGame;
+            EditorTypeO = TypeO.Create<EditorGame>("Drawable Viewer") as TypeO;
+            Game = EditorTypeO.Context.Game as EditorGame;
             if (modules != null)
             {
                 foreach (var module in modules)
                 {
-                    FakeTypeO.LoadModule(module);
+                    EditorTypeO.LoadModule(module);
                 }
             }
-            GameTask = Task.Run(FakeTypeO.Start);
+            GameTask = Task.Run(EditorTypeO.Start);
             if (!SpinWait.SpinUntil(() => Game.Initialized || GameTask.IsCompleted, TimeSpan.FromSeconds(30)))
             {
                 Game.Exit();
