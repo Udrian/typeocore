@@ -195,29 +195,14 @@ namespace TypeDCore.ViewModel.Panels
                 if(Component == hook.Component)
                     return;
                 Component = hook.Component;
-                PropertyNodes.Clear();
-                if (Component == null)
-                {
-                    RefreshGroups();
+                BuildPropertyNodes();
+            });
+
+            HookModel.AddHook<ComponentPropertiesChangedHook>((hook) =>
+            {
+                if (Component == null || !ReferenceEquals(Component, hook.Component))
                     return;
-                }
-                foreach(var property in Component.Properties)
-                {
-                    Action<PropertyNode, object> valueChanged = (node, value) =>
-                    {
-                        var executed = EditorCommandRegistry.Execute("component.change-property", new ChangePropertyCommandData
-                        {
-                            Project = Project,
-                            Property = node.Property,
-                            Value = value
-                        });
-                        if (!executed)
-                            throw new InvalidOperationException($"Could not execute the change-property command for '{node.Property.Name}'.");
-                    };
-                    var definition = PropertyModel.Get(property.Type);
-                    PropertyNodes.Add(definition?.CreateNode(Component, property, valueChanged) ?? new PropertyNode(Component, property, valueChanged));
-                }
-                RefreshGroups();
+                BuildPropertyNodes();
             });
 
             HookModel.AddHook<PropertyChangedHook>((hook) =>
@@ -238,6 +223,33 @@ namespace TypeDCore.ViewModel.Panels
                 PropertyNodes.Clear();
                 RefreshGroups();
             });
+        }
+
+        private void BuildPropertyNodes()
+        {
+            PropertyNodes.Clear();
+            if (Component == null)
+            {
+                RefreshGroups();
+                return;
+            }
+            foreach(var property in Component.Properties)
+            {
+                Action<PropertyNode, object> valueChanged = (node, value) =>
+                {
+                    var executed = EditorCommandRegistry.Execute("component.change-property", new ChangePropertyCommandData
+                    {
+                        Project = Project,
+                        Property = node.Property,
+                        Value = value
+                    });
+                    if (!executed)
+                        throw new InvalidOperationException($"Could not execute the change-property command for '{node.Property.Name}'.");
+                };
+                var definition = PropertyModel.Get(property.Type);
+                PropertyNodes.Add(definition?.CreateNode(Component, property, valueChanged) ?? new PropertyNode(Component, property, valueChanged));
+            }
+            RefreshGroups();
         }
 
         private void RefreshGroups()

@@ -64,6 +64,7 @@ namespace TypeDCore
         RestoreNodeCommand RestoreNodeCommand { get; set; }
         TogglePublicNodeCommand TogglePublicNodeCommand { get; set; }
         ChangePropertyCommand ChangePropertyCommand { get; set; }
+        AddCustomPropertyCommand AddCustomPropertyCommand { get; set; }
         OpenComponentCommand OpenComponentCommand { get; set; }
         CloseComponentCommand CloseComponentCommand { get; set; }
         OpenInExternalCommand OpenInExternalCommand { get; set; }
@@ -128,6 +129,7 @@ namespace TypeDCore
             RestoreNodeCommand = new RestoreNodeCommand(Resources);
             TogglePublicNodeCommand = new TogglePublicNodeCommand(Resources);
             ChangePropertyCommand = new ChangePropertyCommand(Resources);
+            AddCustomPropertyCommand = new AddCustomPropertyCommand(Resources);
             OpenComponentCommand = new OpenComponentCommand(project, Resources);
             CloseComponentCommand = new CloseComponentCommand(Resources);
             OpenInExternalCommand = new OpenInExternalCommand(project, Resources);
@@ -183,6 +185,7 @@ namespace TypeDCore
             RestoreNodeCommand.Dispose();
             TogglePublicNodeCommand.Dispose();
             ChangePropertyCommand.Dispose();
+            AddCustomPropertyCommand.Dispose();
             OpenComponentCommand.Dispose();
             CloseComponentCommand.Dispose();
             OpenInExternalCommand.Dispose();
@@ -622,6 +625,26 @@ namespace TypeDCore
                         }
                     }
                 );
+            }
+
+            var propertyTarget = hook.SelectedComponent ?? hook.OpenedComponent;
+            if (propertyTarget != null && !propertyTarget.ReadOnly && !propertyTarget.Removed)
+            {
+                var componentCommandData = new ComponentCommandData { Project = Project, Component = propertyTarget };
+                if (AddCustomPropertyCommand.CanExecute(componentCommandData))
+                {
+                    hook.Menu.Items.Add(
+                        new MenuItem()
+                        {
+                            Name = "Add Propert_y",
+                            ClickParameter = "LoadedProject",
+                            Click = (param) =>
+                            {
+                                EditorCommandRegistry.Execute("component.add-property", componentCommandData);
+                            }
+                        }
+                    );
+                }
             }
 
             var contextSelection = NodeSelectionModel.SelectedNodes.Count > 0
