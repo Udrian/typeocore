@@ -29,6 +29,7 @@ namespace TypeDCore.ViewModel.Panels
         IViewer Viewer { get; set; }
         Component ComponentToReload { get; set; }
         bool IsBuildInProgress { get; set; }
+        bool IsGameStopped { get; set; }
 
         // Constructors
         public ViewerViewModel(Project project, ViewerPanel viewerPanel) : base(viewerPanel)
@@ -45,6 +46,8 @@ namespace TypeDCore.ViewModel.Panels
             HookModel.AddHook<ComponentFocusHook>(ComponentFocus);
             HookModel.AddHook<BuildStatusChangedHook>(BuildStatusChanged);
             HookModel.AddHook<ViewerContextMenuRequestedHook>(ContextMenuRequested);
+            HookModel.AddHook<GameStopHook>(GameStop);
+            HookModel.AddHook<GameStartHook>(GameStart);
         }
 
         // Functions
@@ -84,6 +87,7 @@ namespace TypeDCore.ViewModel.Panels
         {
             if (Viewer == null)
             {
+                IsGameStopped = false;
                 var setting = SettingModel.GetContext<MainWindowSettingContext>();
 
                 Viewer = PanelModel.CreateViewer(Project, setting.ViewerType.Value);
@@ -92,7 +96,8 @@ namespace TypeDCore.ViewModel.Panels
                 ViewerPanel.ViewerHost.Children.Add(viewerControl);
 
                 Viewer.Init();
-                AttachDrop(viewerControl);
+                if (DropHandler == null)
+                    AttachDrop(viewerControl);
             }
         }
 
@@ -115,7 +120,7 @@ namespace TypeDCore.ViewModel.Panels
                 if (root == null || root.ReadOnly)
                     return;
 
-                var position = e.GetPosition(viewerControl);
+                var position = e.GetPosition(Viewer as Control ?? viewerControl);
                 DropHandler.Drop(Project, root, position.X, position.Y);
             });
         }
@@ -127,11 +132,60 @@ namespace TypeDCore.ViewModel.Panels
             HookModel.RemoveHook<ComponentFocusHook>(ComponentFocus);
             HookModel.RemoveHook<BuildStatusChangedHook>(BuildStatusChanged);
             HookModel.RemoveHook<ViewerContextMenuRequestedHook>(ContextMenuRequested);
+            HookModel.RemoveHook<GameStopHook>(GameStop);
+            HookModel.RemoveHook<GameStartHook>(GameStart);
 
             if (Viewer != null)
             {
                 Viewer.Unload();
             }
+        }
+
+        void GameStop(GameStopHook hook)
+        {
+            if (hook.Project != Project)
+                return;
+
+            RunOnUIThread(() =>
+            {
+                IsGameStopped = true;
+                if (Viewer == null)
+                    return;
+
+                if (Viewer.Component is Component component)
+                    ComponentToReload = component;
+
+                // Removing the viewer shuts down its game instance, a new viewer with a new game is created on start
+                Viewer.Unload();
+                ViewerPanel.ViewerHost.Children.Remove(Viewer as Control);
+                Viewer = null;
+            });
+        }
+
+        void GameStart(GameStartHook hook)
+        {
+            if (hook.Project != Project)
+                return;
+
+            RunOnUIThread(RestartGame);
+        }
+
+        void RestartGame()
+        {
+            var component = ComponentToReload;
+            ComponentToReload = null;
+
+            Load();
+            if (component != null && !component.Removed)
+                Viewer.Load(component);
+        }
+
+        static void RunOnUIThread(Action action)
+        {
+            if (Dispatcher.UIThread.CheckAccess())
+                action();
+            else
+                Dispatcher.UIThread.Post(action);
         }
 
         void ComponentOpened(OpenComponentHook hook)
@@ -154,7 +208,7 @@ namespace TypeDCore.ViewModel.Panels
             if (!hook.Root)
                 return;
 
-            if (IsBuildInProgress)
+            if (IsBuildInProgress || IsGameStopped)
             {
                 ComponentToReload = hook.Component;
                 return;
@@ -193,6 +247,15 @@ namespace TypeDCore.ViewModel.Panels
             Dispatcher.UIThread.Post(() =>
             {
                 IsBuildInProgress = false;
+
+                // A stopped game keeps the component to reload until it starts, a successful build starts it again
+                if (IsGameStopped)
+                {
+                    if (hook.Succeeded)
+                        RestartGame();
+                    return;
+                }
+
                 var component = ComponentToReload;
                 ComponentToReload = null;
 

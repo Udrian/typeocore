@@ -17,16 +17,24 @@ namespace TypeDCore.ViewModel.Viewer
         {
             public override Encoding Encoding { get { return Encoding.UTF8; } }
 
+            // Forwarded so other listeners (e.g. the crash log capture) still receive the game output
+            public TextWriter Inner { get; set; }
+
+            public override void Write(char value)
+            {
+                Inner?.Write(value);
+            }
+
             public override void Write(string value)
             {
                 WriteEvent?.Invoke(this, value);
-                base.Write(value);
+                Inner?.Write(value);
             }
 
             public override void WriteLine(string value)
             {
                 WriteEvent?.Invoke(this, value);
-                base.WriteLine(value);
+                Inner?.WriteLine(value);
             }
 
             public event EventHandler<string> WriteEvent;
@@ -89,6 +97,7 @@ namespace TypeDCore.ViewModel.Viewer
             if (!ReferenceEquals(Console.Out, NewTextWriter))
             {
                 OldTextWriter = Console.Out;
+                NewTextWriter.Inner = OldTextWriter;
                 Console.SetOut(NewTextWriter);
             }
 
