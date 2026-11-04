@@ -12,13 +12,13 @@ namespace TypeOEngine.Typedeaf.Core
             /// <summary>
             /// Gets the unique identifier.
             /// </summary>
-            [TypeOProperty("Gets the unique identifier.", "")]
+            [TypeOProperty("Gets the unique identifier.", "", Group = "General")]
             public string ID { get; internal set; }
 
             /// <summary>
             /// Gets or sets the human readable name of the object.
             /// </summary>
-            [TypeOProperty("Gets or sets the human readable name of the object.", "")]
+            [TypeOProperty("Gets or sets the human readable name of the object.", "", Group = "General")]
             public virtual string Name { get; set; }
 
             /// <summary>

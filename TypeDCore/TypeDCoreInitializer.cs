@@ -870,6 +870,8 @@ namespace TypeDCore
                     {
                         Name = property.Name,
                         Description = typeOPropertyAttribute.Description,
+                        Group = typeOPropertyAttribute.Group,
+                        DeclaringTypeName = property.DeclaringType.FullName,
                         Type = property.PropertyType,
                         Value = typeOPropertyAttribute.DefaultValue ?? GetDefaultValue(componentType, property),
                         FromComponent = property.DeclaringType.FullName == componentType.FullName ? hook.Component : ComponentProvider.Load(Project, property.DeclaringType.FullName),

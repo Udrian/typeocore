@@ -71,13 +71,13 @@ namespace TypeOEngine.Typedeaf.Core
         /// <summary>
         /// Gets or sets a value indicating whether the scene is paused.
         /// </summary>
-        [TypeOProperty("Gets or sets a value indicating whether the scene is paused.")]
+        [TypeOProperty("Gets or sets a value indicating whether the scene is paused.", Group = "Behavior")]
         public bool Pause         { get; set; } = false;
 
         /// <summary>
         /// Gets or sets a value indicating whether the scene should be hidden.
         /// </summary>
-        [TypeOProperty("Gets or sets a value indicating whether the scene should be hidden.")]
+        [TypeOProperty("Gets or sets a value indicating whether the scene should be hidden.", Group = "Rendering")]
         public bool Hide          { get; set; } = false;
 
         /// <summary>

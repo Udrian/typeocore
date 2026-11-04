@@ -10,7 +10,7 @@ namespace TypeOEngine.Typedeaf.Core
             /// <summary>
             /// Gets or sets a value indicating whether the component is paused.
             /// </summary>
-            [TypeOProperty("Gets or sets a value indicating whether the component is paused.", false)]
+            [TypeOProperty("Gets or sets a value indicating whether the component is paused.", false, Group = "Behavior")]
             public bool Pause { get; set; }
             /// <summary>Updates the component using the elapsed time in seconds.</summary>
             void Update(double dt);
