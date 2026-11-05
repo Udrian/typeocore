@@ -73,7 +73,29 @@ namespace TypeOEngine.Typedeaf.Core
             /// <param name="dt">The time elapsed, in seconds, since the last update. This value is used to update entity states.</param>
             public void Update(double dt)
             {
-                //Remove entities
+                ProcessRemovals();
+
+                //TODO: Look over this, remove IHasEntities and make Drawstack and UpdateLoop to IUpdatable and IDrawable and create from Entity
+                foreach(var entity in HasEntities)
+                {
+                    if((entity as Entity)?.WillBeDeleted == true) continue;
+                    if((entity as IUpdatable)?.Pause == true) continue;
+                    entity.Entities.Update(dt);
+                }
+
+                Entities.Process();
+                HasEntities.Process();
+            }
+
+            /// <summary>
+            /// Cleans up queued removals without updating live entities, allowing identifiers to be reused immediately.
+            /// </summary>
+            public void ProcessRemovals()
+            {
+                if (RemoveQueue.Count == 0)
+                    return;
+                Entities.Process();
+                HasEntities.Process();
                 while(RemoveQueue.Count > 0)
                 {
                     var deleteEntity = RemoveQueue.Dequeue();
@@ -99,15 +121,6 @@ namespace TypeOEngine.Typedeaf.Core
                     Entities.Remove(deleteEntity);
                     Context.DestroyObject(deleteEntity);
                 }
-
-                //TODO: Look over this, remove IHasEntities and make Drawstack and UpdateLoop to IUpdatable and IDrawable and create from Entity
-                foreach(var entity in HasEntities)
-                {
-                    if((entity as Entity)?.WillBeDeleted == true) continue;
-                    if((entity as IUpdatable)?.Pause == true) continue;
-                    entity.Entities.Update(dt);
-                }
-
                 Entities.Process();
                 HasEntities.Process();
             }

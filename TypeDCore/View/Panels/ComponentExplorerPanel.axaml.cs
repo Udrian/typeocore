@@ -214,9 +214,26 @@ namespace TypeDCore.View.Panels
                 FocusTree();
         }
 
-        private void ContextMenu_Opening(object sender, System.ComponentModel.CancelEventArgs e)
+        private bool OpeningPreparedContextMenu;
+
+        private async void ContextMenu_Opening(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            ViewModel.ContextMenuOpened(sender as ContextMenu, PrimaryNode());
+            if (OpeningPreparedContextMenu)
+                return;
+            e.Cancel = true;
+            var menu = (ContextMenu)sender;
+            await ViewModel.ContextMenuOpened(menu, PrimaryNode());
+            if (menu.Items.Count == 0)
+                return;
+            OpeningPreparedContextMenu = true;
+            try
+            {
+                menu.Open(ComponentsTree);
+            }
+            finally
+            {
+                OpeningPreparedContextMenu = false;
+            }
         }
 
         private void ComponentsTree_SelectionChanged(object sender, SelectionChangedEventArgs e)

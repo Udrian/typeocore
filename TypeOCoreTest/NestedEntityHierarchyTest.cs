@@ -1,5 +1,6 @@
 using TypeOEngine.Typedeaf.Core;
 using TypeOEngine.Typedeaf.Core.Engine;
+using TypeOEngine.Typedeaf.Core.Engine.Interfaces;
 using TypeOEngine.Typedeaf.Core.Entities;
 
 namespace TypeOCoreTest;
@@ -90,5 +91,30 @@ public class NestedEntityHierarchyTest
         Assert.False(game.Root.Initialized);
         Assert.False(game.Root.Child.Initialized);
         Assert.False(game.Root.Child.Grandchild.Initialized);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void QueuedRemovalsCanBeFlushedBeforeReusingAnEntityId(bool processAdditions)
+    {
+        var typeO = Assert.IsType<TypeO>(TypeO.Create<NestedGame>("node-undo-redo"));
+        typeO.Start();
+        var game = (NestedGame)typeO.Context.Game;
+        var entity = game.Scene.Entities.Create<ParentEntity>("copied-node");
+        if (processAdditions)
+            game.Scene.Entities.Update(0);
+
+        entity.Remove();
+        game.Scene.Entities.ProcessRemovals();
+
+        Assert.False(entity.Initialized);
+        Assert.False(entity.Child.Initialized);
+        Assert.False(entity.Child.Grandchild.Initialized);
+        var replacement = game.Scene.Entities.Create<ParentEntity>("copied-node");
+        game.Scene.Entities.Update(0);
+        Assert.Same(replacement, typeO.Context.GetTypeOObjectByID<Entity>(((IHasParent)replacement).FullParentPath + replacement.ID));
+        Assert.DoesNotContain(entity, game.Scene.Entities.List<ParentEntity>());
+        Assert.Contains(replacement, game.Scene.Entities.List<ParentEntity>());
     }
 }

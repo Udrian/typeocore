@@ -71,6 +71,9 @@ namespace TypeDCore
         OpenInExternalCommand OpenInExternalCommand { get; set; }
         TeleportToSelectionCommand TeleportToSelectionCommand { get; set; }
         ResetViewCommand ResetViewCommand { get; set; }
+        DuplicateNodeCommand DuplicateNodeCommand { get; set; }
+        CopyNodeCommand CopyNodeCommand { get; set; }
+        PasteNodeCommand PasteNodeCommand { get; set; }
 
         // Functions
         public override void Initializer(Project project)
@@ -107,6 +110,7 @@ namespace TypeDCore
                  EditorToolModel,
                  ViewerCameraModel
             });
+            Resources.Add(new NodeClipboardModel());
 
             // Providers
             ComponentProvider = Resources.Get<IComponentProvider>();
@@ -137,6 +141,9 @@ namespace TypeDCore
             OpenInExternalCommand = new OpenInExternalCommand(project, Resources);
             TeleportToSelectionCommand = new TeleportToSelectionCommand(Resources);
             ResetViewCommand = new ResetViewCommand(Resources);
+            DuplicateNodeCommand = new DuplicateNodeCommand(Resources);
+            CopyNodeCommand = new CopyNodeCommand(Resources);
+            PasteNodeCommand = new PasteNodeCommand(Resources);
 
             // Hooks
             Hooks.AddHook<ProjectCreateHook>(ProjectCreate);
@@ -193,6 +200,9 @@ namespace TypeDCore
             OpenInExternalCommand.Dispose();
             TeleportToSelectionCommand.Dispose();
             ResetViewCommand.Dispose();
+            DuplicateNodeCommand.Dispose();
+            CopyNodeCommand.Dispose();
+            PasteNodeCommand.Dispose();
 
             // Panels
             PanelModel.DetachPanel("typed_viewer");
@@ -210,6 +220,7 @@ namespace TypeDCore
             Resources.Remove("NodeSelectionModel");
             Resources.Remove("EditorToolModel");
             Resources.Remove("ViewerCameraModel");
+            Resources.Remove("NodeClipboardModel");
 
             // Hooks
             Hooks.RemoveHook<ProjectCreateHook>();
@@ -553,6 +564,37 @@ namespace TypeDCore
 
         void ComponentContextMenuOpened(ComponentContextMenuHook hook)
         {
+            var clipboard = Resources.Get<INodeClipboardModel>();
+            var clipboardItems = new List<MenuItem>();
+            var clipboardData = new NodeClipboardCommandData
+            {
+                Project = hook.Project,
+                Node = hook is ViewerComponentContextMenuHook
+                    ? hook.SelectedComponent ?? hook.OpenedComponent
+                    : hook.SelectedComponent ?? NodeSelectionModel.SelectedNode ?? hook.OpenedComponent,
+                WorldPosition = hook is ViewerComponentContextMenuHook viewer ? viewer.Position : null
+            };
+            if (hook.SelectedComponent != null)
+            {
+                clipboardItems.Add(new MenuItem("_Duplicate Node", _ => EditorCommandRegistry.Execute("node.duplicate", clipboardData))
+                {
+                    IsEnabled = clipboard.CanDuplicate(clipboardData)
+                });
+                clipboardItems.Add(new MenuItem("_Copy Node", _ => EditorCommandRegistry.Execute("node.copy", clipboardData))
+                {
+                    IsEnabled = clipboard.CanCopy(clipboardData)
+                });
+            }
+            clipboardItems.Add(new MenuItem("_Paste Node", _ => EditorCommandRegistry.Execute("node.paste", clipboardData))
+            {
+                IsEnabled = clipboard.CanPaste(clipboardData)
+            });
+            if (hook.OpenedComponent != null)
+            {
+                hook.Menu.Items.Add(new MenuItem("_Open Component", _ => EditorCommandRegistry.Execute("component.open",
+                    new OpenComponentCommandData { Project = hook.Project })));
+            }
+
             if (hook.OpenedComponent == null)
             {
                 hook.Menu.Items.AddRange(new List<MenuItem>()
@@ -598,9 +640,11 @@ namespace TypeDCore
                     }
                 });
 
+                hook.Menu.Items.AddRange(clipboardItems);
                 return;
             }
 
+            hook.Menu.Items.AddRange(clipboardItems);
             var teleportTarget = hook.SelectedComponent;
             hook.Menu.Items.Add(
                 new MenuItem()

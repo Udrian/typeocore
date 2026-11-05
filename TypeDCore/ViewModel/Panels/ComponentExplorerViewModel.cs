@@ -330,13 +330,25 @@ namespace TypeDCore.ViewModel.Panels
         }
 
         // Functions
-        public void ContextMenuOpened(ContextMenu contextMenu, Node node)
+        public async System.Threading.Tasks.Task ContextMenuOpened(ContextMenu contextMenu, Node node)
         {
             NodeSelectionModel.SetComponentExplorerActive();
             if (node != null && !SelectedComponents.Contains(node.Component))
                 SelectionChanged(node.Component);
             else if (node != null && !ReferenceEquals(SelectedComponent, node.Component))
                 SelectionChanged(SelectedComponents, node.Component);
+            var openedComponent = NodeSelectionModel.OpenedComponent;
+            contextMenu.Items.Clear();
+            try
+            {
+                await ResourceModel.Get<INodeClipboardModel>().RefreshAsync();
+            }
+            catch (Exception exception) when (exception is System.IO.IOException or System.Text.Json.JsonException or InvalidOperationException or NotSupportedException)
+            {
+                ResourceModel.Get<ILogModel>().Log($"Could not read the node clipboard: {exception}");
+            }
+            if (NodeSelectionModel.OpenedComponent != openedComponent)
+                return;
 
             var componentContextMenuHook = CreateComponentContextMenu(node?.Component);
 
