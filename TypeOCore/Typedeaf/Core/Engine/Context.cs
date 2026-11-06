@@ -1,5 +1,4 @@
-﻿using MathNet.Numerics.Statistics.Mcmc;
-using System.Reflection;
+﻿using System.Reflection;
 using TypeOEngine.Typedeaf.Core.Engine.Hardwares;
 using TypeOEngine.Typedeaf.Core.Engine.Hardwares.Interfaces;
 using TypeOEngine.Typedeaf.Core.Engine.Interfaces;
@@ -440,7 +439,7 @@ namespace TypeOEngine.Typedeaf.Core
                 Logger.Log(LogLevel.Ludacris, $"Creating Drawable of type '{type.FullName}' into {obj.GetType().FullName}");
 
                 var drawable = Activator.CreateInstance(type) as Drawable;
-                drawable.Parent = obj as Entity;
+                drawable.Parent = obj;
                 drawable.ContentLoader = Game.ContentLoader;
                 drawable.ID = id;
 
@@ -462,7 +461,7 @@ namespace TypeOEngine.Typedeaf.Core
                 var drawable = new D()
                 {
                     ID = id,
-                    Parent = obj as Entity,
+                    Parent = obj,
                     ContentLoader = Game.ContentLoader
                 };
 
@@ -493,7 +492,7 @@ namespace TypeOEngine.Typedeaf.Core
 
                 var logic = new L()
                 {
-                    Parent = obj as Entity
+                    Parent = obj
                 };
 
                 InitializeObject(logic, obj);

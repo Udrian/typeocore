@@ -28,14 +28,5 @@
                 }
             }
         }
-
-        /// <summary>Provides a parent object of a specific TypeO object type.</summary>
-        /// <typeparam name="T">The type of the parent object.</typeparam>
-        public interface IHasParent<T> : IHasParent where T : TypeOObject
-        {
-            TypeOObject IHasParent.Parent { get => Parent; }
-            /// <summary>Gets the parent object.</summary>
-            public new T Parent { get; }
-        }
     }
 }

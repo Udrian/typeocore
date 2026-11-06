@@ -62,7 +62,7 @@ namespace TypeOEngine.Typedeaf.Core
         /// <summary>
         /// Gets the manager responsible for handling a collection of drawable objects.
         /// </summary>
-        public DrawableManager<Drawable> Drawables { get; private set; }
+        public DrawableManager<Drawable> Drawables { get; set; }
 
         /// <summary>
         /// Gets the <see cref="LogicManager"/> instance used to manage application logic.

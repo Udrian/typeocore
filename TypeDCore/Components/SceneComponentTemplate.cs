@@ -2,6 +2,7 @@
 using TypeD.Helpers;
 using TypeDCore.Code.Scene;
 using TypeOEngine.Typedeaf.Core.Entities;
+using TypeOEngine.Typedeaf.Core.Entities.Drawables;
 
 namespace TypeDCore.Components
 {
@@ -22,6 +23,7 @@ namespace TypeDCore.Components
         /// <param name="filter">The <see cref="FilterHelper"/> instance to which the filter is applied. This parameter cannot be <see langword="null"/>.</param>
         public override void ChildrenFilter(FilterHelper filter)
         {
+            filter.Filters += $"{typeof(Drawable).FullName};";
             filter.Filters += $"{typeof(Entity).FullName};";
         }
     }

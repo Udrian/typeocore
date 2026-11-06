@@ -1,4 +1,5 @@
 ﻿using TypeOEngine.Typedeaf.Core.Engine;
+using TypeOEngine.Typedeaf.Core.Engine.Interfaces;
 using TypeOEngine.Typedeaf.Core.Entities;
 using TypeOEngine.Typedeaf.Core.Interfaces;
 
@@ -10,12 +11,12 @@ namespace TypeOEngine.Typedeaf.Core
     /// <remarks>This class provides a foundation for logic components that are associated with an entity and
     /// can be paused or updated. Derived classes must implement the <see cref="Update(double)"/> method to define
     /// specific update behavior.</remarks>
-    public abstract class Logic : TypeOObject, IUpdatable
+    public abstract class Logic : TypeOObject, IUpdatable, IHasParent
     {
         /// <summary>
         /// Gets or sets the parent entity of the current entity.
         /// </summary>
-        public Entity Parent { get; set; } //TODO: Look over this
+        public TypeOObject Parent { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether the operation is paused.

@@ -15,10 +15,10 @@ namespace TypeOEngine.Typedeaf.Core
         /// <remarks>The <see cref="Drawable"/> class provides a foundation for drawable entities, 
         /// including properties to control visibility and draw order. Derived classes must implement the
         /// <see cref="Draw(ICanvas)"/> method to define the specific drawing behavior.</remarks>
-        public abstract class Drawable : TypeOObject, IDrawable, IHasParent<Entity>
+        public abstract class Drawable : TypeOObject, IDrawable, IHasParent
         {
             /// <summary>Gets the parent entity that owns this drawable.</summary>
-            public Entity Parent { get; internal set; }
+            public TypeOObject Parent { get; internal set; }
 
             /// <summary>
             /// Gets the <see cref="ContentLoader"/> instance used to load content for the application.
