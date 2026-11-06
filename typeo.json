@@ -24,14 +24,30 @@
     {
       "Name": "TypeOCore",
       "type": "",
-      "depends_on": []
+      "depends_on": [],
+      "propertyGroup": {
+        "Nullable": "disable"
+      },
+      "packageReferences": {}
     },
     {
       "Name": "TypeDCore",
       "type": "dev",
       "depends_on": [
         "TypeOCore"
-      ]
+      ],
+      "propertyGroup": {
+        "Nullable": "disable",
+        "AvaloniaUseCompiledBindingsByDefault": "false",
+        "GenerateDocumentationFile": "true"
+      },
+      "packageReferences": {
+        "Avalonia.Diagnostics": {
+          "IncludeAssets": "None",
+          "PrivateAssets": "All",
+          "Condition": "'$(Configuration)' != 'Debug'"
+        }
+      }
     },
     {
       "Name": "TypeOCoreTest",
@@ -39,6 +55,27 @@
       "depends_on": [
         "TypeOCore",
         "TypeDCore"
+      ],
+      "propertyGroup": {
+        "IsPackable": "false"
+      },
+      "packageReferences": {
+        "coverlet.collector": {
+          "PrivateAssets": "all",
+          "IncludeAssets": "runtime; build; native; contentfiles; analyzers; buildtransitive"
+        },
+        "xunit.runner.visualstudio": {
+          "PrivateAssets": "all",
+          "IncludeAssets": "runtime; build; native; contentfiles; analyzers; buildtransitive"
+        },
+        "Avalonia.Diagnostics": {
+          "IncludeAssets": null,
+          "PrivateAssets": null,
+          "Condition": null
+        }
+      },
+      "usingStatements": [
+        "Xunit"
       ]
     }
   ]
