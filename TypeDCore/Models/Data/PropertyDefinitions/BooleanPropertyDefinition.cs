@@ -43,7 +43,7 @@ namespace TypeDCore.Models.Data.PropertyDefinitions
         /// <summary>
         /// Gets the Boolean property editor template URI.
         /// </summary>
-        protected override string TemplateUri => "avares://TypeDCore/View/Panels/PropertyTemplates/BooleanPropertyTemplate.axaml";
+        protected override string TemplateUri => "avares://TypeDitor/View/Panels/PropertyTemplates/BooleanPropertyTemplate.axaml";
         /// <summary>
         /// Gets the Boolean property editor template key.
         /// </summary>

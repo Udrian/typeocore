@@ -7,10 +7,8 @@ using TypeD.Commands;
 using TypeD.Models.Data.Hooks;
 using TypeD.Models.Interfaces;
 using TypeD.ViewModel;
-using TypeDCore.Commands.Data;
+using TypeD.Models.Data;
 using TypeDCore.Models.Data.Hooks;
-using TypeDCore.Models.Interfaces;
-using TypeDCore.View.Panels;
 
 namespace TypeDCore.Commands
 {
@@ -39,7 +37,7 @@ namespace TypeDCore.Commands
             resources.Get<IHookModel>().Shoot(viewer);
             var lifetime = Avalonia.Application.Current?.ApplicationLifetime as Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime;
             var focused = lifetime?.MainWindow?.FocusManager?.GetFocusedElement();
-            var explorer = (focused as Avalonia.Visual)?.GetSelfAndVisualAncestors().OfType<ComponentExplorerPanel>().Any() == true;
+            var explorer = (focused as Avalonia.Visual)?.GetSelfAndVisualAncestors().OfType<IComponentExplorerView>().Any() == true;
             var target = selection.SelectedNode ?? selection.OpenedComponent;
             if (paste && viewer.Focused)
             {
@@ -52,7 +50,7 @@ namespace TypeDCore.Commands
                 Project = selection.Project,
                 Node = !requireFocus || ((viewer.Focused || explorer) && focused is not TextBox)
                     ? target : null,
-                WorldPosition = viewer.Focused ? viewer.Position : null
+                WorldPosition = viewer.Focused ? (viewer.Position.X, viewer.Position.Y) : null
             };
         }
 

@@ -2,24 +2,36 @@ using TypeD.Models.Data;
 
 namespace TypeDCore.Commands.Data
 {
-    internal enum MovePosition
+    /// <summary>Specifies where a node is placed relative to its target.</summary>
+    public enum MovePosition
     {
+        /// <summary>Places the node before the target.</summary>
         Before,
+        /// <summary>Places the node after the target.</summary>
         After,
+        /// <summary>Appends the node to the target's children.</summary>
         Child,
+        /// <summary>Places the node first among the target's children.</summary>
         FirstChild
     }
 
-    internal class ComponentMove
+    /// <summary>Describes a single node move.</summary>
+    public class ComponentMove
     {
+        /// <summary>Gets or sets the node to move.</summary>
         public Component Node { get; set; }
+        /// <summary>Gets or sets the destination node.</summary>
         public Component Target { get; set; }
+        /// <summary>Gets or sets the placement relative to the target.</summary>
         public MovePosition Position { get; set; }
     }
 
-    internal class ComponentMoveCommandData
+    /// <summary>Describes an undoable editor move operation.</summary>
+    public class ComponentMoveCommandData
     {
+        /// <summary>Gets or sets the project being edited.</summary>
         public Project Project { get; set; }
+        /// <summary>Gets or sets the primary node to move.</summary>
         public Component Node { get; set; }
         /// <summary>
         /// All nodes to move together with <see cref="Node"/>. When null only <see cref="Node"/> is moved.
@@ -33,6 +45,7 @@ namespace TypeDCore.Commands.Data
         /// The node to move relative to. When null a dialog asks for the target.
         /// </summary>
         public Component Target { get; set; }
+        /// <summary>Gets or sets the placement relative to the target.</summary>
         public MovePosition Position { get; set; } = MovePosition.Child;
     }
 }

@@ -3,7 +3,6 @@ using TypeD.Commands;
 using TypeD.Models.Interfaces;
 using TypeDCore.Commands.Data;
 using TypeDCore.Models.Data.Hooks;
-using TypeDCore.Models.Interfaces;
 
 namespace TypeDCore.Commands
 {

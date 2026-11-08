@@ -1,12 +1,11 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using TypeD.Commands;
 using TypeD.ViewModel;
 using TypeD.Models.Interfaces;
 using TypeDCore.Commands.Data;
-using TypeDCore.View.Dialogs.Project;
-using TypeDCore.Models.Interfaces;
+using TypeD.Helpers;
 using TypeOEngine.Typedeaf.Core;
 
 namespace TypeDCore.Commands
@@ -52,8 +51,6 @@ namespace TypeDCore.Commands
 
         public override async void Execute(AddNodeCommandData parameter)
         {
-            var dialog = new ComponentSelectorDialog(parameter.Project);
-
             var parents = GetParents();
             var parentComponent = NodeSelectionModel.SelectedNode is { } primary && parents.Contains(primary) ? primary : parents.FirstOrDefault();
             if (parentComponent == null)
@@ -65,16 +62,12 @@ namespace TypeDCore.Commands
                 excludeComponent = excludeComponent.ParentComponent;
             }
 
-            dialog.ViewModel.NameFilter.Exclude = $"{excludeComponent.FullName};";
-            dialog.ViewModel.TypeFilter.Exclude = $"{typeof(Game).FullName};{typeof(TypeOEngine.Typedeaf.Core.Scene).FullName};";
-
-            parentComponent.Template.ChildrenFilter(dialog.ViewModel.TypeFilter);
-            dialog.ViewModel.ExcludeAbstract = true;
-
-            dialog.ViewModel.UpdateFilter();
-            if(await dialog.ShowDialog<bool>(ViewModelBase.MainWindow) == true)
+            var nameFilter = new FilterHelper { Exclude = $"{excludeComponent.FullName};" };
+            var typeFilter = new FilterHelper { Exclude = $"{typeof(Game).FullName};{typeof(TypeOEngine.Typedeaf.Core.Scene).FullName};" };
+            parentComponent.Template.ChildrenFilter(typeFilter);
+            var selected = await ResourceModel.Get<IEditorDialogModel>().SelectComponentAsync(parameter.Project, typeFilter, nameFilter, true);
+            if (selected != null)
             {
-                var selected = dialog.ViewModel.SelectedComponent;
                 var undoActions = new List<Action>();
                 var redoActions = new List<Action>();
                 foreach (var parent in parents)

@@ -43,7 +43,7 @@ namespace TypeDCore.Models.Data.PropertyDefinitions
         /// <summary>
         /// Gets the enum property editor template URI.
         /// </summary>
-        protected override string TemplateUri => "avares://TypeDCore/View/Panels/PropertyTemplates/EnumPropertyTemplate.axaml";
+        protected override string TemplateUri => "avares://TypeDitor/View/Panels/PropertyTemplates/EnumPropertyTemplate.axaml";
         /// <summary>
         /// Gets the enum property editor template key.
         /// </summary>

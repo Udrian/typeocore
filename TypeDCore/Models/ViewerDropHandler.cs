@@ -17,15 +17,17 @@ namespace TypeDCore.Models
     /// <summary>
     /// Creates and updates nodes from components and content that are dropped in the viewer.
     /// </summary>
-    internal class ViewerDropHandler
+    public class ViewerDropHandler
     {
         private readonly IResourceModel ResourceModel;
 
+        /// <summary>Creates a drop handler using the supplied editor services.</summary>
         public ViewerDropHandler(IResourceModel resourceModel)
         {
             ResourceModel = resourceModel;
         }
 
+        /// <summary>Returns whether the current payload can be dropped into the component.</summary>
         public bool CanDrop(Project project, Component root)
         {
             if (project == null || root == null)

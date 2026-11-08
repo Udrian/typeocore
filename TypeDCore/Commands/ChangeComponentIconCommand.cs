@@ -6,8 +6,6 @@ using TypeD.Models.Interfaces;
 using TypeD.Models.Providers.Interfaces;
 using TypeD.ViewModel;
 using TypeDCore.Commands.Data;
-using TypeDCore.Models.Interfaces;
-using TypeDCore.View.Dialogs.Project;
 
 namespace TypeDCore.Commands
 {
@@ -54,11 +52,9 @@ namespace TypeDCore.Commands
             var component = parameter.Component;
             var previous = component.Icon;
 
-            var dialog = new IconSelectorDialog(project, component.ResolvedIcon);
-            if (await dialog.ShowDialog<bool>(ViewModelBase.MainWindow) != true || dialog.SelectedIcon == null)
+            var icon = await ResourceModel.Get<IEditorDialogModel>().SelectIconAsync(project, component.ResolvedIcon);
+            if (icon == null)
                 return;
-
-            var icon = dialog.SelectedIcon;
             if (icon == component.ResolvedIcon)
                 return;
 

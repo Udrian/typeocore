@@ -1,12 +1,10 @@
-﻿using System;
+using System;
 using TypeD.Commands;
 using TypeD.ViewModel;
 using TypeD.Models.Data;
 using TypeD.Models.Interfaces;
 using TypeD.Models.Providers.Interfaces;
 using TypeDCore.Commands.Data;
-using TypeDCore.View.Dialogs.Project;
-using TypeDCore.Models.Interfaces;
 
 namespace TypeDCore.Commands
 {
@@ -49,13 +47,13 @@ namespace TypeDCore.Commands
 
         public override async void Execute(ComponentCommandData parameter)
         {
-            var dialog = new RenameComponentTypeDialog(parameter.Component);
-            if (await dialog.ShowDialog<bool>(ViewModelBase.MainWindow) == true)
+            var name = await ResourceModel.Get<IEditorDialogModel>().RenameComponentAsync(parameter.Component);
+            if (name != null)
             {
                 var previousName = parameter.Component.FullName;
-                var newName = $"{parameter.Component.Namespace}.{dialog.ViewModel.Name}";
+                var newName = $"{parameter.Component.Namespace}.{name}";
                 var previousClassName = parameter.Component.ClassName;
-                var newClassName = dialog.ViewModel.Name;
+                var newClassName = name;
                 if (previousClassName == newClassName)
                     return;
 

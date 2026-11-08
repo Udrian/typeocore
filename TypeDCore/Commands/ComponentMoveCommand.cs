@@ -9,12 +9,11 @@ using TypeD.Models.Interfaces;
 using TypeD.Models.Providers.Interfaces;
 using TypeD.ViewModel;
 using TypeDCore.Commands.Data;
-using TypeDCore.Models.Interfaces;
-using TypeDCore.View.Dialogs.Project;
 
 namespace TypeDCore.Commands
 {
-    internal class ComponentMoveCommand : CustomCommand<ComponentMoveCommandData>, IDisposable
+    /// <summary>Moves selected nodes and validates editor move targets.</summary>
+    public class ComponentMoveCommand : CustomCommand<ComponentMoveCommandData>, IDisposable
     {
         private sealed class MoveStep
         {
@@ -31,6 +30,7 @@ namespace TypeDCore.Commands
         private readonly IHookModel _hookModel;
         private readonly IDisposable _registration;
 
+        /// <summary>Registers the move command using the supplied editor services.</summary>
         public ComponentMoveCommand(IResourceModel resourceModel) : base(resourceModel)
         {
             _componentModel = resourceModel.Get<IComponentModel>();
@@ -53,8 +53,10 @@ namespace TypeDCore.Commands
                 });
         }
 
+        /// <summary>Removes the command registration.</summary>
         public void Dispose() => _registration.Dispose();
 
+        /// <inheritdoc/>
         public override bool CanExecute(ComponentMoveCommandData parameter)
         {
             if (parameter?.Project == null)
@@ -70,6 +72,7 @@ namespace TypeDCore.Commands
             return nodes.Any(node => CanMove(node) && TryResolve(node, parameter.Target, parameter.Position, out _, out _));
         }
 
+        /// <inheritdoc/>
         public override async void Execute(ComponentMoveCommandData parameter)
         {
             var moves = parameter.Moves?.ToList();
@@ -83,10 +86,9 @@ namespace TypeDCore.Commands
 
                 if (target == null)
                 {
-                    var dialog = new ComponentMoveTargetDialog(GetRoot(primary), primary);
-                    if (await dialog.ShowDialog<bool>(ViewModelBase.MainWindow) != true || dialog.SelectedComponent == null)
+                    target = await ResourceModel.Get<IEditorDialogModel>().SelectMoveTargetAsync(GetRoot(primary), primary);
+                    if (target == null)
                         return;
-                    target = dialog.SelectedComponent;
                     position = MovePosition.Child;
                 }
 
@@ -237,7 +239,7 @@ namespace TypeDCore.Commands
         /// <summary>
         /// Resolves the parent and the index among that parent's children without the moved node, or false when the move isn't allowed or changes nothing.
         /// </summary>
-        internal static bool TryResolve(Component node, Component target, MovePosition position, out Component newParent, out int index)
+        public static bool TryResolve(Component node, Component target, MovePosition position, out Component newParent, out int index)
         {
             newParent = null;
             index = -1;

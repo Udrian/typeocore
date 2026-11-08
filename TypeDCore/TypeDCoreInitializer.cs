@@ -1,5 +1,4 @@
-﻿using Dock.Model.Core;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -21,8 +20,6 @@ using TypeDCore.Models.Data.SettingContexts;
 using TypeDCore.Models.Data.Hooks;
 using TypeOEngine.Typedeaf.Core.Common;
 using TypeDCore.Models.Interfaces;
-using TypeDCore.View.Panels;
-using TypeDCore.View.Toolbars;
 using TypeDCore.View.Viewer;
 using TypeOEngine.Typedeaf.Core;
 using TypeOEngine.Typedeaf.Core.Attributes;
@@ -41,15 +38,13 @@ namespace TypeDCore
         // Models
         ITypeDCoreProjectModel TypeDCoreProjectModel { get; set; }
         ITypeDCoreRestoreModel TypeDCoreRestoreModel { get; set; }
-        ICommandHistoryModel CommandHistoryModel { get; set; }
         ISettingModel SettingModel { get; set; }
         IPanelModel PanelModel { get; set; }
         IComponentModel ComponentModel { get; set; }
         IPropertyModel PropertyModel { get; set; }
         IEditorCommandRegistry EditorCommandRegistry { get; set; }
-        NodeSelectionModel NodeSelectionModel { get; set; }
+        INodeSelectionModel NodeSelectionModel { get; set; }
         EditorToolModel EditorToolModel { get; set; }
-        ViewerCameraModel ViewerCameraModel { get; set; }
 
         // Commands
         CreateEntityTypeCommand CreateEntityTypeCommand { get; set; }
@@ -82,6 +77,7 @@ namespace TypeDCore
 
             // Models
             PropertyModel = Resources.Get<IPropertyModel>();
+            NodeSelectionModel = Resources.Get<INodeSelectionModel>();
 
             // Properties
             PropertyModel.Register(new BooleanPropertyDefinition());
@@ -97,20 +93,13 @@ namespace TypeDCore
             // Internal Models
             TypeDCoreProjectModel = new TypeDCoreProjectModel();
             TypeDCoreRestoreModel = new TypeDCoreRestoreModel();
-            CommandHistoryModel = new CommandHistoryModel();
-            NodeSelectionModel = new NodeSelectionModel();
             EditorToolModel = new EditorToolModel();
-            ViewerCameraModel = new ViewerCameraModel();
 
             Resources.Add(new List<object>() {
                  TypeDCoreProjectModel,
                  TypeDCoreRestoreModel,
-                 CommandHistoryModel,
-                 NodeSelectionModel,
-                 EditorToolModel,
-                 ViewerCameraModel
+                 EditorToolModel
             });
-            Resources.Add(new NodeClipboardModel());
 
             // Providers
             ComponentProvider = Resources.Get<IComponentProvider>();
@@ -153,17 +142,9 @@ namespace TypeDCore
             Hooks.AddHook<OptionsHook>(OptionsWindowOpened);
             Hooks.AddHook<ExtractPropertiesHook>(ExtractProperties);
             Hooks.AddHook<PropertyChangedHook>(ContentPropertyChanged);
+            Hooks.AddHook<NodeClipboardPositionHook>(PositionPastedNode);
 
             // Settings
-
-            // Panels
-            PanelModel.AttachPanel("typed_viewer", "Viewer", new ViewerPanel(project), Alignment.Unset);
-            PanelModel.AttachPanel("typed_properties", "Properties", new PropertiesPanel(project), Alignment.Right);
-            PanelModel.AttachPanel("typed_commandhistory", "Command History", new CommandHistoryPanel(), Alignment.Right);
-            PanelModel.AttachPanel("typed_componentexplorer", "Component Explorer", new ComponentExplorerPanel(project), Alignment.Left);
-            PanelModel.AttachPanel("typed_content", "Content", new ContentPanel(project), Alignment.Bottom);
-            PanelModel.AttachPanel("typed_output", "Output", new OutputPanel(), Alignment.Bottom);
-            PanelModel.AttachPanel("typed_componentbrowser", "Component Browser", new ComponentBrowserPanel(project), Alignment.Left);
 
             // Viewers
             PanelModel.AddViewer<ConsoleViewer>();
@@ -204,23 +185,10 @@ namespace TypeDCore
             CopyNodeCommand.Dispose();
             PasteNodeCommand.Dispose();
 
-            // Panels
-            PanelModel.DetachPanel("typed_viewer");
-            PanelModel.DetachPanel("typed_componentexplorer");
-            PanelModel.DetachPanel("typed_output");
-            PanelModel.DetachPanel("typed_componentbrowser");
-            PanelModel.DetachPanel("typed_properties");
-            PanelModel.DetachPanel("typed_commandhistory");
-
             // Internal Models
-            NodeSelectionModel.Dispose();
             Resources.Remove("TypeDCoreProjectModel");
             Resources.Remove("TypeDCoreRestoreModel");
-            Resources.Remove("CommandHistoryModel");
-            Resources.Remove("NodeSelectionModel");
             Resources.Remove("EditorToolModel");
-            Resources.Remove("ViewerCameraModel");
-            Resources.Remove("NodeClipboardModel");
 
             // Hooks
             Hooks.RemoveHook<ProjectCreateHook>();
@@ -230,6 +198,7 @@ namespace TypeDCore
             Hooks.RemoveHook<OptionsHook>();
             Hooks.RemoveHook<ExtractPropertiesHook>();
             Hooks.RemoveHook<PropertyChangedHook>(ContentPropertyChanged);
+            Hooks.RemoveHook<NodeClipboardPositionHook>(PositionPastedNode);
 
             // Settings
 
@@ -244,6 +213,31 @@ namespace TypeDCore
         }
 
         // Events
+        void PositionPastedNode(NodeClipboardPositionHook hook)
+        {
+            var property = hook.Node.Properties.FirstOrDefault(property => property.Name == "Position" &&
+                property.Type == typeof(Vec2) && !property.ReadOnly);
+            if (property == null)
+                return;
+
+            var hit = new ViewerHitTestHook { Project = hook.Project, Target = hook.Parent };
+            Hooks.Shoot(hit);
+            var origin = Vec2.Zero;
+            if (hit.TargetFound)
+            {
+                origin = new Vec2(hit.OriginX, hit.OriginY);
+            }
+            else
+            {
+                for (var ancestor = hook.Parent; ancestor != null; ancestor = ancestor.ParentComponent)
+                {
+                    if (ancestor.Properties.FirstOrDefault(property => property.Name == "Position")?.Value is Vec2 offset)
+                        origin += offset;
+                }
+            }
+            property.Value = new Vec2(hook.X, hook.Y) - origin;
+        }
+
         void ProjectCreate(ProjectCreateHook hook)
         {
             ComponentProvider.Create(
@@ -268,11 +262,6 @@ namespace TypeDCore
             AddToolbarTool(hook, "Move", EditorTool.Move, "M12,2 L16,6 L13,6 L13,11 L18,11 L18,8 L22,12 L18,16 L18,13 L13,13 L13,18 L16,18 L12,22 L8,18 L11,18 L11,13 L6,13 L6,16 L2,12 L6,8 L6,11 L11,11 L11,6 L8,6 Z");
             AddToolbarTool(hook, "Resize", EditorTool.Resize, "M14,3 L21,3 L21,10 L18.5,7.5 L7.5,18.5 L10,21 L3,21 L3,14 L5.5,16.5 L16.5,5.5 Z");
             AddToolbarTool(hook, "Origin", EditorTool.Origin, "M12,3 C6.48,3 2,7.48 2,13 C2,18.52 6.48,23 12,23 C17.52,23 22,18.52 22,13 C22,7.48 17.52,3 12,3 M12,5 L12,21 M3,13 L21,13");
-            hook.Toolbar.Add("Camera Control", new ToolbarItem()
-            {
-                Name = "Camera Control",
-                CreateControl = () => new CameraToolbar(Resources)
-            });
 
             hook.Menu.Items.Add(
                 new MenuItem() {
@@ -572,7 +561,7 @@ namespace TypeDCore
                 Node = hook is ViewerComponentContextMenuHook
                     ? hook.SelectedComponent ?? hook.OpenedComponent
                     : hook.SelectedComponent ?? NodeSelectionModel.SelectedNode ?? hook.OpenedComponent,
-                WorldPosition = hook is ViewerComponentContextMenuHook viewer ? viewer.Position : null
+                WorldPosition = hook is ViewerComponentContextMenuHook viewer ? (viewer.Position.X, viewer.Position.Y) : null
             };
             if (hook.SelectedComponent != null)
             {

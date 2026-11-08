@@ -7,7 +7,7 @@ using TypeDCore.Commands.Data;
 using TypeDCore.Models.Data.DTO;
 using TypeDCore.Models.Data.Hooks;
 using TypeDCore.Models.Interfaces;
-using TypeDCore.View.Dialogs.Project;
+using TypeDCore.Components;
 using TypeD.Models.Providers.Interfaces;
 using TypeOEngine.Typedeaf.Core.Entities.Drawables;
 
@@ -43,22 +43,22 @@ namespace TypeDCore.Commands
 
         public override async void Execute(CreateComponentCommandData parameter)
         {
-            var dialog = new CreateDrawableTypeDialog(parameter.Project, parameter.Namespace);
-            if(await dialog.ShowDialog<bool>(ViewModelBase.MainWindow) == true)
+            var options = await ResourceModel.Get<IEditorDialogModel>().CreateComponentAsync(parameter.Project, parameter.Namespace, CoreComponent.DrawableComponent());
+            if (options != null)
             {
                 if (!HookModel.Shoot(new CreateComponentHook(new CreateComponentDTO()
                 {
-                    Name = dialog.ViewModel.ComponentName,
-                    Namespace = dialog.ViewModel.ComponentNamespace,
-                    ParentComponent = dialog.ViewModel.ParentComponent
+                    Name = options.Name,
+                    Namespace = options.Namespace,
+                    ParentComponent = options.ParentComponent
                 })).Handled)
                 {
-                    if (dialog.ViewModel.ComponentBaseType == typeof(Drawable).FullName)
+                    if (options.BaseType == typeof(Drawable).FullName)
                     {
-                        var className = dialog.ViewModel.ComponentName;
-                        var @namespace = dialog.ViewModel.ComponentNamespace;
-                        var parent = dialog.ViewModel.ParentComponent;
-                        var icon = dialog.ViewModel.IconName;
+                        var className = options.Name;
+                        var @namespace = options.Namespace;
+                        var parent = options.ParentComponent;
+                        var icon = options.Icon;
                         var component = TypeDCoreProjectModel.CreateDrawable(
                             parameter.Project, className, @namespace, parent, icon);
                         CommandHistoryModel.Record(

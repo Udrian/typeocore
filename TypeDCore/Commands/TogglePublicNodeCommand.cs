@@ -4,7 +4,6 @@ using System.Linq;
 using TypeD.Commands;
 using TypeD.Models.Interfaces;
 using TypeDCore.Commands.Data;
-using TypeDCore.Models.Interfaces;
 
 namespace TypeDCore.Commands
 {

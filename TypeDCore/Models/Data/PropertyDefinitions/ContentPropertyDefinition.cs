@@ -5,11 +5,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.Input;
-using TypeDCore.View.Dialogs.Project;
+using TypeD.Models.Interfaces;
 using TypeD.Models.Data;
 using TypeD.Models.Providers.Interfaces;
 using TypeD.ViewModel;
-using TypeDCore.Models.Interfaces;
 using TypeOEngine.Typedeaf.Core.Engine.Contents;
 using EngineContent = TypeOEngine.Typedeaf.Core.Engine.Contents.Content;
 
@@ -62,10 +61,9 @@ namespace TypeDCore.Models.Data.PropertyDefinitions
                 return;
 
             var extensions = contentProvider.GetAssociationsForEngineType(Property.Type).Select(a => a.Extension);
-            var dialog = new ContentSelectorDialog(project, extensions);
-            await dialog.ShowDialog(MainWindow);
-            if (dialog.SelectedPath != null)
-                Value = dialog.SelectedPath;
+            var path = await ResourceModel.Get<IEditorDialogModel>().SelectContentAsync(project, extensions);
+            if (path != null)
+                Value = path;
         }
     }
 
@@ -94,7 +92,7 @@ namespace TypeDCore.Models.Data.PropertyDefinitions
         /// <summary>
         /// Gets the content property editor template URI.
         /// </summary>
-        protected override string TemplateUri => "avares://TypeDCore/View/Panels/PropertyTemplates/ContentPropertyTemplate.axaml";
+        protected override string TemplateUri => "avares://TypeDitor/View/Panels/PropertyTemplates/ContentPropertyTemplate.axaml";
         /// <summary>
         /// Gets the content property editor template key.
         /// </summary>

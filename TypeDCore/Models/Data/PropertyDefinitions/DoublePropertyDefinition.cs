@@ -44,7 +44,7 @@ namespace TypeDCore.Models.Data.PropertyDefinitions
         /// <summary>
         /// Gets the double property editor template URI.
         /// </summary>
-        protected override string TemplateUri => "avares://TypeDCore/View/Panels/PropertyTemplates/DoublePropertyTemplate.axaml";
+        protected override string TemplateUri => "avares://TypeDitor/View/Panels/PropertyTemplates/DoublePropertyTemplate.axaml";
         /// <summary>
         /// Gets the double property editor template key.
         /// </summary>

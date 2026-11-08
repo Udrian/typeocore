@@ -7,7 +7,6 @@ using TypeD.Commands;
 using TypeD.Models.Interfaces;
 using TypeD.ViewModel;
 using TypeDCore.Commands.Data;
-using TypeDCore.Models.Interfaces;
 
 namespace TypeDCore.Commands
 {

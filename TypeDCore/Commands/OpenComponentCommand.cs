@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Linq;
-using TypeDCore.View.Panels;
 using TypeD.Commands;
 using TypeD.ViewModel;
 using TypeD.Models.Interfaces;
 using TypeDCore.Commands.Data;
-using TypeDCore.View.Dialogs.Project;
 using TypeD.Models.Data;
 
 namespace TypeDCore.Commands
@@ -40,9 +38,7 @@ namespace TypeDCore.Commands
         {
             if(parameter.Component == null)
             {
-                var componentSelectorDialog = new ComponentSelectorDialog(parameter.Project);
-                await componentSelectorDialog.ShowDialog(ViewModelBase.MainWindow);
-                parameter.Component = componentSelectorDialog.ViewModel.SelectedComponent;
+                parameter.Component = await ResourceModel.Get<IEditorDialogModel>().SelectComponentAsync(parameter.Project);
             }
 
             if (parameter.Component == null) return;
@@ -52,7 +48,7 @@ namespace TypeDCore.Commands
             const string explorerId = "typed_componentexplorer";
             var panelModel = ResourceModel.Get<IPanelModel>();
             panelModel.OpenPanel(explorerId);
-            (panelModel.GetPanels().FirstOrDefault(p => p.ID == explorerId)?.PanelView as ComponentExplorerPanel)?.FocusTree();
+            (panelModel.GetPanels().FirstOrDefault(p => p.ID == explorerId)?.PanelView as IComponentExplorerView)?.FocusTree();
         }
 
         public void Dispose()

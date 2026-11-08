@@ -1,12 +1,17 @@
 #nullable enable annotations
 
 using System.Reflection;
+using TypeD;
 using TypeD.Code;
 using TypeD.Helpers;
 using TypeD.Models.Data;
+using TypeD.Models.Data.Hooks;
+using TypeD.Models.Interfaces;
 using TypeDCore.Code.Drawable;
 using TypeDCore.Code.Entity;
 using TypeDCore.Components;
+using TypeDCore.Models.Data.Hooks;
+using TypeOEngine.Typedeaf.Core.Common;
 using TypeOEngine.Typedeaf.Core.Entities;
 using TypeOEngine.Typedeaf.Core.Entities.Drawables;
 
@@ -21,6 +26,36 @@ public class ComponentBaseTypeTests
     private const string DrawableName = "TypeOEngine.Typedeaf.Core.Entities.Drawables.Drawable";
     private const string SceneName = "TypeOEngine.Typedeaf.Core.Scene";
     private const string GameName = "TypeOEngine.Typedeaf.Core.Game";
+
+    [Theory]
+    [InlineData(true, 70, 160)]
+    [InlineData(false, 88, 177)]
+    public void ClipboardPosition_UsesViewerOriginOrAncestorPositions(bool targetFound, double expectedX, double expectedY)
+    {
+        var ancestor = new Component();
+        ancestor.Properties.Add(new Property { Name = "Position", Type = typeof(Vec2), Value = new Vec2(2, 3) });
+        var parent = new Component();
+        parent.Properties.Add(new Property { Name = "Position", Type = typeof(Vec2), Value = new Vec2(10, 20) });
+        typeof(Component).GetProperty(nameof(Component.ParentComponent)).SetValue(parent, ancestor);
+        var node = new Component();
+        node.Properties.Add(new Property { Name = "Position", Type = typeof(Vec2), Value = Vec2.Zero });
+        var hooks = (IHookModel)Activator.CreateInstance(typeof(TypeDInit).Assembly.GetType("TypeD.Models.HookModel", throwOnError: true), nonPublic: true);
+        hooks.AddHook<ViewerHitTestHook>(hook =>
+        {
+            Assert.Same(parent, hook.Target);
+            hook.TargetFound = targetFound;
+            hook.OriginX = 30;
+            hook.OriginY = 40;
+        });
+        var initializerType = typeof(CoreComponent).Assembly.GetType("TypeDCore.TypeDCoreInitializer", throwOnError: true);
+        var initializer = (TypeDModuleInitializer)Activator.CreateInstance(initializerType, nonPublic: true);
+        typeof(TypeDModuleInitializer).GetProperty(nameof(TypeDModuleInitializer.Hooks)).SetValue(initializer, hooks);
+
+        initializerType.GetMethod("PositionPastedNode", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(initializer,
+            new object[] { new NodeClipboardPositionHook { Parent = parent, Node = node, X = 100, Y = 200 } });
+
+        Assert.Equal(new Vec2(expectedX, expectedY), node.Properties[0].Value);
+    }
 
     // The only place that reads how the root type is exposed, switch it when the API changes.
     private static string? RootType(Component component) => component.RootBaseComponent?.FullName;

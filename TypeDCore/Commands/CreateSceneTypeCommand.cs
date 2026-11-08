@@ -5,7 +5,7 @@ using TypeD.Models.Data;
 using TypeD.Models.Interfaces;
 using TypeDCore.Commands.Data;
 using TypeDCore.Models.Interfaces;
-using TypeDCore.View.Dialogs.Project;
+using TypeDCore.Components;
 using TypeD.Models.Providers.Interfaces;
 
 namespace TypeDCore.Commands
@@ -38,13 +38,13 @@ namespace TypeDCore.Commands
 
         public override async void Execute(CreateComponentCommandData parameter)
         {
-            var dialog = new CreateSceneTypeDialog(parameter.Project, parameter.Namespace);
-            if(await dialog.ShowDialog<bool>(ViewModelBase.MainWindow) == true)
+            var options = await ResourceModel.Get<IEditorDialogModel>().CreateComponentAsync(parameter.Project, parameter.Namespace, CoreComponent.SceneComponent());
+            if (options != null)
             {
-                var className = dialog.ViewModel.ComponentName;
-                var @namespace = dialog.ViewModel.ComponentNamespace;
-                var parent = dialog.ViewModel.ParentComponent;
-                var icon = dialog.ViewModel.IconName;
+                var className = options.Name;
+                var @namespace = options.Namespace;
+                var parent = options.ParentComponent;
+                var icon = options.Icon;
                 var component = TypeDCoreProjectModel.CreateScene(
                     parameter.Project, className, @namespace, parent, icon);
                 CommandHistoryModel.Record(

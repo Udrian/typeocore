@@ -4,32 +4,34 @@ using TypeD.Models.Data.SaveContexts;
 using TypeD.Models.Interfaces;
 using TypeD.Models.Providers.Interfaces;
 using TypeDCore.Models.Data.PropertyDefinitions;
-using TypeDCore.Models.Interfaces;
 
 namespace TypeDCore.Models
 {
     /// <summary>
     /// A content property, on a node of a component, that points at a content file.
     /// </summary>
-    internal record ContentReference(Component Root, Component Node, Property Property, string NodePath, string ContentPath);
+    public record ContentReference(Component Root, Component Node, Property Property, string NodePath, string ContentPath);
 
     /// <summary>
     /// Finds and updates the content properties in all components that reference a content file.
     /// </summary>
-    internal class ContentReferenceUpdater
+    public class ContentReferenceUpdater
     {
         private readonly IResourceModel Resources;
 
+        /// <summary>Creates an updater using the supplied editor services.</summary>
         public ContentReferenceUpdater(IResourceModel resources)
         {
             Resources = resources;
         }
 
+        /// <summary>Converts an absolute content path to the project's stored path format.</summary>
         public static string ToRelativePath(Project project, string absolutePath)
         {
             return Path.GetRelativePath(project.ProjectContentPath, absolutePath).Replace('\\', '/');
         }
 
+        /// <summary>Finds component properties referencing the specified content path.</summary>
         public List<ContentReference> Find(Project project, string relativePath)
         {
             return Find(project, path => string.Equals(path, relativePath, StringComparison.OrdinalIgnoreCase));
@@ -47,6 +49,7 @@ namespace TypeDCore.Models
             return references;
         }
 
+        /// <summary>Updates all supplied references to a replacement content path.</summary>
         public void Update(Project project, IEnumerable<ContentReference> references, string newRelativePath)
         {
             Update(project, references, _ => newRelativePath);

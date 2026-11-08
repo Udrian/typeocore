@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using TypeD.Commands;
@@ -8,8 +8,6 @@ using TypeD.Models.Interfaces;
 using TypeD.Models.Providers.Interfaces;
 using TypeD.ViewModel;
 using TypeDCore.Commands.Data;
-using TypeDCore.Models.Interfaces;
-using TypeDCore.View.Dialogs.Project;
 
 namespace TypeDCore.Commands
 {
@@ -87,12 +85,11 @@ namespace TypeDCore.Commands
                     takenNames.Add(customProperty.Name);
             }
 
-            var dialog = new AddCustomPropertyDialog(PropertyModel.List(), takenNames);
-            if (await dialog.ShowDialog<bool>(ViewModelBase.MainWindow) != true)
+            var result = await ResourceModel.Get<IEditorDialogModel>().AddCustomPropertyAsync(PropertyModel.List(), takenNames);
+            if (result == null)
                 return;
-
-            var custom = dialog.ViewModel.Build();
-            var type = dialog.ViewModel.SelectedType.Type;
+            var custom = result.Value.Property;
+            var type = result.Value.Type;
 
             var targets = new List<Component> { definition };
             if (!ReferenceEquals(node, definition))

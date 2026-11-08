@@ -7,7 +7,6 @@ using TypeD.Models.Data.Hooks;
 using TypeD.Models.Data.SaveContexts;
 using TypeD.Models.Interfaces;
 using TypeDCore.Commands.Data;
-using TypeDCore.Models.Interfaces;
 
 namespace TypeDCore.Commands
 {

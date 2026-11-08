@@ -10,10 +10,11 @@ namespace TypeDCore.Models
     /// <summary>
     /// Loads and caches the bitmaps of the component icons stored in the project.
     /// </summary>
-    internal static class IconCache
+    public static class IconCache
     {
         private static readonly Dictionary<string, (DateTime Written, Bitmap Bitmap)> Cache = new();
 
+        /// <summary>Returns the cached bitmap for a project icon.</summary>
         public static Bitmap Get(TypeD.Models.Data.Project project, string iconName)
         {
             var path = ViewModelBase.ResourceModel?.Get<IIconModel>()?.GetPath(project, iconName);

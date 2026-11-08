@@ -1,5 +1,5 @@
 using TypeD.Models.Interfaces;
-using TypeDCore.Commands.Data;
+using TypeD.Models.Data;
 
 namespace TypeDCore.Commands
 {

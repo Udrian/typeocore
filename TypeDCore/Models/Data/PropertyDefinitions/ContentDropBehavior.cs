@@ -4,7 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using TypeD.Models.Providers.Interfaces;
 using TypeD.ViewModel;
-using TypeDCore.Models.Interfaces;
+using TypeD.Models.Interfaces;
 
 namespace TypeDCore.Models.Data.PropertyDefinitions
 {

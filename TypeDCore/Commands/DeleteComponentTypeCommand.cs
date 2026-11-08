@@ -1,4 +1,4 @@
-﻿using MsBox.Avalonia;
+using MsBox.Avalonia;
 using MsBox.Avalonia.Enums;
 using System;
 using TypeD.ViewModel;
@@ -6,7 +6,6 @@ using TypeDCore.Commands.Data;
 using TypeD.Models.Providers.Interfaces;
 using TypeD.Commands;
 using TypeD.Models.Interfaces;
-using TypeDCore.Models.Interfaces;
 
 namespace TypeDCore.Commands
 {
