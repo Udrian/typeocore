@@ -62,7 +62,7 @@ public class ComponentBaseTypeTests
 
     [Theory]
     [InlineData("Entity", true, true)]
-    [InlineData("Scene", true, false)]
+    [InlineData("Scene", true, true)]
     [InlineData("Drawable", false, true)]
     public void ChildFilter_AcceptsExpectedRootTypes(string parentName, bool acceptsEntity, bool acceptsDrawable)
     {
