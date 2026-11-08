@@ -2,7 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
+using Window = Avalonia.Controls.Window;
+using Dock.Model.Core;
 using TypeD;
+using TypeD.Models;
 using TypeD.Models.Data;
 using TypeD.Models.Data.Hooks;
 using TypeD.Models.Data.SettingContexts;
@@ -21,6 +25,9 @@ using TypeDCore.Models.Data.Hooks;
 using TypeOEngine.Typedeaf.Core.Common;
 using TypeDCore.Models.Interfaces;
 using TypeDCore.View.Viewer;
+using TypeDCore.View.Panels;
+using TypeDCore.View.Dialogs.Project;
+using TypeDCore.ViewModel.Dialogs.Project;
 using TypeOEngine.Typedeaf.Core;
 using TypeOEngine.Typedeaf.Core.Attributes;
 
@@ -80,13 +87,8 @@ namespace TypeDCore
             NodeSelectionModel = Resources.Get<INodeSelectionModel>();
 
             // Properties
-            PropertyModel.Register(new BooleanPropertyDefinition());
-            PropertyModel.Register(new StringPropertyDefinition());
-            PropertyModel.Register(new Int32PropertyDefinition());
-            PropertyModel.Register(new DoublePropertyDefinition());
             PropertyModel.Register(new Vec2PropertyDefinition());
             PropertyModel.Register(new ColorPropertyDefinition());
-            PropertyModel.Register(new EnumPropertyDefinition());
             PropertyModel.Register(new ContentPropertyDefinition(Resources.Get<IContentProvider>()));
             Resources.Get<ISettingModel>().InitContext<ViewerSettingContext>(project);
 
@@ -143,11 +145,15 @@ namespace TypeDCore
             Hooks.AddHook<ExtractPropertiesHook>(ExtractProperties);
             Hooks.AddHook<PropertyChangedHook>(ContentPropertyChanged);
             Hooks.AddHook<NodeClipboardPositionHook>(PositionPastedNode);
+            Hooks.AddHook<CreateComponentDialogHook>(CreateComponentDialogRequested);
+            Hooks.AddHook<AddCustomPropertyDialogHook>(AddCustomPropertyDialogRequested);
 
             // Settings
 
             // Viewers
             PanelModel.AddViewer<ConsoleViewer>();
+            PanelModel.AttachPanel("typed_viewer", "Viewer", new ViewerPanel(project), Alignment.Unset);
+            PanelModel.AttachPanel("typed_content", "Content", new ContentPanel(project), Alignment.Bottom);
 
             // Data
             ComponentProvider.AddBaseTypeComponent(CoreComponent.EntityComponent());
@@ -159,7 +165,7 @@ namespace TypeDCore
         public override void Uninitializer()
         {
             // Properties
-            foreach (var type in new[] { typeof(bool), typeof(string), typeof(int), typeof(double), typeof(Vec2), typeof(Color), typeof(Enum), typeof(TypeOEngine.Typedeaf.Core.Engine.Contents.Content) })
+            foreach (var type in new[] { typeof(Vec2), typeof(Color), typeof(TypeOEngine.Typedeaf.Core.Engine.Contents.Content) })
                 PropertyModel.Unregister(type);
 
             CreateEntityTypeCommand.Dispose();
@@ -199,10 +205,14 @@ namespace TypeDCore
             Hooks.RemoveHook<ExtractPropertiesHook>();
             Hooks.RemoveHook<PropertyChangedHook>(ContentPropertyChanged);
             Hooks.RemoveHook<NodeClipboardPositionHook>(PositionPastedNode);
+            Hooks.RemoveHook<CreateComponentDialogHook>(CreateComponentDialogRequested);
+            Hooks.RemoveHook<AddCustomPropertyDialogHook>(AddCustomPropertyDialogRequested);
 
             // Settings
 
             // Viewers
+            PanelModel.DetachPanel("typed_viewer");
+            PanelModel.DetachPanel("typed_content");
             PanelModel.RemoveViewer<ConsoleViewer>();
 
             // Data
@@ -213,6 +223,53 @@ namespace TypeDCore
         }
 
         // Events
+        void CreateComponentDialogRequested(CreateComponentDialogHook hook)
+        {
+            var baseType = hook.BaseComponent?.FullName;
+            if (hook.Project != Project || hook.Result != null ||
+                (baseType != typeof(TypeOEngine.Typedeaf.Core.Entities.Entity).FullName &&
+                 baseType != typeof(TypeOEngine.Typedeaf.Core.Entities.Drawables.Drawable).FullName &&
+                 baseType != typeof(TypeOEngine.Typedeaf.Core.Scene).FullName))
+                return;
+            hook.Result = ShowComponentCreationDialog(hook);
+        }
+
+        async Task<ComponentCreationOptions> ShowComponentCreationDialog(CreateComponentDialogHook hook)
+        {
+            Window dialog = hook.BaseComponent.FullName == typeof(TypeOEngine.Typedeaf.Core.Entities.Entity).FullName
+                ? new CreateEntityTypeDialog(hook.Project, hook.ComponentNamespace)
+                : hook.BaseComponent.FullName == typeof(TypeOEngine.Typedeaf.Core.Entities.Drawables.Drawable).FullName
+                    ? new CreateDrawableTypeDialog(hook.Project, hook.ComponentNamespace)
+                    : new CreateSceneTypeDialog(hook.Project, hook.ComponentNamespace);
+            if (await dialog.ShowDialog<bool>(TypeD.ViewModel.ViewModelBase.MainWindow) != true)
+                return null;
+            var viewModel = (CreateComponentTypeBaseViewModel)dialog.DataContext;
+            var entity = viewModel as CreateEntityTypeViewModel;
+            return new ComponentCreationOptions
+            {
+                Name = viewModel.ComponentName,
+                Namespace = viewModel.ComponentNamespace,
+                ParentComponent = viewModel.ParentComponent,
+                BaseType = viewModel.ComponentBaseType,
+                Icon = viewModel.IconName,
+                Updatable = entity?.ComponentUpdatable ?? false,
+                Drawable = entity?.ComponentDrawable ?? false
+            };
+        }
+
+        void AddCustomPropertyDialogRequested(AddCustomPropertyDialogHook hook)
+        {
+            if (hook.Result == null)
+                hook.Result = ShowCustomPropertyDialog(hook);
+        }
+
+        async Task<(CustomProperty Property, Type Type)?> ShowCustomPropertyDialog(AddCustomPropertyDialogHook hook)
+        {
+            var dialog = new AddCustomPropertyDialog(hook.Definitions, hook.TakenNames);
+            return await dialog.ShowDialog<bool>(TypeD.ViewModel.ViewModelBase.MainWindow) == true
+                ? (dialog.ViewModel.Build(), dialog.ViewModel.SelectedType.Type) : null;
+        }
+
         void PositionPastedNode(NodeClipboardPositionHook hook)
         {
             var property = hook.Node.Properties.FirstOrDefault(property => property.Name == "Position" &&

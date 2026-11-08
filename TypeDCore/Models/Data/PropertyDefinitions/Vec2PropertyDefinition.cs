@@ -1,5 +1,6 @@
 using System;
 using TypeD.Models.Data;
+using TypeD.Models.Data.PropertyDefinitions;
 using TypeD.ViewModel;
 using TypeOEngine.Typedeaf.Core.Common;
 
@@ -113,7 +114,7 @@ namespace TypeDCore.Models.Data.PropertyDefinitions
         /// <summary>
         /// Gets the vector property editor template URI.
         /// </summary>
-        protected override string TemplateUri => "avares://TypeDitor/View/Panels/PropertyTemplates/Vec2PropertyTemplate.axaml";
+        protected override string TemplateUri => "avares://TypeDCore/View/Panels/PropertyTemplates/Vec2PropertyTemplate.axaml";
         /// <summary>
         /// Gets the vector property editor template key.
         /// </summary>

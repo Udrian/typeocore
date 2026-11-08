@@ -92,7 +92,7 @@ namespace TypeDCore.Models.Data.PropertyDefinitions
         /// <summary>
         /// Gets the content property editor template URI.
         /// </summary>
-        protected override string TemplateUri => "avares://TypeDitor/View/Panels/PropertyTemplates/ContentPropertyTemplate.axaml";
+        protected override string TemplateUri => "avares://TypeDCore/View/Panels/PropertyTemplates/ContentPropertyTemplate.axaml";
         /// <summary>
         /// Gets the content property editor template key.
         /// </summary>

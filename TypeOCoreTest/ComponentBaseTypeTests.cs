@@ -1,6 +1,7 @@
 #nullable enable annotations
 
 using System.Reflection;
+using Avalonia;
 using TypeD;
 using TypeD.Code;
 using TypeD.Helpers;
@@ -11,6 +12,7 @@ using TypeDCore.Code.Drawable;
 using TypeDCore.Code.Entity;
 using TypeDCore.Components;
 using TypeDCore.Models.Data.Hooks;
+using TypeDCore.Models.Data.PropertyDefinitions;
 using TypeOEngine.Typedeaf.Core.Common;
 using TypeOEngine.Typedeaf.Core.Entities;
 using TypeOEngine.Typedeaf.Core.Entities.Drawables;
@@ -26,6 +28,33 @@ public class ComponentBaseTypeTests
     private const string DrawableName = "TypeOEngine.Typedeaf.Core.Entities.Drawables.Drawable";
     private const string SceneName = "TypeOEngine.Typedeaf.Core.Scene";
     private const string GameName = "TypeOEngine.Typedeaf.Core.Game";
+
+    [Fact]
+    public void EnginePropertyTemplates_LoadWithoutEditorAssembly()
+    {
+        AppBuilder.Configure<Application>().UsePlatformDetect().SetupWithoutStarting();
+        Assert.NotNull(new Vec2PropertyDefinition().CreateTemplate());
+        Assert.NotNull(new ColorPropertyDefinition().CreateTemplate());
+        Assert.NotNull(new ContentPropertyDefinition(null).CreateTemplate());
+    }
+
+    [Fact]
+    public void SharedMoveRules_PreserveCoreComponentChildFilters()
+    {
+        var parent = CoreComponent.SceneComponent();
+        var node = CoreComponent.EntityComponent();
+        var sibling = CoreComponent.EntityComponent();
+        typeof(Component).GetProperty(nameof(Component.ParentComponent)).SetValue(node, parent);
+        typeof(Component).GetProperty(nameof(Component.ParentComponent)).SetValue(sibling, parent);
+        parent.Children.AddRange(new[] { node, sibling });
+
+        Assert.True(TypeD.Models.ComponentMoveRules.TryResolve(node, sibling, MovePosition.After, out var destination, out var index));
+        Assert.Same(parent, destination);
+        Assert.Equal(1, index);
+        Assert.True(TypeDCore.Commands.ComponentMoveCommand.TryResolve(node, sibling, MovePosition.After, out var commandDestination, out var commandIndex));
+        Assert.Same(destination, commandDestination);
+        Assert.Equal(index, commandIndex);
+    }
 
     [Theory]
     [InlineData(true, 70, 160)]

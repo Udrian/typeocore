@@ -3,6 +3,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using TypeD.Models.Providers.Interfaces;
+using TypeD.Models;
 using TypeD.ViewModel;
 using TypeD.Models.Interfaces;
 
