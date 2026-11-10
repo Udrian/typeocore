@@ -232,6 +232,7 @@ namespace TypeDCore.ViewModel.Panels
             if (Viewer != null)
             {
                 Viewer.Unload();
+                Viewer = null;
             }
         }
 
