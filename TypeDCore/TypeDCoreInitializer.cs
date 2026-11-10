@@ -51,6 +51,7 @@ namespace TypeDCore
         IPropertyModel PropertyModel { get; set; }
         IEditorCommandRegistry EditorCommandRegistry { get; set; }
         INodeSelectionModel NodeSelectionModel { get; set; }
+        IGameLogModel GameLogModel { get; set; }
         EditorToolModel EditorToolModel { get; set; }
 
         // Commands
@@ -91,6 +92,7 @@ namespace TypeDCore
             PropertyModel.Register(new ColorPropertyDefinition());
             PropertyModel.Register(new ContentPropertyDefinition(Resources.Get<IContentProvider>()));
             Resources.Get<ISettingModel>().InitContext<ViewerSettingContext>(project);
+            Resources.Get<ISettingModel>().InitContext<OutputSettingContext>(project);
 
             // Internal Models
             TypeDCoreProjectModel = new TypeDCoreProjectModel();
@@ -111,6 +113,8 @@ namespace TypeDCore
             PanelModel = Resources.Get<IPanelModel>();
             ComponentModel = Resources.Get<IComponentModel>();
             EditorCommandRegistry = Resources.Get<IEditorCommandRegistry>();
+            GameLogModel = Resources.Get<IGameLogModel>();
+            ApplyGameLogColors(SettingModel.GetContext<OutputSettingContext>());
 
             // Commands
             CreateEntityTypeCommand = new CreateEntityTypeCommand(project, Resources);
@@ -863,6 +867,16 @@ namespace TypeDCore
         {
             var mainWindowSettingContext = SettingModel.GetContext<MainWindowSettingContext>(hook.Level);
             var viewerSettingContext = SettingModel.GetContext<ViewerSettingContext>(hook.Level);
+            var outputSettingContext = SettingModel.GetContext<OutputSettingContext>(hook.Level);
+
+            SettingItem GameLogColorItem(string level, Setting<Color> setting)
+            {
+                return new SettingItem($"{level} Log Color", $"Color of {level} lines in the game log output.", setting, (value) => {
+                    setting.Value = (Color)value;
+                    SettingModel.SetContext(outputSettingContext);
+                    ApplyGameLogColors(SettingModel.GetContext<OutputSettingContext>());
+                }, "Output");
+            }
 
             hook.Items.AddRange(new List<SettingItem>()
             { 
@@ -884,8 +898,30 @@ namespace TypeDCore
                     Hooks.Shoot(new ViewerClearColorChangedHook {
                         Color = SettingModel.GetContext<ViewerSettingContext>().ClearColor.Value
                     });
-                }, "Viewer")
+                }, "Viewer"),
+                GameLogColorItem("Ludacris", outputSettingContext.LudacrisColor),
+                GameLogColorItem("Debug", outputSettingContext.DebugColor),
+                GameLogColorItem("Info", outputSettingContext.InfoColor),
+                GameLogColorItem("Warning", outputSettingContext.WarningColor),
+                GameLogColorItem("Error", outputSettingContext.ErrorColor),
+                GameLogColorItem("Fatal", outputSettingContext.FatalColor)
             });
+        }
+
+        // The Output panel reads the colors as hex strings from the game log model, since it has no reference to the engine's Color type
+        void ApplyGameLogColors(OutputSettingContext context)
+        {
+            GameLogModel.SetLevelColor(GameLogLevel.Ludacris, ToHex(context.LudacrisColor.Value));
+            GameLogModel.SetLevelColor(GameLogLevel.Debug, ToHex(context.DebugColor.Value));
+            GameLogModel.SetLevelColor(GameLogLevel.Info, ToHex(context.InfoColor.Value));
+            GameLogModel.SetLevelColor(GameLogLevel.Warning, ToHex(context.WarningColor.Value));
+            GameLogModel.SetLevelColor(GameLogLevel.Error, ToHex(context.ErrorColor.Value));
+            GameLogModel.SetLevelColor(GameLogLevel.Fatal, ToHex(context.FatalColor.Value));
+        }
+
+        static string ToHex(Color color)
+        {
+            return $"#{color.R:X2}{color.G:X2}{color.B:X2}";
         }
 
         void ContentPropertyChanged(PropertyChangedHook hook)
