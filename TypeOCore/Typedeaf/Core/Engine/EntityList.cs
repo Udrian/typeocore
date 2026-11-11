@@ -16,7 +16,7 @@ namespace TypeOEngine.Typedeaf.Core
         /// entities, querying entities by type or ID, and creating entities from stubs. This class is designed to work
         /// with the <see cref="Scene"/> and <see cref="Entity"/> systems, and it integrates with update and draw loops
         /// for entities that implement the appropriate interfaces.</remarks>
-        public class EntityList : TypeOObject, IHasContext, IHasScene, IHasEntity
+        public class EntityList : TypeOObject, IHasContext, IHasScene, IHasEntity, IHasParent
         {
             Context IHasContext.Context { get; set; }
             private Context Context { get => (this as IHasContext).Context; set => (this as IHasContext).Context = value; }
@@ -31,6 +31,9 @@ namespace TypeOEngine.Typedeaf.Core
             /// Gets or sets the entity associated with this instance.
             /// </summary>
             public Entity Entity { get; set; } //TODO: This maybe should change to something else, OwnerEntity or Node?
+            
+            /// <inheritdoc />
+            public TypeOObject Parent { get; internal set; }
 
             private DelayedList<Entity> Entities { get; set; }
 
@@ -260,7 +263,15 @@ namespace TypeOEngine.Typedeaf.Core
                     EntityLists.Add(eType, Entities.Where(e => e is E).Cast<E>().ToList());
                 }
 
-                return EntityLists[eType] as List<E>;
+                var retList = EntityLists[eType] as List<E>;
+
+                if(retList == null)
+                {
+                    retList = Entities.Where(e => e is E).Cast<E>().ToList();
+                    EntityLists[eType] = retList;
+                }
+
+                return retList;
             }
 
             /// <summary>

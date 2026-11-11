@@ -72,7 +72,7 @@ namespace TypeOEngine.Typedeaf.Core
 
             private Entity CreateEntity(Entity entity, EntityList parentList, string id = null, bool pushToUpdateLoop = true, bool pushToDrawStack = true)
             {
-                entity.Parent = parentList.Entity;
+                entity.Parent = parentList.Parent;
                 entity.ParentEntityList = parentList;
                 entity.DrawStack = parentList.Scene?.DrawStack ?? parentList.Entity?.DrawStack;
                 entity.UpdateLoop = parentList.Scene?.UpdateLoop ?? parentList.Entity?.UpdateLoop;
@@ -345,6 +345,7 @@ namespace TypeOEngine.Typedeaf.Core
                     var hasEntities = obj as IHasEntities;
 
                     hasEntities.Entities = new EntityList();
+                    hasEntities.Entities.Parent = obj;
                     Logger.Log(LogLevel.Ludacris, $"Creating EntityList in {obj.GetType().FullName}");
                     InitializeObject(hasEntities.Entities, obj);
                 }
