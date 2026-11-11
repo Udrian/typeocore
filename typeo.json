@@ -1,6 +1,6 @@
 {
   "name": "TypeOCore",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "externals": [
     "Mock/Content/Lato-Black.ttf;test",
     "Mock/Content/texture.png;test"

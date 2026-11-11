@@ -1,8 +1,4 @@
-using System;
-using System.Linq;
-using TypeDCore.Commands;
 using Avalonia.Controls;
-using Avalonia.Controls.Primitives;
 using TypeD.Helpers;
 using TypeDCore.Models.Data.Hooks;
 using Avalonia.Threading;
@@ -274,7 +270,7 @@ namespace TypeDCore.ViewModel.Panels
             ComponentToReload = null;
 
             Load();
-            if (component != null && !component.Removed)
+            if (component != null && !component.Removed && Viewer != null)
                 Viewer.Load(component);
         }
 

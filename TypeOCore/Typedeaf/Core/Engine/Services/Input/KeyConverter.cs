@@ -22,6 +22,25 @@ namespace TypeOEngine.Typedeaf.Core
                 return this;
             }
 
+            /// <summary>
+            /// Removes the key alias associated with the specified input.
+            /// </summary>
+            /// <param name="input">The input value whose key alias mapping is removed.</param>
+            public void RemoveKeyAlias(object input)
+            {
+                if(InputToKeyConverter.ContainsKey(input))
+                    InputToKeyConverter.Remove(input);
+            }
+
+            /// <summary>
+            /// Removes all configured input-to-key aliases.
+            /// </summary>
+            /// <remarks>After this call, no key aliases remain.</remarks>
+            public void ClearKeyAliases()
+            {
+                InputToKeyConverter.Clear();
+            }
+
             /// <summary>Determines whether an input value has a registered alias.</summary>
             public bool ContainsInput(object input)
             {
