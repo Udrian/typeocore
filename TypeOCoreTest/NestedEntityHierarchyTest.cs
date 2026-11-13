@@ -83,7 +83,7 @@ public class NestedEntityHierarchyTest
 
         game.Scene.Entities.Update(0);
         Assert.Same(game.Root, Assert.Single(game.Scene.Entities.List<ParentEntity>()));
-        Assert.Same(game.Root, game.Scene.Entities.GetEntityByID<ParentEntity>(game.Root.ID));
+        Assert.Same(game.Root, game.Scene.Entities.GetEntityByID<ParentEntity>($"{game.Scene.ID}/{game.Root.ID}"));
 
         game.Root.Remove();
         game.Scene.Entities.Update(0);

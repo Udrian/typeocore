@@ -83,7 +83,7 @@ public class DrawableManagerTests
         var owner = scene.Owner;
 
         Assert.Equal(3, owner.Drawables.Get<RecordingDrawable>().Count());
-        Assert.Same(scene.First, owner.Drawables.GetDrawableByID<RecordingDrawable>("owner/first"));
+        Assert.Same(scene.First, owner.Drawables.GetDrawableByID<RecordingDrawable>($"{scene.ID}/owner/first"));
         Assert.Equal(1, scene.First.DrawCount);
         Assert.Equal(1, scene.Second.DrawCount);
         Assert.Equal(0, scene.Hidden.DrawCount);
