@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using TypeD.Code;
+﻿using TypeD.Code;
 using TypeD.Models.Data;
 using TypeD.Models.Interfaces;
 using TypeD.Models.Providers.Interfaces;
 using TypeDCore.Components;
-using TypeDCore.Models.Data.SaveContexts;
 using TypeDCore.Models.Interfaces;
 using TypeOEngine.Typedeaf.Core;
 using TypeOEngine.Typedeaf.Core.Entities;
@@ -48,68 +43,6 @@ namespace TypeDCore.Models
         // Functions
         public void Restore(Project project)
         {
-            var types = project.Assembly?.GetTypes().ToList() ?? new List<Type>();
-
-            // Check if we have types that are missing .component file
-            foreach (var type in types)
-            {
-                // Only restore if type is a subclass to any of the following types
-                if (new List<Type>() { typeof(Entity), typeof(Scene), typeof(Drawable) }.Find(t => type.IsSubclassOf(t)) == null)
-                {
-                    continue;
-                }
-
-                // True if .component files are missing, we need to restore them
-                if (!ComponentProvider.Exists(project, type))
-                {
-                    // Fetch parent component, will be null if there is none
-                    var parentComponent = ComponentProvider.Load(project, type.BaseType.FullName);
-
-                    if(parentComponent == null)
-                    {
-                        var componentBaseTypes = ComponentProvider.GetBaseTypeComponents();
-                        parentComponent = componentBaseTypes.Find(c => c.FullName == type.BaseType.FullName);
-                    }
-
-                    if (type.IsSubclassOf(typeof(Entity)))
-                    {
-                        var updatable = type.GetInterfaces().Contains(typeof(IUpdatable));
-                        var drawable = type.GetInterfaces().Contains(typeof(IDrawable));
-                        TypeDCoreProjectModel.CreateEntity(project, type.Name, type.Namespace, parentComponent, updatable, drawable);
-                    }
-                    else if (type.IsSubclassOf(typeof(Scene)))
-                    {
-                        TypeDCoreProjectModel.CreateScene(project, type.Name, type.Namespace, parentComponent);
-                    }
-                    else if (type.IsSubclassOf(typeof(Drawable)))
-                    {
-                        TypeDCoreProjectModel.CreateDrawable(project, type.Name, type.Namespace, parentComponent);
-                    }
-                    parentComponent.Template.Init();
-
-                    var csFilePath = Path.Combine(project.Location, $"{type.FullName.Replace('.', Path.DirectorySeparatorChar)}.cs");
-                    // If CS files already exists, check if we need to convert them to typed.cs pair
-                    if (File.Exists(csFilePath))
-                    {
-                        var fileContent = File.ReadAllText(csFilePath);
-                        bool needToSave = false;
-
-                        ReplaceCode(ref fileContent, ref needToSave, $"class {type.Name}", $"partial class {type.Name}");
-                        if (type == typeof(Entity) || type == typeof(Scene))
-                        {
-                            ReplaceCode(ref fileContent, ref needToSave, $"public override void Initialize()", $"protected void InternalInitialize()");
-                        }
-
-                        if (needToSave)
-                        {
-                            var typeDCoreRestoreSaveContext = SaveModel.GetSaveContext<TypeDCoreRestoreSaveContext>();
-                            typeDCoreRestoreSaveContext.RestoreCodes.Add(csFilePath, fileContent);
-                            SaveModel.AddSave<TypeDCoreRestoreSaveContext>();
-                        }
-                    }
-                }
-            }
-
             // Check if we are missing Program.cs
             if (!File.Exists(Path.Combine(project.Location, project.ProjectName, "Program.cs")))
             {
@@ -183,15 +116,6 @@ namespace TypeDCore.Models
 
                     TypeDCoreProjectModel.SetStartScene(project, scene.Component);
                 }
-            }
-        }
-
-        private void ReplaceCode(ref string code, ref bool needToSave, string search, string replace)
-        {
-            if (!code.Contains(replace))
-            {
-                needToSave = true;
-                code = code.Replace(search, replace);
             }
         }
     }
