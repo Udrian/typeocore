@@ -1,15 +1,9 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.Input;
 using TypeD.Models.Interfaces;
 using TypeD.Models.Data;
 using TypeD.Models.Providers.Interfaces;
 using TypeD.ViewModel;
-using TypeOEngine.Typedeaf.Core.Engine.Contents;
 using EngineContent = TypeOEngine.Typedeaf.Core.Engine.Contents.Content;
 
 namespace TypeDCore.Models.Data.PropertyDefinitions
@@ -88,6 +82,8 @@ namespace TypeDCore.Models.Data.PropertyDefinitions
         /// Gets the engine content base type handled by this definition.
         /// </summary>
         public override Type Type => typeof(EngineContent);
+        /// <summary>Gets the template association for content properties.</summary>
+        public override Type PropertyTemplateType => Type;
 
         /// <summary>
         /// Gets the content property editor template URI.
