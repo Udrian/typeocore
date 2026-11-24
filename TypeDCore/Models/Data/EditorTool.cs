@@ -20,7 +20,11 @@ namespace TypeDCore.Models.Data
         /// <summary>
         /// Changes the origin point of the selected component.
         /// </summary>
-        Origin
+        Origin,
+        /// <summary>
+        /// Rotates the selected component around its origin.
+        /// </summary>
+        Rotate
     }
 }
 
