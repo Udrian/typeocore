@@ -21,7 +21,7 @@ namespace TypeOEngine.Typedeaf.Core
         /// behavior as needed. The <see cref="Initialize"/> method sets up the drawable and logic managers, while the 
         /// <see cref="Remove"/> method handles cleanup and removal of the entity from its parent list and  associated
         /// systems.</remarks>
-        public abstract class Entity : TypeOObject, IHasContext, IHasEntities, IHasParent
+        public class Entity : TypeOObject, IHasContext, IHasEntities, IHasParent
         {
             Context IHasContext.Context { get; set; }
             internal Context Context { get => (this as IHasContext).Context; set => (this as IHasContext).Context = value; }
@@ -65,6 +65,13 @@ namespace TypeOEngine.Typedeaf.Core
             /// Gets the logic manager responsible for handling application-specific logic operations.
             /// </summary>
             public LogicManager Logics { get; private set; }
+
+            /// <summary>
+            /// Initializes a new instance of the Entity class.
+            /// </summary>
+            public Entity()
+            {
+            }
 
             /// <summary>
             /// Initializes the drawable and logic managers for the current context.
