@@ -201,7 +201,8 @@ namespace TypeDCore.Models
 
             var filter = new FilterHelper();
             parent.Template?.ChildrenFilter(filter);
-            return (filter.Filters ?? string.Empty).Contains($"{child.RootBaseComponent.FullName};");
+            return (filter.Filters ?? string.Empty).Contains($"{child.RootBaseComponent.FullName};")
+                && parent.Template?.CanAddChild(child) != false;
         }
     }
 }

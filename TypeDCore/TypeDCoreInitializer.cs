@@ -89,6 +89,7 @@ namespace TypeDCore
 
             // Properties
             PropertyModel.Register(new Vec2PropertyDefinition());
+            PropertyModel.Register(new Vec2iPropertyDefinition());
             PropertyModel.Register(new ColorPropertyDefinition());
             PropertyModel.Register(new ContentPropertyDefinition(Resources.Get<IContentProvider>()));
             Resources.Get<ISettingModel>().InitContext<ViewerSettingContext>(project);
@@ -165,12 +166,13 @@ namespace TypeDCore
             ComponentProvider.AddBaseTypeComponent(CoreComponent.SceneComponent());
             ComponentProvider.AddBaseTypeComponent(CoreComponent.DrawableComponent());
             ComponentProvider.AddBaseTypeComponent(CoreComponent.GameComponent());
+            ComponentProvider.AddBaseTypeComponent(CoreComponent.WindowComponent());
         }
 
         public override void Uninitializer()
         {
             // Properties
-            foreach (var type in new[] { typeof(Vec2), typeof(Color), typeof(TypeOEngine.Typedeaf.Core.Engine.Contents.Content) })
+            foreach (var type in new[] { typeof(Vec2), typeof(Vec2i), typeof(Color), typeof(TypeOEngine.Typedeaf.Core.Engine.Contents.Content) })
                 PropertyModel.Unregister(type);
 
             CreateEntityTypeCommand.Dispose();
@@ -225,6 +227,7 @@ namespace TypeDCore
             ComponentProvider.RemoveBaseTypeComponent(CoreComponent.SceneComponent());
             ComponentProvider.RemoveBaseTypeComponent(CoreComponent.DrawableComponent());
             ComponentProvider.RemoveBaseTypeComponent(CoreComponent.GameComponent());
+            ComponentProvider.RemoveBaseTypeComponent(CoreComponent.WindowComponent());
         }
 
         // Events
@@ -302,12 +305,13 @@ namespace TypeDCore
 
         void ProjectCreate(ProjectCreateHook hook)
         {
-            ComponentProvider.Create(
+            var game = ComponentProvider.Create(
                 hook.Project,
                 $"{hook.Project.ProjectName}Game",
                 hook.Project.ProjectName,
                 CoreComponent.GameComponent()
             );
+            ComponentModel.Add(hook.Project, game.Component, CoreComponent.WindowComponent());
             var scene = ComponentProvider.Create(
                 hook.Project,
                 "StartScene",
@@ -315,6 +319,7 @@ namespace TypeDCore
                 CoreComponent.SceneComponent()
             );
 
+            ComponentModel.Add(hook.Project, game.Component, scene.Component);
             TypeDCoreProjectModel.SetStartScene(hook.Project, scene.Component);
         }
 
@@ -742,6 +747,24 @@ namespace TypeDCore
                 }
             );
 
+            var sceneNode = hook.SelectedComponent;
+            if (sceneNode?.ParentComponent != null
+                && ComponentModel.IsOfType(sceneNode, typeof(Scene))
+                && ComponentModel.IsOfType(sceneNode.ParentComponent, typeof(Game)))
+            {
+                hook.Menu.Items.Add(
+                    new MenuItem()
+                    {
+                        Name = "_Set Start Scene",
+                        ClickParameter = "LoadedProject",
+                        Click = (param) =>
+                        {
+                            EditorCommandRegistry.Execute("component.set-start-scene", new ComponentCommandData() { Component = sceneNode, Project = param as Project ?? hook.Project });
+                        }
+                    }
+                );
+            }
+
             if (hook.SelectedComponent?.ReadOnly != true)
             {
                 hook.Menu.Items.Add(
@@ -1060,6 +1083,19 @@ namespace TypeDCore
 
         public void ExtractProperties(ExtractPropertiesHook hook)
         {
+            if (ComponentModel.IsOfType(hook.Component, typeof(Game)))
+            {
+                var startingScene = Property.CreateDynamicComboBox(
+                    StartingScene.PropertyName,
+                    game => StartingScene.Options(game));
+                startingScene.Description = "The scene that is active when the game starts. Chosen among the scenes added to the game.";
+                startingScene.Group = "Game";
+                startingScene.DeclaringTypeName = typeof(Game).FullName;
+                // Projects created before the property existed stored their start scene on the project.
+                startingScene.Value = Project?.StartScene;
+                hook.Properties.Add(startingScene);
+            }
+
             var componentType = ComponentModel.GetType(hook.Component);
             if(componentType == null)
                 return;

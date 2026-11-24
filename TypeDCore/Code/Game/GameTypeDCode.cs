@@ -1,7 +1,10 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using TypeD.Code;
 using TypeD.Models.Data;
 using TypeD.Models.Providers.Interfaces;
+using TypeDCore.Models.Data.PropertyDefinitions;
+using Property = TypeD.Code.Codalyzer.Property;
 
 namespace TypeDCore.Code.Game
 {
@@ -30,31 +33,44 @@ namespace TypeDCore.Code.Game
         {
             ComponentProvider = Resources.Get<IComponentProvider>();
 
+            var inheritedDynamicProperties = TypeDFile.DynamicProperties;
+            TypeDFile.DynamicProperties = () =>
+            {
+                var properties = inheritedDynamicProperties?.Invoke() ?? new List<Property>();
+                properties.AddRange(WindowProperties());
+                return properties;
+            };
+
             AddUsings(new List<string>()
             {
                 "TypeOEngine.Typedeaf.Core"
-            });
-            SetDynamicUsing(() =>
-            {
-                var usings = new List<string>();
-                Component defaultScene = ComponentProvider.Load(Project, Project.StartScene);
-                if (defaultScene != null)
-                {
-                    usings.Add(defaultScene.Namespace);
-                }
-
-                return usings;
             });
 
             AddFunction(new Function("protected override void Initialize()", () => {
                 Writer.AddLine("base.Initialize();");
                 Writer.NewLine();
+                WindowInitializeCode();
                 TypeDInitializeCode();
                 Writer.AddLine("InternalInitialize();");
-                Component defaultScene = ComponentProvider.Load(Project, Project.StartScene);
-                if (defaultScene != null)
+                foreach (var child in Component.Children)
                 {
-                    Writer.AddLine($"Scenes.SetScene<{defaultScene.ClassName}>();");
+                    if (child.Removed || !child.IsBasedOn(typeof(TypeOEngine.Typedeaf.Core.Scene)))
+                        continue;
+
+                    Writer.AddLeftCurlyBracket();
+                    Writer.AddLine($"var scene = Scenes.CreateScene<{child.FullName}>();");
+                    foreach (var property in child.Properties)
+                    {
+                        if (child.HasPropertyOverridesFor(property.Name))
+                            AddPropertyCode(property, "scene.");
+                    }
+                    Writer.AddRightCurlyBrackets();
+                }
+
+                var startingScene = Models.Data.StartingScene.Get(Component);
+                if (startingScene != null)
+                {
+                    Writer.AddLine($"Scenes.SetScene<{startingScene}>();");
                 }
             }));
             AddFunction(new Function("public override void Update(double dt)", () => {
@@ -66,6 +82,59 @@ namespace TypeDCore.Code.Game
             AddFunction(new Function("protected override void Cleanup()", () => {
                 Writer.AddLine("InternalCleanup();");
             }));
+        }
+
+        private List<Component> WindowChildren()
+        {
+            return Component.Children
+                .Where(child => !child.Removed && child.IsBasedOn(typeof(TypeOEngine.Typedeaf.Core.Engine.Graphics.Window)))
+                .ToList();
+        }
+
+        private List<Property> WindowProperties()
+        {
+            var windows = WindowChildren();
+            var properties = new List<Property>();
+            if (windows.Count == 0)
+                return properties;
+
+            properties.Add(new Property("public TypeOEngine.Typedeaf.Desktop.Engine.Services.WindowService WindowService"));
+            // The first window is the main window, a list is only needed for the windows beyond it
+            if (windows.Count > 1)
+            {
+                properties.Add(new Property("public System.Collections.Generic.List<TypeOEngine.Typedeaf.Core.Engine.Graphics.Interfaces.IWindow> Windows")
+                {
+                    Initializer = "new System.Collections.Generic.List<TypeOEngine.Typedeaf.Core.Engine.Graphics.Interfaces.IWindow>()"
+                });
+            }
+            return properties;
+        }
+
+        private void WindowInitializeCode()
+        {
+            var windows = WindowChildren();
+            for (var i = 0; i < windows.Count; i++)
+            {
+                var create = $"WindowService.CreateWindow({WindowValueCode(windows[i], "Title")}, {WindowValueCode(windows[i], "Position")}, {WindowValueCode(windows[i], "Size")})";
+                Writer.AddLine(i == 0 ? $"MainWindow = {create};" : $"Windows.Add({create});");
+            }
+            if (windows.Count > 0)
+                Writer.NewLine();
+        }
+
+        private string WindowValueCode(Component window, string propertyName)
+        {
+            var property = window.Properties.FirstOrDefault(p => p.Name == propertyName);
+            if (property == null)
+                return propertyName == "Title" ? "\"Window\"" : "default";
+            if (propertyName == "Title")
+            {
+                var title = (property.Value as string ?? "").Replace("\\", "\\\\").Replace("\"", "\\\"");
+                return $"\"{title}\"";
+            }
+            if (property.Value is TypeOEngine.Typedeaf.Core.Common.Vec2i vec)
+                return new Vec2iPropertyDefinition().ToCode(vec);
+            return GetValueCode(property.Type, property.Value);
         }
     }
 }

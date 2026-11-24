@@ -1,6 +1,9 @@
 ﻿using TypeD.Components;
 using TypeD.Helpers;
+using TypeD.Models.Data;
 using TypeDCore.Code.Game;
+using TypeOEngine.Typedeaf.Core;
+using TypeOEngine.Typedeaf.Core.Engine.Graphics;
 using TypeOEngine.Typedeaf.Core.Entities;
 using TypeOEngine.Typedeaf.Core.Entities.Drawables;
 
@@ -27,6 +30,22 @@ namespace TypeDCore.Components
         {
             filter.Exclude += $"{typeof(Drawable).FullName};";
             filter.Exclude += $"{typeof(Entity).FullName};";
+            filter.Include += $"{typeof(Scene).FullName};";
+            filter.Include += $"{typeof(Window).FullName};";
+            // The move, paste and drop rules only look at Filters
+            filter.Filters += $"{typeof(Window).FullName};";
+        }
+
+        /// <summary>
+        /// Allows at most one child of each scene type.
+        /// </summary>
+        /// <param name="child">The component that would be added.</param>
+        /// <returns><see langword="false"/> if the game already has a child of the same scene type; otherwise, <see langword="true"/>.</returns>
+        public override bool CanAddChild(Component child)
+        {
+            if (!child.IsBasedOn(typeof(Scene)))
+                return true;
+            return !Component.Children.Any(existing => !existing.Removed && existing.FullName == child.FullName);
         }
     }
 }

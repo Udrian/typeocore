@@ -35,11 +35,11 @@ namespace TypeDCore.Commands
             //var result = MessageBox.Show($"Do you want to set '{parameter.Component.FullName}' as start scene?", "Set Start Scene", MessageBoxButton.YesNo, MessageBoxImage.Warning);
             //if (result == MessageBoxResult.Yes)
             {
-                var previousStartScene = parameter.Project.StartScene;
+                var previousStartScene = TypeDCoreProjectModel.GetStartScene(parameter.Project);
                 TypeDCoreProjectModel.SetStartScene(parameter.Project, parameter.Component);
-                if (parameter.Project.StartScene != previousStartScene)
+                var newStartScene = TypeDCoreProjectModel.GetStartScene(parameter.Project);
+                if (newStartScene != previousStartScene)
                 {
-                    var newStartScene = parameter.Project.StartScene;
                     CommandHistoryModel.Record(
                         "Set start scene",
                         $"Changed the start scene from {previousStartScene ?? "None"} to {newStartScene}.",

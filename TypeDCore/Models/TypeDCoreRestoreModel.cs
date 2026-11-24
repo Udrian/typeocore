@@ -105,7 +105,7 @@ namespace TypeDCore.Models
                     project.ProjectName,
                     CoreComponent.GameComponent()
                 );
-                if (!File.Exists(Path.Combine(project.Location, project.ProjectName, "Scenes", "StartScene.cs")) && (project.StartScene == null || project.StartScene == $"{project.ProjectName}.Scenes.StartScene"))
+                if (!File.Exists(Path.Combine(project.Location, project.ProjectName, "Scenes", "StartScene.cs")))
                 {
                     var scene = ComponentProvider.Create(
                         project,

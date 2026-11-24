@@ -21,12 +21,16 @@ namespace TypeDCore.Models.Interfaces
         /// </summary>
                 public Component CreateDrawable(Project project, string className, string @namespace, Component parentComponent, string icon = null);
         /// <summary>
-        /// Sets the project's start scene using its component.
+        /// Sets the game's StartingScene property to the scene, adding the scene to the game when it is not already a child.
         /// </summary>
         public void SetStartScene(Project project, Component scene);
         /// <summary>
-        /// Sets the project's start scene using its fully qualified name.
+        /// Sets the game's StartingScene property to a scene's fully qualified name, or clears it when null.
         /// </summary>
         public void SetStartScene(Project project, string sceneFullName);
+        /// <summary>
+        /// Gets the fully qualified name stored in the game's StartingScene property, or null.
+        /// </summary>
+        public string GetStartScene(Project project);
     }
 }

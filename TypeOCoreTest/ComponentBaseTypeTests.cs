@@ -1,6 +1,8 @@
 #nullable enable annotations
 
 using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using Avalonia;
 using TypeD;
 using TypeD.Code;
@@ -8,10 +10,13 @@ using TypeD.Helpers;
 using TypeD.Models.Data;
 using TypeD.Models.Data.Hooks;
 using TypeD.Models.Interfaces;
+using TypeD.Models.Providers.Interfaces;
 using TypeDCore.Code.Drawable;
 using TypeDCore.Code.Entity;
+using TypeDCore.Code.Game;
 using TypeDCore.Components;
 using TypeDCore.Models.Data.Hooks;
+using TypeDCore.Models.Data;
 using TypeDCore.Models.Data.PropertyDefinitions;
 using TypeOEngine.Typedeaf.Core.Common;
 using TypeOEngine.Typedeaf.Core.Entities;
@@ -28,12 +33,14 @@ public class ComponentBaseTypeTests
     private const string DrawableName = "TypeOEngine.Typedeaf.Core.Entities.Drawables.Drawable";
     private const string SceneName = "TypeOEngine.Typedeaf.Core.Scene";
     private const string GameName = "TypeOEngine.Typedeaf.Core.Game";
+    private const string WindowName = "TypeOEngine.Typedeaf.Core.Engine.Graphics.Window";
 
     [Fact]
     public void EnginePropertyTemplates_LoadWithoutEditorAssembly()
     {
         AppBuilder.Configure<Application>().UsePlatformDetect().SetupWithoutStarting();
         Assert.NotNull(new Vec2PropertyDefinition().CreateTemplate());
+        Assert.NotNull(new Vec2iPropertyDefinition().CreateTemplate());
         Assert.NotNull(new ColorPropertyDefinition().CreateTemplate());
         Assert.NotNull(new ContentPropertyDefinition(null).CreateTemplate());
     }
@@ -216,6 +223,221 @@ public class ComponentBaseTypeTests
         var names = GetPublicChildNames(new EntityCode(parent));
 
         Assert.Equal(new[] { "Enemy", "EnemySprite" }, names.Values.OrderBy(n => n).ToArray());
+    }
+
+    [Fact]
+    public void GameTemplate_AllowsAtMostOneChildPerSceneType()
+    {
+        var game = CoreComponent.GameComponent();
+        var level = Child("Level", CoreComponent.SceneComponent(), false);
+        var menu = Child("Menu", CoreComponent.SceneComponent(), false);
+        var template = game.Template;
+        typeof(TypeD.Components.ComponentTemplate).GetProperty(nameof(TypeD.Components.ComponentTemplate.Component)).SetValue(template, game);
+        Assert.True(template.CanAddChild(level));
+        game.Children.Add(level);
+
+        Assert.False(template.CanAddChild(level));
+        Assert.True(template.CanAddChild(menu));
+
+        level.Removed = true;
+        Assert.True(template.CanAddChild(level));
+    }
+
+    [Fact]
+    public void GameCode_CreatesSceneChildrenAndAppliesOnlyPropertyOverrides()
+    {
+        var game = Derive("MyGame", CoreComponent.GameComponent());
+        var first = Child("Level", CoreComponent.SceneComponent(), false);
+        first.Namespace = "Game.Levels";
+        first.Properties.Add(new Property { Name = "Pause", Type = typeof(bool), Value = true });
+        first.Properties.Add(new Property { Name = "Hide", Type = typeof(bool), Value = false });
+        first.OveriddenProperties.Add(new Property { Name = "Hide", Value = false });
+        first.Properties.Add(new Property { Name = "ReadOnly", Type = typeof(int), Value = 1, ReadOnly = true });
+        var second = Child("Menu", CoreComponent.SceneComponent(), false);
+        second.Properties.Add(new Property { Name = "Hide", Type = typeof(bool), Value = true });
+        var removed = Child("Removed", CoreComponent.SceneComponent(), false);
+        removed.Removed = true;
+        game.Children.AddRange(new[] { first, Child("Other", CoreComponent.GameComponent(), false), removed, second });
+
+        var output = GenerateGameCode(game, second);
+
+        Assert.Contains("var scene = Scenes.CreateScene<Game.Levels.Level>();", output);
+        Assert.Contains("scene.Pause = true;", output);
+        Assert.Contains("var scene = Scenes.CreateScene<Game.Menu>();", output);
+        Assert.Contains("scene.Hide = true;", output);
+        Assert.DoesNotContain("scene.Hide = false;", output);
+        Assert.DoesNotContain("scene.ReadOnly =", output);
+        Assert.DoesNotContain("Game.Removed>", output);
+        Assert.DoesNotContain("Game.Other>", output);
+        Assert.True(output.IndexOf("InternalInitialize();", StringComparison.Ordinal) < output.IndexOf("CreateScene<Game.Levels.Level>", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void GameCode_SetsTheStartingSceneAfterAllScenesAreCreated()
+    {
+        var game = Derive("MyGame", CoreComponent.GameComponent());
+        var first = Child("Level", CoreComponent.SceneComponent(), false);
+        var second = Child("Menu", CoreComponent.SceneComponent(), false);
+        game.Children.AddRange(new[] { first, second });
+
+        var output = GenerateGameCode(game, first);
+
+        Assert.Equal(1, Regex.Matches(output, "Scenes.SetScene<").Count);
+        Assert.Contains("Scenes.SetScene<Game.Level>();", output);
+        Assert.True(output.IndexOf("CreateScene<Game.Menu>", StringComparison.Ordinal) < output.IndexOf("Scenes.SetScene<Game.Level>", StringComparison.Ordinal));
+        Assert.DoesNotContain("StartingScene =", output);
+    }
+
+    [Fact]
+    public void GameCode_DoesNotSetASceneWhenTheStartingSceneIsMissing()
+    {
+        var game = Derive("MyGame", CoreComponent.GameComponent());
+        var scene = Child("Level", CoreComponent.SceneComponent(), false);
+        var other = Child("Other", CoreComponent.SceneComponent(), false);
+        game.Children.Add(scene);
+
+        Assert.DoesNotContain("Scenes.SetScene<", GenerateGameCode(game, other));
+        scene.Removed = true;
+        Assert.DoesNotContain("Scenes.SetScene<", GenerateGameCode(game, scene));
+        Assert.Equal(new string[0], StartingScene.Options(game));
+    }
+
+    [Fact]
+    public void StartingSceneProperty_OffersTheScenesOfTheGame()
+    {
+        var game = Derive("MyGame", CoreComponent.GameComponent());
+        game.Children.AddRange(new[] { Child("Level", CoreComponent.SceneComponent(), false), Child("Player", CoreComponent.EntityComponent(), false) });
+        var property = Property.CreateDynamicComboBox(StartingScene.PropertyName, StartingScene.Options);
+
+        Assert.Equal(new[] { "Game.Level" }, property.DynamicOptions(game));
+        Assert.False(property.GenerateCode);
+        Assert.Same(property.DynamicOptions, new Property(property).DynamicOptions);
+    }
+
+    [Fact]
+    public void GameCode_WithoutWindows_AddsNoWindowCode()
+    {
+        var game = Derive("MyGame", CoreComponent.GameComponent());
+        var scene = Child("Level", CoreComponent.SceneComponent(), false);
+        game.Children.Add(scene);
+
+        var output = GenerateGameCode(game, scene);
+
+        Assert.DoesNotContain("WindowService", output);
+        Assert.DoesNotContain("MainWindow", output);
+    }
+
+    [Fact]
+    public void GameCode_FirstWindowIsMainWindowAndOnlyAWindowService()
+    {
+        var game = Derive("MyGame", CoreComponent.GameComponent());
+        var scene = Child("Level", CoreComponent.SceneComponent(), false);
+        game.Children.AddRange(new[] { scene, WindowChild("Main \"Window\"", 10, 20, 800, 600) });
+
+        var output = GenerateGameCode(game, scene);
+
+        Assert.Contains("public TypeOEngine.Typedeaf.Desktop.Engine.Services.WindowService WindowService { get; set; }", output);
+        Assert.Contains("MainWindow = WindowService.CreateWindow(\"Main \\\"Window\\\"\", new TypeOEngine.Typedeaf.Core.Common.Vec2i(10, 20), new TypeOEngine.Typedeaf.Core.Common.Vec2i(800, 600));", output);
+        Assert.DoesNotContain("Windows", output);
+        Assert.True(output.IndexOf("MainWindow =", StringComparison.Ordinal) < output.IndexOf("CreateScene<", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void GameCode_AdditionalWindowsAreAddedToAList()
+    {
+        var game = Derive("MyGame", CoreComponent.GameComponent());
+        var scene = Child("Level", CoreComponent.SceneComponent(), false);
+        var removed = WindowChild("Removed", 0, 0, 1, 1);
+        removed.Removed = true;
+        game.Children.AddRange(new[] { scene, WindowChild("A", 0, 0, 1, 1), removed, WindowChild("B", 1, 2, 3, 4), WindowChild("C", 5, 6, 7, 8) });
+
+        var output = GenerateGameCode(game, scene);
+
+        Assert.Contains("List<TypeOEngine.Typedeaf.Core.Engine.Graphics.Interfaces.IWindow> Windows", output);
+        Assert.Equal(1, Regex.Matches(output, "MainWindow =").Count);
+        Assert.Contains("Windows.Add(WindowService.CreateWindow(\"B\"", output);
+        Assert.Contains("Windows.Add(WindowService.CreateWindow(\"C\"", output);
+        Assert.DoesNotContain("Removed", output);
+    }
+
+    [Fact]
+    public void WindowComponent_CanOnlyBeAddedToAGame()
+    {
+        var window = CoreComponent.WindowComponent();
+        Assert.Equal(WindowName, RootType(window));
+        Assert.False(new FilterHelperProbe(CoreComponent.EntityComponent()).Accepts(window));
+        Assert.False(new FilterHelperProbe(CoreComponent.SceneComponent()).Accepts(window));
+        Assert.False(new FilterHelperProbe(CoreComponent.DrawableComponent()).Accepts(window));
+        Assert.False(new FilterHelperProbe(window).Accepts(CoreComponent.EntityComponent()));
+        Assert.True(new FilterHelperProbe(CoreComponent.GameComponent()).Accepts(window));
+        Assert.False(window.Template.CanAddChild(CoreComponent.EntityComponent()));
+    }
+
+    private sealed class FilterHelperProbe(Component parent)
+    {
+        public bool Accepts(Component child)
+        {
+            var filter = new FilterHelper();
+            parent.Template.ChildrenFilter(filter);
+            return filter.Filters.Contains($"{child.RootBaseComponent.FullName};");
+        }
+    }
+
+    private static Component WindowChild(string title, int x, int y, int width, int height)
+    {
+        var window = Child("Window", CoreComponent.WindowComponent(), false);
+        window.Properties.Add(new Property { Name = "Title", Type = typeof(string), Value = title });
+        window.Properties.Add(new Property { Name = "Position", Type = typeof(Vec2i), Value = new Vec2i(x, y) });
+        window.Properties.Add(new Property { Name = "Size", Type = typeof(Vec2i), Value = new Vec2i(width, height) });
+        return window;
+    }
+
+    private static string GenerateGameCode(Component game, Component startScene)
+    {
+        game.Properties.Add(Property.CreateDynamicComboBox(StartingScene.PropertyName, StartingScene.Options));
+        game.Properties[^1].Value = startScene.FullName;
+        var provider = DispatchProxy.Create<IComponentProvider, SceneProviderProxy>();
+        var resources = DispatchProxy.Create<IResourceModel, ResourceProxy>();
+        ((ResourceProxy)resources).Provider = provider;
+        var project = (Project)RuntimeHelpers.GetUninitializedObject(typeof(Project));
+        var code = new TestGameCode(game);
+        typeof(Codalyzer).GetProperty(nameof(Codalyzer.Resources)).SetValue(code, resources);
+        typeof(Codalyzer).GetProperty(nameof(Codalyzer.Project)).SetValue(code, project);
+        code.GenerateGame();
+        return code.Output;
+    }
+
+    public class SceneProviderProxy : DispatchProxy
+    {
+        protected override object Invoke(MethodInfo targetMethod, object[] args)
+        {
+            throw new NotSupportedException(targetMethod.Name);
+        }
+    }
+
+    public class ResourceProxy : DispatchProxy
+    {
+        public IComponentProvider Provider { get; set; }
+
+        protected override object Invoke(MethodInfo targetMethod, object[] args)
+        {
+            if (targetMethod.Name == nameof(IResourceModel.Get))
+                return targetMethod.GetGenericArguments()[0] == typeof(IComponentProvider) ? Provider : null;
+            throw new NotSupportedException(targetMethod.Name);
+        }
+    }
+
+    private sealed class TestGameCode(Component component) : GameCode(component)
+    {
+        public string Output => TypeDFile.Output.ToString();
+
+        public void GenerateGame()
+        {
+            TypeDFile.AutoGeneratedFile = false;
+            Writer.TargetFile = TypeDFile;
+            InitTypeDClass();
+            Generate();
+        }
     }
 
     private static Component Derive(string name, Component baseComponent)

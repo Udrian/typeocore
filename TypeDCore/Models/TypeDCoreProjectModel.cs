@@ -1,9 +1,12 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using TypeD.Models.Data;
+using TypeD.Models.Data.Hooks;
 using TypeD.Models.Data.SaveContexts;
 using TypeD.Models.Interfaces;
 using TypeD.Models.Providers.Interfaces;
 using TypeDCore.Models.Interfaces;
+using TypeDCore.Models.Data;
 using TypeOEngine.Typedeaf.Core;
 using TypeOEngine.Typedeaf.Core.Entities.Interfaces;
 using TypeOEngine.Typedeaf.Core.Interfaces;
@@ -16,6 +19,7 @@ namespace TypeDCore.Models
         IProjectModel ProjectModel { get; set; }
         ISaveModel SaveModel { get; set; }
         IComponentModel ComponentModel { get; set; }
+        IHookModel HookModel { get; set; }
 
         // Providers
         IComponentProvider ComponentProvider { get; set; }
@@ -29,6 +33,7 @@ namespace TypeDCore.Models
             SaveModel = resourceModel.Get<ISaveModel>();
             ComponentProvider = resourceModel.Get<IComponentProvider>();
             ComponentModel = resourceModel.Get<IComponentModel>();
+            HookModel = resourceModel.Get<IHookModel>();
         }
 
         // Functions
@@ -90,13 +95,32 @@ namespace TypeDCore.Models
 
         public void SetStartScene(Project project, string sceneFullName)
         {
-            project.StartScene = sceneFullName;
+            var game = ComponentProvider.Load(project, $"{project.ProjectName}.{project.ProjectName}Game");
+            if (game == null)
+                return;
 
-            SaveModel.AddSave<ProjectSaveContext>(project);
+            if (sceneFullName != null && !StartingScene.Options(game).Contains(sceneFullName))
+            {
+                var scene = ComponentProvider.Load(project, sceneFullName);
+                if (scene == null || !ComponentModel.IsOfType(scene, typeof(Scene)))
+                    return;
+                ComponentModel.Add(project, game, scene);
+            }
 
-            var gameComponent = ComponentProvider.Load(project, $"{project.ProjectName}.{project.ProjectName}Game");
+            var property = game.Properties.FirstOrDefault(p => p.Name == StartingScene.PropertyName);
+            if (property == null)
+                return;
+            property.Value = sceneFullName;
 
-            ProjectModel.SaveCode(gameComponent.Template.Code);
+            ComponentProvider.Save(project, game);
+            ProjectModel.SaveCode(game.Template.Code);
+            HookModel.Shoot(new PropertyChangedHook { Component = game, Property = property });
+        }
+
+        public string GetStartScene(Project project)
+        {
+            var game = ComponentProvider.Load(project, $"{project.ProjectName}.{project.ProjectName}Game");
+            return game == null ? null : StartingScene.Get(game);
         }
     }
 }
