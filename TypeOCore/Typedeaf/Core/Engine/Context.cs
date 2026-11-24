@@ -1,6 +1,9 @@
 ﻿using System.Reflection;
+using System.Runtime.ExceptionServices;
+using System.Collections.Concurrent;
 using TypeOEngine.Typedeaf.Core.Engine.Hardwares;
 using TypeOEngine.Typedeaf.Core.Engine.Hardwares.Interfaces;
+using TypeOEngine.Typedeaf.Core.Engine.Graphics;
 using TypeOEngine.Typedeaf.Core.Engine.Interfaces;
 using TypeOEngine.Typedeaf.Core.Engine.Services;
 using TypeOEngine.Typedeaf.Core.Entities;
@@ -36,8 +39,31 @@ namespace TypeOEngine.Typedeaf.Core
             /// <summary>Gets the mappings from content base types to concrete content types.</summary>
             public Dictionary<Type, Type> ContentBinding { get; internal set; }
             private Dictionary<string, TypeOObject> IDToTypeOObjectMap { get; set; }
+            private readonly ConcurrentDictionary<Type, InjectionProperties> _injectionProperties = new();
             /// <summary>Gets the logger used by this context.</summary>
             public Logger Logger { get; internal set; }
+            internal DrawThreadPool DrawWorkers { get; private set; }
+
+            private readonly AutoResetEvent _updateRequested = new(false);
+            private readonly AutoResetEvent _updateCompleted = new(false);
+            private readonly AutoResetEvent _drawCompleted = new(false);
+            private readonly AutoResetEvent _mainThreadUpdateRequested = new(false);
+            private readonly AutoResetEvent _mainThreadUpdateCompleted = new(false);
+            private readonly SemaphoreSlim _processGameLock = new(1, 1);
+            private Thread _updateThread;
+            private volatile bool _stopUpdateThread;
+            private double _pendingDelta;
+            private bool _shouldDrawFrame;
+            private ExceptionDispatchInfo _updateException;
+            private Action _mainThreadUpdateAction;
+            private ExceptionDispatchInfo _mainThreadUpdateException;
+
+            private sealed class InjectionProperties
+            {
+                public PropertyInfo[] Hardwares { get; init; }
+                public (PropertyInfo Property, string Id)[] Services { get; init; }
+                public PropertyInfo Logger { get; init; }
+            }
 
             internal Context(Game game, TypeO typeO, string name) : base()
             {
@@ -94,11 +120,24 @@ namespace TypeOEngine.Typedeaf.Core
                 return entity;
             }
 
-            private bool ExitApplication = false;
-            /// <summary>Requests that the synchronous game loop stop.</summary>
+            private volatile bool ExitApplication = false;
+            /// <summary>Requests that the game loop stop.</summary>
             public void Exit()
             {
                 ExitApplication = true;
+                if (!_processGameLock.Wait(0))
+                    return;
+
+                try
+                {
+                    _stopUpdateThread = true;
+                    _updateRequested.Set();
+                    DrawWorkers?.Dispose();
+                }
+                finally
+                {
+                    _processGameLock.Release();
+                }
             }
 
             internal void Start()
@@ -167,16 +206,57 @@ namespace TypeOEngine.Typedeaf.Core
                 }
 
                 //Initialize the game
-                InitializeObject(Game);
+                DrawWorkers = new DrawThreadPool(Name, TypeO.DrawThreadCount);
+                try
+                {
+                    InitializeObject(Game);
+                }
+                catch
+                {
+                    DrawWorkers.Dispose();
+                    DrawWorkers = null;
+                    throw;
+                }
 
                 Logger.Log($"Game of type '{Game.GetType().FullName}' loaded");
 
                 Logger.Log($"Everything loaded successfully, spinning up game loop");
+                if (ExitApplication)
+                {
+                    Cleanup();
+                    return;
+                }
+
+                try
+                {
+                    StartUpdateThread();
+                }
+                catch
+                {
+                    DrawWorkers.Dispose();
+                    DrawWorkers = null;
+                    throw;
+                }
                 if (Game.RunSynchronously)
                 {
-                    while (!ExitApplication)
+                    try
                     {
-                        ProcessGame();
+                        while (!ExitApplication)
+                        {
+                            ProcessGame();
+                        }
+                    }
+                    finally
+                    {
+                        try
+                        {
+                            StopUpdateThread();
+                        }
+                        finally
+                        {
+                            DrawWorkers?.Dispose();
+                            DrawWorkers = null;
+                        }
                     }
                     Cleanup();
                     return;
@@ -185,44 +265,197 @@ namespace TypeOEngine.Typedeaf.Core
             }
 
             /// <summary>
-            /// Processes the game state by updating all modules, hardware components, services, and the game itself.
+            /// Processes one frame, coordinating the update thread with drawing on the calling thread.
             /// </summary>
-            /// <remarks>This method calculates the time elapsed since the last update and invokes the
-            /// <c>Update</c> method on all updatable modules, hardware components, and services that are not paused.
-            /// It then updates and renders the game. If <see cref="ExitApplication"/> is set to
-            /// <see langword="true"/>, the method  exits early without performing further updates.</remarks>
+            /// <remarks>Each frame waits for the single update thread to finish, draws on the calling thread, then
+            /// releases the update thread to begin the next frame.</remarks>
             public void ProcessGame()
             {
-                var now = DateTime.UtcNow;
-                TimeSinceStart = (now - StartTime);
-                var dt = (now - LastTick).TotalSeconds;
-                LastTick = now;
+                if (_updateThread == null)
+                    throw new InvalidOperationException("The game runtime must be started before processing frames.");
 
-                foreach (var module in Modules)
+                _processGameLock.Wait();
+                try
                 {
-                    if ((module as IUpdatable)?.Pause == false)
-                        (module as IUpdatable)?.Update(dt);
-                }
-
-                foreach (var hardware in Hardwares.Values)
-                {
-                    if ((hardware as IUpdatable)?.Pause == false)
-                        (hardware as IUpdatable)?.Update(dt);
-                }
-
-                foreach (var serviceids in Services.Values)
-                {
-                    foreach (var service in serviceids.Values)
+                    if (ExitApplication)
                     {
-                        if ((service as IUpdatable)?.Pause == false)
-                            (service as IUpdatable)?.Update(dt);
+                        _stopUpdateThread = true;
+                        _updateRequested.Set();
+                        DrawWorkers?.Dispose();
+                        return;
+                    }
+
+                    if (!_updateThread.IsAlive)
+                    {
+                        if (ExitApplication)
+                            return;
+                        throw new InvalidOperationException("The update thread has stopped unexpectedly.");
+                    }
+
+                    var now = DateTime.UtcNow;
+                    TimeSinceStart = now - StartTime;
+                    _pendingDelta = (now - LastTick).TotalSeconds;
+                    LastTick = now;
+                    _updateException = null;
+                    _mainThreadUpdateAction = null;
+                    _mainThreadUpdateException = null;
+
+                    _updateRequested.Set();
+                    WaitForUpdate();
+
+                    var updateException = _updateException;
+                    try
+                    {
+                        if (updateException == null && _shouldDrawFrame)
+                            Game.Draw();
+                    }
+                    finally
+                    {
+                        _drawCompleted.Set();
+                    }
+
+                    updateException?.Throw();
+                }
+                finally
+                {
+                    _processGameLock.Release();
+                }
+            }
+
+            private void StartUpdateThread()
+            {
+                if (_updateThread != null)
+                    throw new InvalidOperationException("The update thread has already been started.");
+
+                _stopUpdateThread = false;
+                _updateThread = new Thread(UpdateThreadLoop)
+                {
+                    IsBackground = true,
+                    Name = $"{Name} Update"
+                };
+                _updateThread.Start();
+            }
+
+            private void StopUpdateThread()
+            {
+                var updateThread = _updateThread;
+                if (updateThread == null)
+                    return;
+                if (Thread.CurrentThread == updateThread)
+                    throw new InvalidOperationException("The update thread cannot stop itself.");
+
+                _processGameLock.Wait();
+                try
+                {
+                    _stopUpdateThread = true;
+                    _drawCompleted.Set();
+                    _updateRequested.Set();
+                    updateThread.Join();
+                    _updateThread = null;
+                }
+                finally
+                {
+                    _processGameLock.Release();
+                }
+            }
+
+            private void UpdateThreadLoop()
+            {
+                using (CanvasDrawCommandQueue.EnterWorkerThread())
+                {
+                    while (true)
+                    {
+                        _updateRequested.WaitOne();
+                        if (_stopUpdateThread)
+                            return;
+
+                        try
+                        {
+                            _shouldDrawFrame = !ExitApplication && UpdateFrame(_pendingDelta);
+                        }
+                        catch (Exception exception)
+                        {
+                            _updateException = ExceptionDispatchInfo.Capture(exception);
+                            _shouldDrawFrame = false;
+                        }
+                        finally
+                        {
+                            _updateCompleted.Set();
+                        }
+
+                        _drawCompleted.WaitOne();
+                        if (ExitApplication || _stopUpdateThread)
+                        {
+                            if (ExitApplication)
+                                DrawWorkers?.Dispose();
+                            return;
+                        }
                     }
                 }
+            }
 
-                if (ExitApplication) return;
+            private void WaitForUpdate()
+            {
+                var waitHandles = new WaitHandle[] { _updateCompleted, _mainThreadUpdateRequested };
+                while (WaitHandle.WaitAny(waitHandles) != 0)
+                {
+                    try
+                    {
+                        var action = _mainThreadUpdateAction
+                            ?? throw new InvalidOperationException("A main-thread update was requested without an action.");
+                        action();
+                    }
+                    catch (Exception exception)
+                    {
+                        _mainThreadUpdateException = ExceptionDispatchInfo.Capture(exception);
+                    }
+                    finally
+                    {
+                        _mainThreadUpdateAction = null;
+                        _mainThreadUpdateCompleted.Set();
+                    }
+                }
+            }
+
+            private bool UpdateFrame(double dt)
+            {
+                foreach (var module in Modules)
+                    UpdateComponent(module as IUpdatable, dt);
+
+                foreach (var hardware in Hardwares.Values)
+                    UpdateComponent(hardware as IUpdatable, dt);
+
+                foreach (var services in Services.Values)
+                {
+                    foreach (var service in services.Values)
+                        UpdateComponent(service as IUpdatable, dt);
+                }
+
+                if (ExitApplication)
+                    return false;
 
                 Game.Update(dt);
-                Game.Draw();
+                return true;
+            }
+
+            private void UpdateComponent(IUpdatable updatable, double dt)
+            {
+                if (updatable?.Pause != false)
+                    return;
+
+                if (updatable is IMainThreadUpdatable)
+                {
+                    _mainThreadUpdateAction = () => updatable.Update(dt);
+                    _mainThreadUpdateRequested.Set();
+                    _mainThreadUpdateCompleted.WaitOne();
+
+                    var exception = _mainThreadUpdateException;
+                    _mainThreadUpdateException = null;
+                    exception?.Throw();
+                    return;
+                }
+
+                updatable.Update(dt);
             }
 
             /// <summary>
@@ -234,6 +467,9 @@ namespace TypeOEngine.Typedeaf.Core
             /// memory leaks.</remarks>
             public void Cleanup()
             {
+                StopUpdateThread();
+                DrawWorkers?.Dispose();
+                DrawWorkers = null;
                 Logger.Log("Exiting game, initiating cleanup");
 
                 //Cleanup
@@ -365,74 +601,71 @@ namespace TypeOEngine.Typedeaf.Core
 
             private void SetHardwares(object obj)
             {
-                var type = obj.GetType();
-                //TODO: Should set hardware from a attribute
-                var properties = type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-                foreach (var property in properties)
+                foreach (var property in GetInjectionProperties(obj.GetType()).Hardwares)
                 {
-                    if (property.PropertyType.GetInterface(nameof(IHardware)) == null)
-                    {
-                        continue;
-                    }
-                    if (!Hardwares.ContainsKey(property.PropertyType))
+                    if (!Hardwares.TryGetValue(property.PropertyType, out var hardware))
                     {
                         var message = $"Hardware type '{property.PropertyType.Name}' is not loaded for '{obj.GetType().Name}'";
                         Logger.Log(LogLevel.Fatal, message);
                         throw new InvalidOperationException(message);
                     }
 
-                    Logger.Log(LogLevel.Ludacris, $"Hardware '{Hardwares[property.PropertyType].GetType().FullName}' injected to property '{property.Name}' on object '{obj.GetType().FullName}'");
-                    property.SetValue(obj, Hardwares[property.PropertyType]);
+                    Logger.Log(LogLevel.Ludacris, $"Hardware '{hardware.GetType().FullName}' injected to property '{property.Name}' on object '{obj.GetType().FullName}'");
+                    property.SetValue(obj, hardware);
                 }
             }
 
             private void SetServices(object obj)
             {
-                var type = obj.GetType();
-                //TODO: Should set Service from a attribute
-                var properties = type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-                foreach (var property in properties)
+                foreach (var injection in GetInjectionProperties(obj.GetType()).Services)
                 {
-                    if (!property.PropertyType.IsSubclassOf(typeof(Service)))
-                    {
-                        continue;
-                    }
-                    if (!Services.ContainsKey(property.PropertyType))
+                    var property = injection.Property;
+                    if (!Services.TryGetValue(property.PropertyType, out var services))
                     {
                         var message = $"Service type '{property.PropertyType.Name}' is not loaded for '{obj.GetType().Name}'";
                         Logger.Log(LogLevel.Fatal, message);
                         throw new InvalidOperationException(message);
                     }
 
-                    var serviceId = property.GetCustomAttribute<ServiceId>() ?? new ServiceId();
-
-                    if (!Services[property.PropertyType].ContainsKey(serviceId.Id))
+                    if (!services.TryGetValue(injection.Id, out var service))
                     {
-                        var message = $"Service type '{property.PropertyType.Name}' with ID '{serviceId.Id}' is not loaded for '{obj.GetType().Name}'";
+                        var message = $"Service type '{property.PropertyType.Name}' with ID '{injection.Id}' is not loaded for '{obj.GetType().Name}'";
                         Logger.Log(LogLevel.Fatal, message);
                         throw new InvalidOperationException(message);
                     }
 
-                    Logger.Log(LogLevel.Ludacris, $"Service '{Services[property.PropertyType][serviceId.Id].GetType().FullName}' injected to property '{property.Name}' on object '{obj.GetType().FullName}'");
-                    property.SetValue(obj, Services[property.PropertyType][serviceId.Id]);
+                    Logger.Log(LogLevel.Ludacris, $"Service '{service.GetType().FullName}' injected to property '{property.Name}' on object '{obj.GetType().FullName}'");
+                    property.SetValue(obj, service);
                 }
             }
 
             private void SetLogger(TypeOObject obj)
             {
-                var type = obj.GetType();
-                var properties = type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-                foreach (var property in properties)
-                {
-                    if (property.PropertyType != typeof(ILogger))
-                    {
-                        continue;
-                    }
+                var property = GetInjectionProperties(obj.GetType()).Logger;
+                if (property == null)
+                    return;
 
-                    Logger.Log(LogLevel.Ludacris, $"Logger injected to property '{property.Name}' on object '{obj.GetType().FullName}'");
-                    property.SetValue(obj, Logger);
-                    break;
-                }
+                Logger.Log(LogLevel.Ludacris, $"Logger injected to property '{property.Name}' on object '{obj.GetType().FullName}'");
+                property.SetValue(obj, Logger);
+            }
+
+            private InjectionProperties GetInjectionProperties(Type type)
+            {
+                return _injectionProperties.GetOrAdd(type, static objectType =>
+                {
+                    var properties = objectType.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                    return new InjectionProperties
+                    {
+                        Hardwares = properties
+                            .Where(property => property.PropertyType.GetInterface(nameof(IHardware)) != null)
+                            .ToArray(),
+                        Services = properties
+                            .Where(property => property.PropertyType.IsSubclassOf(typeof(Service)))
+                            .Select(property => (property, property.GetCustomAttribute<ServiceId>()?.Id ?? string.Empty))
+                            .ToArray(),
+                        Logger = properties.FirstOrDefault(property => property.PropertyType == typeof(ILogger))
+                    };
+                });
             }
 
             internal Drawable CreateDrawable(Type type, TypeOObject obj, DrawStack drawStack, DrawableOption<Drawable> option, string id = null)

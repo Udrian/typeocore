@@ -213,5 +213,19 @@ namespace TypeOCoreTest
             Assert.IsType<TestLogger>(typeO.Context.Logger);
             Assert.Equal(LogLevel.None, (typeO.Context.Logger as TestLogger)?.LogLevel);
         }
+
+        [Fact]
+        public void DrawThreadCount_DefaultsToAvailableWorkerCount_AndMustBeConfiguredBeforeStart()
+        {
+            var typeO = TypeO.Create<TestGame>(GameName) as TypeO;
+
+            Assert.InRange(typeO.DrawThreadCount, 1, Math.Max(1, Environment.ProcessorCount - 1));
+            Assert.Throws<ArgumentOutOfRangeException>(() => typeO.DrawThreadCount = 0);
+
+            typeO.DrawThreadCount = 2;
+            typeO.Start();
+
+            Assert.Throws<InvalidOperationException>(() => typeO.DrawThreadCount = 1);
+        }
     }
 }

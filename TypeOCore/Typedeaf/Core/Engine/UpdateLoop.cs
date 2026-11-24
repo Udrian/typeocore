@@ -42,7 +42,7 @@ namespace TypeOEngine.Typedeaf.Core
             public void Pop(IUpdatable updatable)
             {
                 if(updatable == null) return;
-                Updatables.Remove(updatable);
+                Updatables.RemoveDeferred(updatable);
             }
         }
     }

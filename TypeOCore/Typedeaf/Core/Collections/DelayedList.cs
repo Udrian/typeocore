@@ -55,28 +55,89 @@ namespace TypeOEngine.Typedeaf.Core
                 return false;
             }
 
+            internal void RemoveDeferred(T item)
+            {
+                RemoveQueue.Enqueue(item);
+            }
+
             /// <summary>Applies queued additions and removals to the underlying list.</summary>
             public void Process()
             {
+                ProcessAndReportChanges();
+            }
+
+            internal bool ProcessAndReportChanges()
+            {
                 if(ToBeCleared)
                 {
+                    var changed = Count > 0 || AddQueue.Count > 0;
                     base.Clear();
                     ToBeCleared = false;
                     AddQueue.Clear();
                     RemoveQueue.Clear();
-                    return;
+                    return changed;
                 }
 
+                var additionsApplied = false;
                 while(AddQueue.Count > 0)
                 {
                     ProcessAdd(AddQueue.Dequeue());
-                }
-                while(RemoveQueue.Count > 0)
-                {
-                    base.Remove(RemoveQueue.Dequeue());
+                    additionsApplied = true;
                 }
 
-                return;
+                if(RemoveQueue.Count == 0)
+                    return additionsApplied;
+
+                var removalCounts = new Dictionary<T, int>();
+                var nullRemovalCount = 0;
+                while(RemoveQueue.Count > 0)
+                {
+                    var item = RemoveQueue.Dequeue();
+                    if(item is null)
+                    {
+                        nullRemovalCount++;
+                    }
+                    else if(removalCounts.TryGetValue(item, out var count))
+                    {
+                        removalCounts[item] = count + 1;
+                    }
+                    else
+                    {
+                        removalCounts.Add(item, 1);
+                    }
+                }
+
+                var writeIndex = 0;
+                for(var readIndex = 0; readIndex < Count; readIndex++)
+                {
+                    var item = this[readIndex];
+                    if(item is null && nullRemovalCount > 0)
+                    {
+                        nullRemovalCount--;
+                        continue;
+                    }
+
+                    if(item is not null
+                        && removalCounts.TryGetValue(item, out var removalCount)
+                        && removalCount > 0)
+                    {
+                        if(removalCount == 1)
+                            removalCounts.Remove(item);
+                        else
+                            removalCounts[item] = removalCount - 1;
+                        continue;
+                    }
+
+                    if(writeIndex != readIndex)
+                        this[writeIndex] = item;
+                    writeIndex++;
+                }
+
+                var removalsApplied = writeIndex != Count;
+                if(removalsApplied)
+                    base.RemoveRange(writeIndex, Count - writeIndex);
+
+                return additionsApplied || removalsApplied;
             }
 
             /// <summary>Processes a queued addition; derived lists can override its insertion behavior.</summary>

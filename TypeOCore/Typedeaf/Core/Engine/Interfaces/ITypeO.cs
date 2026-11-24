@@ -10,6 +10,12 @@ namespace TypeOEngine.Typedeaf.Core
         /// <summary>Defines methods for configuring and starting a TypeO runtime.</summary>
         public interface ITypeO
         {
+            /// <summary>
+            /// Gets or sets the number of draw workers before the game starts.
+            /// Defaults to up to four workers, based on the available processor count, with a minimum of one.
+            /// </summary>
+            public int DrawThreadCount { get; set; }
+
             /// <summary>Starts the configured game runtime.</summary>
             public void Start();
 

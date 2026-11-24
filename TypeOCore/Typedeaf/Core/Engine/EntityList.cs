@@ -86,7 +86,8 @@ namespace TypeOEngine.Typedeaf.Core
                     entity.Entities.Update(dt);
                 }
 
-                Entities.Process();
+                if(Entities.ProcessAndReportChanges())
+                    EntityLists.Clear();
                 HasEntities.Process();
             }
 
@@ -97,34 +98,27 @@ namespace TypeOEngine.Typedeaf.Core
             {
                 if (RemoveQueue.Count == 0)
                     return;
-                Entities.Process();
+                if(Entities.ProcessAndReportChanges())
+                    EntityLists.Clear();
                 HasEntities.Process();
                 while(RemoveQueue.Count > 0)
                 {
                     var deleteEntity = RemoveQueue.Dequeue();
-                    for(int j = 0; j < HasEntities.Count; j++)
+                    if(deleteEntity is IHasEntities hasEntities)
                     {
-                        if(HasEntities[j] == deleteEntity)
-                        {
-                            HasEntities.RemoveAt(j);
-                            deleteEntity.Entities.Clear();
-                            deleteEntity.Entities.Update(0);
-                            break;
-                        }
+                        HasEntities.RemoveDeferred(hasEntities);
+                        deleteEntity.Entities.Clear();
+                        deleteEntity.Entities.Update(0);
                     }
 
-                    var iType = deleteEntity.GetType();
-                    if(EntityLists.ContainsKey(iType))
-                    {
-                        EntityLists.Remove(iType);
-                    }
-
-                    Logger.Log(LogLevel.Debug, $"Removing Entity of type '{iType.FullName}'");
+                    var entityType = deleteEntity.GetType();
+                    Logger.Log(LogLevel.Debug, $"Removing Entity of type '{entityType.FullName}'");
                     deleteEntity.DoCleanup();
-                    Entities.Remove(deleteEntity);
+                    Entities.RemoveDeferred(deleteEntity);
                     Context.DestroyObject(deleteEntity);
                 }
-                Entities.Process();
+                if(Entities.ProcessAndReportChanges())
+                    EntityLists.Clear();
                 HasEntities.Process();
             }
 
@@ -187,11 +181,7 @@ namespace TypeOEngine.Typedeaf.Core
             {
                 // This helper assumes the entity has already been initialized by Context.CreateEntity
                 Entities.Add(entity);
-                var eType = entity.GetType();
-                if (EntityLists.ContainsKey(eType))
-                {
-                    EntityLists[eType] = Entities.Where(e => e.GetType().IsSubclassOf(eType) || e.GetType() == eType).ToList();
-                }
+                EntityLists.Clear();
 
                 if (entity is IHasEntities hasEntities)
                 {
@@ -258,20 +248,14 @@ namespace TypeOEngine.Typedeaf.Core
             public List<E> List<E>() where E : Entity
             {
                 var eType = typeof(E);
-                if(!EntityLists.ContainsKey(eType))
+                if(!EntityLists.TryGetValue(eType, out var cachedEntities))
                 {
-                    EntityLists.Add(eType, Entities.Where(e => e is E).Cast<E>().ToList());
+                    var entities = Entities.Where(e => e is E).Cast<E>().ToList();
+                    EntityLists.Add(eType, entities);
+                    return entities;
                 }
 
-                var retList = EntityLists[eType] as List<E>;
-
-                if(retList == null)
-                {
-                    retList = Entities.Where(e => e is E).Cast<E>().ToList();
-                    EntityLists[eType] = retList;
-                }
-
-                return retList;
+                return (List<E>)cachedEntities;
             }
 
             /// <summary>

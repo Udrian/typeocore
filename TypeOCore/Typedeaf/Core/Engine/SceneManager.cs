@@ -74,6 +74,7 @@ namespace TypeOEngine.Typedeaf.Core.Engine
         private void CreateScene(Scene scene)
         {
             Scenes.Add(scene.GetType(), scene);
+            scene.DrawStack.DrawWorkers = Context.DrawWorkers;
 
             if (Window == null)
                 Logger.Log(LogLevel.Warning, $"Window have not been instantiated to SceneManager on '{Context.Game.GetType().FullName}'");

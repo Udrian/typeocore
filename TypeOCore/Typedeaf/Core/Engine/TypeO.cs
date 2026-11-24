@@ -11,6 +11,9 @@ namespace TypeOEngine.Typedeaf.Core
         /// <summary>Configures and starts a TypeO game runtime.</summary>
         public class TypeO : ITypeO
         {
+            private int _drawThreadCount = Math.Max(1, Math.Min(4, Environment.ProcessorCount - 1));
+            private bool _hasStarted;
+
             /// <summary>Creates a runtime and game context for the specified game type.</summary>
             public static ITypeO Create<G>(string name) where G : Game, new()
             {
@@ -22,6 +25,24 @@ namespace TypeOEngine.Typedeaf.Core
 
             /// <summary>Gets the context owned by this runtime.</summary>
             public Context Context { get; private set; }
+
+            /// <summary>
+            /// Gets or sets the number of draw workers. Defaults to up to four workers, based on the available processor
+            /// count, with a minimum of one. Configure this before starting the game.
+            /// </summary>
+            public int DrawThreadCount
+            {
+                get => _drawThreadCount;
+                set
+                {
+                    if (_hasStarted)
+                        throw new InvalidOperationException("DrawThreadCount must be configured before the game starts.");
+                    if (value < 1)
+                        throw new ArgumentOutOfRangeException(nameof(value), "DrawThreadCount must be at least one.");
+
+                    _drawThreadCount = value;
+                }
+            }
 
             internal TypeO() : base()
             {
@@ -101,6 +122,7 @@ namespace TypeOEngine.Typedeaf.Core
             /// <summary>Initializes the configured runtime and starts the game.</summary>
             public void Start()
             {
+                _hasStarted = true;
                 Context.Start();
             }
         }

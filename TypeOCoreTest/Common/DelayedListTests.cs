@@ -61,4 +61,50 @@ public class DelayedListTests
         list.Process();
         Assert.Equal(new[] { 1, 3, 5 }, list);
     }
+
+    [Fact]
+    public void ProcessRemovesRepeatedItemsWithoutRemovingUnrequestedDuplicates()
+    {
+        var list = new DelayedList<int> { 1, 2, 1, 3, 1 };
+        list.Process();
+
+        Assert.True(list.Remove(1));
+        Assert.True(list.Remove(1));
+        list.Process();
+
+        Assert.Equal(new[] { 2, 3, 1 }, list);
+    }
+
+    [Fact]
+    public void SortedDelayedListAppendsLargeAlreadySortedBatchesInLinearComparisons()
+    {
+        const int itemCount = 20_000;
+        var list = new SortedDelayedList<CountingComparable>();
+        CountingComparable.ComparisonCount = 0;
+
+        for(var i = 0; i < itemCount; i++)
+            list.Add(new CountingComparable(i));
+
+        list.Process();
+
+        Assert.Equal(itemCount, list.Count);
+        Assert.InRange(CountingComparable.ComparisonCount, 0, itemCount);
+    }
+
+    private sealed class CountingComparable : IComparable<CountingComparable>
+    {
+        public static int ComparisonCount { get; set; }
+        private readonly int _value;
+
+        public CountingComparable(int value)
+        {
+            _value = value;
+        }
+
+        public int CompareTo(CountingComparable other)
+        {
+            ComparisonCount++;
+            return _value.CompareTo(other._value);
+        }
+    }
 }
