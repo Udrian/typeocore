@@ -57,7 +57,7 @@ namespace TypeDCore.Code.Scene
                 if (IsBaseComponentType)
                 {
                     Writer.AddLine("Canvas?.Clear(ClearColor);");
-                    Writer.AddLine("DrawStack.Draw(Canvas);");
+                    Writer.AddLine("DrawAllStacks(Canvas);");
                     Writer.AddLine("Canvas?.Present();");
                 }
                 else

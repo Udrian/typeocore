@@ -1,4 +1,5 @@
-﻿using TypeOEngine.Typedeaf.Core.Collections;
+﻿using TypeOEngine.Typedeaf.Core.Attributes;
+using TypeOEngine.Typedeaf.Core.Collections;
 using TypeOEngine.Typedeaf.Core.Engine.Graphics;
 using TypeOEngine.Typedeaf.Core.Engine.Graphics.Interfaces;
 using TypeOEngine.Typedeaf.Core.Entities.Interfaces;
@@ -8,7 +9,7 @@ namespace TypeOEngine.Typedeaf.Core
     namespace Engine
     {
         /// <summary>Maintains and draws visible components in draw-order sequence.</summary>
-        public class DrawStack
+        public class DrawStack : TypeOObject, Interfaces.IHasParent
         {
             private sealed class DrawCommandBuffer
             {
@@ -22,14 +23,65 @@ namespace TypeOEngine.Typedeaf.Core
 
             internal DrawThreadPool DrawWorkers { get; set; }
 
+            /// <summary>Gets the scene that owns this draw stack. Null for the scene's default draw stack.</summary>
+            public TypeOObject Parent { get; internal set; }
+
+            /// <summary>Gets or sets the order the draw stack is drawn in among the scene's draw stacks; lower values are drawn first.</summary>
+            [TypeOProperty("The order this draw stack is drawn in compared to the other draw stacks of the scene, lower values are drawn first.", Group = "DrawStack")]
+            public int DrawOrder { get; set; }
+
+            /// <summary>Gets or sets a value indicating whether the stack is drawn in screen space, ignoring the camera translation and scale.</summary>
+            [TypeOProperty("Draws everything in this draw stack in screen space, ignoring the camera.", Group = "DrawStack")]
+            public bool IgnoreCamera { get; set; }
+
+            /// <summary>Gets the manager that creates drawables drawn by this stack.</summary>
+            public DrawableManager<TypeOEngine.Typedeaf.Core.Entities.Drawables.Drawable> DrawableManager { get; internal set; }
+
             internal DrawStack()
             {
+                Name = "DrawStack";
                 Drawables = new SortedDelayedList<IDrawable>();
             }
 
+            /// <inheritdoc/>
+            protected override void Initialize()
+            {
+            }
+
+            /// <inheritdoc/>
+            protected override void Cleanup()
+            {
+            }
+
             /// <summary>Draws visible components on workers, replays canvas commands on the calling thread in draw order, and applies queued changes.</summary>
-            /// <remarks>Drawable callbacks run concurrently and should not mutate shared game state. Canvas operations are recorded separately per drawable; all workers finish before commands are replayed.</remarks>
+            /// <remarks>Drawable callbacks run concurrently and should not mutate shared game state. Canvas operations are recorded separately per drawable; all workers finish before commands are replayed.
+            /// When <see cref="IgnoreCamera"/> is set the canvas camera is reset while drawing, so the drawables are placed in screen space.</remarks>
             public void Draw(ICanvas canvas)
+            {
+                if (!IgnoreCamera || canvas == null)
+                {
+                    DrawItems(canvas);
+                    return;
+                }
+
+                var translation = canvas.WorldTranslation;
+                var scale = canvas.WorldScale;
+                canvas.WorldTranslation = TypeOEngine.Typedeaf.Core.Common.Vec3.Zero;
+                canvas.WorldScale = 1;
+                canvas.PreDraw();
+                try
+                {
+                    DrawItems(canvas);
+                }
+                finally
+                {
+                    canvas.WorldTranslation = translation;
+                    canvas.WorldScale = scale;
+                    canvas.PreDraw();
+                }
+            }
+
+            private void DrawItems(ICanvas canvas)
             {
                 IDrawable[] visibleDrawables;
                 lock (_sync)

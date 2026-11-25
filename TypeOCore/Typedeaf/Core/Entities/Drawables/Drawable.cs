@@ -20,6 +20,9 @@ namespace TypeOEngine.Typedeaf.Core
             /// <summary>Gets the parent entity that owns this drawable.</summary>
             public TypeOObject Parent { get; internal set; }
 
+            /// <summary>Gets the draw stack this drawable was created for, or <see langword="null"/> if it was not pushed to one.</summary>
+            public DrawStack DrawStack { get; internal set; }
+
             /// <summary>
             /// Gets the <see cref="ContentLoader"/> instance used to load content for the application.
             /// </summary>

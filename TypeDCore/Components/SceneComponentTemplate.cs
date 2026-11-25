@@ -25,6 +25,8 @@ namespace TypeDCore.Components
         {
             filter.Filters += $"{typeof(Drawable).FullName};";
             filter.Filters += $"{typeof(Entity).FullName};";
+            filter.Filters += $"{typeof(TypeOEngine.Typedeaf.Core.Engine.DrawStack).FullName};";
+            filter.Include += $"{typeof(TypeOEngine.Typedeaf.Core.Engine.DrawStack).FullName};";
         }
     }
 }

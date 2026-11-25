@@ -150,9 +150,9 @@ namespace TypeOEngine.Typedeaf.Core
             /// to <see langword="true"/>.</param>
             /// <returns>The newly created <see cref="Entity"/> instance, initialized with the current context and optionally
             /// added to the update loop and draw stack.</returns>
-            public Entity Create(Type type, string id = null, bool pushToUpdateLoop = true, bool pushToDrawStack = true) //TODO: Split out, Should be able to push automatically to draw stack and update stack
+            public Entity Create(Type type, string id = null, bool pushToUpdateLoop = true, bool pushToDrawStack = true, DrawStack drawStack = null) //TODO: Split out, Should be able to push automatically to draw stack and update stack
             {
-                var entity = Context.CreateEntity(type, this, pushToUpdateLoop, pushToDrawStack, id);
+                var entity = Context.CreateEntity(type, this, pushToUpdateLoop, pushToDrawStack, id, drawStack);
 
                 return Create(entity, id, pushToUpdateLoop, pushToDrawStack);
             }
@@ -170,9 +170,9 @@ namespace TypeOEngine.Typedeaf.Core
             /// <param name="pushToDrawStack">Indicates whether the created entity should be automatically added to the draw stack. The default value
             /// is <see langword="true"/>.</param>
             /// <returns>A new instance of the specified entity type, initialized with the current context.</returns>
-            public E Create<E>(string id = null, bool pushToUpdateLoop = true, bool pushToDrawStack = true) where E : Entity, new() //TODO: Split out, Should be able to push automatically to draw stack and update stack
+            public E Create<E>(string id = null, bool pushToUpdateLoop = true, bool pushToDrawStack = true, DrawStack drawStack = null) where E : Entity, new() //TODO: Split out, Should be able to push automatically to draw stack and update stack
             {
-                var entity = Context.CreateEntity<E>(this, pushToUpdateLoop, pushToDrawStack, id);
+                var entity = Context.CreateEntity<E>(this, pushToUpdateLoop, pushToDrawStack, id, drawStack);
 
                 return Create(entity, id, pushToUpdateLoop, pushToDrawStack) as E;
             }

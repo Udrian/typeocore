@@ -78,29 +78,29 @@ namespace TypeOEngine.Typedeaf.Core
                 IDToTypeOObjectMap = new Dictionary<string, TypeOObject>();
             }
 
-            internal Entity CreateEntity(Type type, EntityList parentList, bool pushToUpdateLoop = true, bool pushToDrawStack = true, string id = null)
+            internal Entity CreateEntity(Type type, EntityList parentList, bool pushToUpdateLoop = true, bool pushToDrawStack = true, string id = null, DrawStack drawStack = null)
             {
                 Logger.Log(LogLevel.Ludacris, $"Creating Entity of type '{type.FullName}' into {parentList.GetType().FullName}");
 
                 var entity = Activator.CreateInstance(type) as Entity;
 
-                return CreateEntity(entity, parentList, id, pushToUpdateLoop, pushToDrawStack);
+                return CreateEntity(entity, parentList, id, pushToUpdateLoop, pushToDrawStack, drawStack);
             }
 
-            internal E CreateEntity<E>(EntityList parentList, bool pushToUpdateLoop = true, bool pushToDrawStack = true, string id = null) where E : Entity, new()
+            internal E CreateEntity<E>(EntityList parentList, bool pushToUpdateLoop = true, bool pushToDrawStack = true, string id = null, DrawStack drawStack = null) where E : Entity, new()
             {
                 Logger.Log(LogLevel.Ludacris, $"Creating Entity of type '{typeof(E).FullName}' into {parentList.GetType().FullName}");
 
                 var entity = new E();
 
-                return CreateEntity(entity, parentList, id, pushToUpdateLoop, pushToDrawStack) as E;
+                return CreateEntity(entity, parentList, id, pushToUpdateLoop, pushToDrawStack, drawStack) as E;
             }
 
-            private Entity CreateEntity(Entity entity, EntityList parentList, string id = null, bool pushToUpdateLoop = true, bool pushToDrawStack = true)
+            private Entity CreateEntity(Entity entity, EntityList parentList, string id = null, bool pushToUpdateLoop = true, bool pushToDrawStack = true, DrawStack drawStack = null)
             {
-                entity.Parent = parentList.Parent;
+                entity.Parent = drawStack ?? parentList.Parent;
                 entity.ParentEntityList = parentList;
-                entity.DrawStack = parentList.Scene?.DrawStack ?? parentList.Entity?.DrawStack;
+                entity.DrawStack = drawStack ?? parentList.Scene?.DrawStack ?? parentList.Entity?.DrawStack;
                 entity.UpdateLoop = parentList.Scene?.UpdateLoop ?? parentList.Entity?.UpdateLoop;
                 entity.ContentLoader = parentList.Scene?.ContentLoader ?? parentList.Entity?.ContentLoader;
                 entity.ID = id;
@@ -682,6 +682,7 @@ namespace TypeOEngine.Typedeaf.Core
 
                 if (drawStack != null)
                 {
+                    drawable.DrawStack = drawStack;
                     drawStack.Push(drawable);
                 }
 
@@ -704,6 +705,7 @@ namespace TypeOEngine.Typedeaf.Core
 
                 if (drawStack != null)
                 {
+                    drawable.DrawStack = drawStack;
                     drawStack.Push(drawable);
                 }
 

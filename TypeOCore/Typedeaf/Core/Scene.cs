@@ -108,8 +108,75 @@ namespace TypeOEngine.Typedeaf.Core
         {
             Drawables = new DrawableManager<Drawable>(DrawStack, this);
             Context.InitializeObject(Drawables, this);
+            DrawStack.DrawableManager = Drawables;
             Logics = new LogicManager(UpdateLoop, this);
             Context.InitializeObject(Logics, this);
+        }
+
+        private readonly Dictionary<string, DrawStack> _drawStacks = new();
+        private readonly List<DrawStack> _drawStackOrder = new();
+
+        /// <summary>
+        /// Creates an additional draw stack with its own <see cref="DrawableManager{T}"/>. Entities and drawables created
+        /// through it are drawn by the new stack instead of the scene's default <see cref="DrawStack"/>.
+        /// </summary>
+        /// <param name="id">Identifier used to find the draw stack again.</param>
+        /// <param name="name">Name of the draw stack.</param>
+        /// <param name="drawOrder">Order the stack is drawn in, lower values are drawn first. The default stack has order 0.</param>
+        /// <param name="ignoreCamera">Draw the stack in screen space, ignoring the camera.</param>
+        public DrawStack CreateDrawStack(string id, string name, int drawOrder = 0, bool ignoreCamera = false)
+        {
+            if (id != null && _drawStacks.TryGetValue(id, out var existing))
+                return existing;
+
+            var stack = new DrawStack
+            {
+                ID = id,
+                Name = name,
+                Parent = this,
+                DrawOrder = drawOrder,
+                IgnoreCamera = ignoreCamera,
+                DrawWorkers = DrawStack.DrawWorkers
+            };
+            Context.InitializeObject(stack, this);
+            stack.DrawableManager = new DrawableManager<Drawable>(stack, stack);
+            Context.InitializeObject(stack.DrawableManager, stack);
+            _drawStacks.Add(stack.ID, stack);
+            _drawStackOrder.Add(stack);
+            return stack;
+        }
+
+        /// <summary>Gets a draw stack created with <see cref="CreateDrawStack"/>, or null when it does not exist.</summary>
+        public DrawStack GetDrawStack(string id)
+        {
+            return id != null && _drawStacks.TryGetValue(id, out var stack) ? stack : null;
+        }
+
+        /// <summary>Removes a draw stack created with <see cref="CreateDrawStack"/>.</summary>
+        public void RemoveDrawStack(string id)
+        {
+            if (id != null && _drawStacks.Remove(id, out var stack))
+            {
+                _drawStackOrder.Remove(stack);
+                Context.DestroyObject(stack);
+            }
+        }
+
+        /// <summary>Draws the default draw stack and every created draw stack, ordered by <see cref="DrawStack.DrawOrder"/>.</summary>
+        /// <param name="canvas">The canvas to draw to.</param>
+        public void DrawAllStacks(ICanvas canvas)
+        {
+            if (_drawStackOrder.Count == 0)
+            {
+                DrawStack.Draw(canvas);
+                return;
+            }
+
+            // OrderBy is stable, so the default stack goes before created stacks with the same order
+            var stacks = new List<DrawStack>(_drawStackOrder.Count + 1) { DrawStack };
+            stacks.AddRange(_drawStackOrder);
+            foreach (var stack in stacks.OrderBy(s => s.DrawOrder))
+                stack.Draw(canvas);
         }
 
         /// <summary>

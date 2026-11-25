@@ -167,6 +167,7 @@ namespace TypeDCore
             ComponentProvider.AddBaseTypeComponent(CoreComponent.DrawableComponent());
             ComponentProvider.AddBaseTypeComponent(CoreComponent.GameComponent());
             ComponentProvider.AddBaseTypeComponent(CoreComponent.WindowComponent());
+            ComponentProvider.AddBaseTypeComponent(CoreComponent.DrawStackComponent());
         }
 
         public override void Uninitializer()
@@ -228,6 +229,7 @@ namespace TypeDCore
             ComponentProvider.RemoveBaseTypeComponent(CoreComponent.DrawableComponent());
             ComponentProvider.RemoveBaseTypeComponent(CoreComponent.GameComponent());
             ComponentProvider.RemoveBaseTypeComponent(CoreComponent.WindowComponent());
+            ComponentProvider.RemoveBaseTypeComponent(CoreComponent.DrawStackComponent());
         }
 
         // Events

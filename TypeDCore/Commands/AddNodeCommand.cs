@@ -63,7 +63,7 @@ namespace TypeDCore.Commands
             }
 
             var nameFilter = new FilterHelper { Exclude = $"{excludeComponent.FullName};" };
-            var typeFilter = new FilterHelper { Exclude = $"{typeof(Game).FullName};{typeof(TypeOEngine.Typedeaf.Core.Scene).FullName};{typeof(TypeOEngine.Typedeaf.Core.Engine.Graphics.Window).FullName};" };
+            var typeFilter = new FilterHelper { Exclude = $"{typeof(Game).FullName};{typeof(TypeOEngine.Typedeaf.Core.Scene).FullName};{typeof(TypeOEngine.Typedeaf.Core.Engine.Graphics.Window).FullName};{typeof(TypeOEngine.Typedeaf.Core.Engine.DrawStack).FullName};" };
             parentComponent.Template.ChildrenFilter(typeFilter);
             var selected = await ResourceModel.Get<IEditorDialogModel>().SelectComponentAsync(parameter.Project, typeFilter, nameFilter, true);
             if (selected != null)
