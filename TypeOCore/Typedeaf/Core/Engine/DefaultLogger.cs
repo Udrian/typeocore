@@ -221,7 +221,7 @@ namespace TypeOEngine.Typedeaf.Core
                     return;
 
                 StreamWriter logFile = null;
-                if (false/*SaveLogs*/)
+                if (SaveLogs)
                 {
                     var directoryPath = string.IsNullOrEmpty(LogPath)
                         ? Path.Combine(
