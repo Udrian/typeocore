@@ -22,6 +22,7 @@ namespace TypeDCore.ViewModel.Panels
         ISettingModel SettingModel { get; set; }
         IEditorCommandRegistry EditorCommandRegistry { get; set; }
         IViewerCameraModel ViewerCameraModel { get; set; }
+        ISimulationModel SimulationModel { get; set; }
 
         // Data
         ViewerPanel ViewerPanel { get; set; }
@@ -50,6 +51,9 @@ namespace TypeDCore.ViewModel.Panels
             SettingModel = ResourceModel.Get<ISettingModel>();
             EditorCommandRegistry = ResourceModel.Get<IEditorCommandRegistry>();
             ViewerCameraModel = ResourceModel.Get<IViewerCameraModel>();
+            SimulationModel = ResourceModel.Get<ISimulationModel>();
+            if (SimulationModel != null)
+                SimulationModel.ResetRequested += SimulationResetRequested;
 
             HookModel.AddHook<OpenComponentHook>(ComponentOpened);
             HookModel.AddHook<CloseComponentHook>(ComponentClosed);
@@ -223,6 +227,8 @@ namespace TypeDCore.ViewModel.Panels
             HookModel.RemoveHook<ViewerContextMenuRequestedHook>(ContextMenuRequested);
             HookModel.RemoveHook<GameStopHook>(GameStop);
             HookModel.RemoveHook<GameStartHook>(GameStart);
+            if (SimulationModel != null)
+                SimulationModel.ResetRequested -= SimulationResetRequested;
 
             DetachCamera();
             if (Viewer != null)
@@ -240,19 +246,37 @@ namespace TypeDCore.ViewModel.Panels
             RunOnUIThread(() =>
             {
                 IsGameStopped = true;
-                if (Viewer == null)
+                RemoveViewer();
+            });
+        }
+
+        // Removing the viewer shuts down its game instance, a new viewer with a new game is created on start
+        void RemoveViewer()
+        {
+            if (Viewer == null)
+                return;
+
+            if (Viewer.Component is Component component)
+                ComponentToReload = component;
+            if (Viewer.Camera is ViewerCamera camera)
+                CameraToRestore = (camera.X, camera.Y, camera.Zoom);
+            DetachCamera();
+
+            Viewer.Unload();
+            ViewerPanel.ViewerHost.Children.Remove(Viewer as Control);
+            Viewer = null;
+        }
+
+        void SimulationResetRequested()
+        {
+            RunOnUIThread(() =>
+            {
+                // A stopped game or a running build already reloads the view when it is done
+                if (Viewer == null || IsGameStopped || IsBuildInProgress)
                     return;
 
-                if (Viewer.Component is Component component)
-                    ComponentToReload = component;
-                if (Viewer.Camera is ViewerCamera camera)
-                    CameraToRestore = (camera.X, camera.Y, camera.Zoom);
-                DetachCamera();
-
-                // Removing the viewer shuts down its game instance, a new viewer with a new game is created on start
-                Viewer.Unload();
-                ViewerPanel.ViewerHost.Children.Remove(Viewer as Control);
-                Viewer = null;
+                RemoveViewer();
+                RestartGame();
             });
         }
 
