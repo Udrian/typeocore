@@ -10,6 +10,7 @@ using TypeD.View.Viewer;
 using TypeD.ViewModel;
 using Avalonia.Input;
 using TypeDCore.Models;
+using TypeDCore.Models.Data.SettingContexts;
 using TypeDCore.View.Panels;
 
 namespace TypeDCore.ViewModel.Panels
@@ -38,6 +39,10 @@ namespace TypeDCore.ViewModel.Panels
         (double X, double Y, double Zoom)? CameraToRestore { get; set; }
         string CameraComponent { get; set; }
         Button ZoomButton { get; set; }
+        Border EditStatus { get; set; }
+        Border EditOutline { get; set; }
+        TextBlock EditStatusText { get; set; }
+        IPropertyEditorModel PropertyEditorModel { get; set; }
         ViewerCamera AttachedCamera { get; set; }
 
         // Constructors
@@ -62,6 +67,10 @@ namespace TypeDCore.ViewModel.Panels
             HookModel.AddHook<ViewerContextMenuRequestedHook>(ContextMenuRequested);
             HookModel.AddHook<GameStopHook>(GameStop);
             HookModel.AddHook<GameStartHook>(GameStart);
+            PropertyEditorModel = ResourceModel.Get<IPropertyEditorModel>();
+            HookModel.AddHook<PropertyEditorOpenedHook>(_ => UpdateEditStatus());
+            HookModel.AddHook<PropertyEditorClosedHook>(_ => UpdateEditStatus());
+            HookModel.AddHook<ViewerEditOutlineChangedHook>(_ => UpdateEditStatus());
         }
 
         // Functions
@@ -150,7 +159,7 @@ namespace TypeDCore.ViewModel.Panels
                 // Shortcuts can be changed in the options, so refresh the help when it's about to show
                 ZoomButton.PointerEntered += (_, _) => ToolTip.SetTip(ZoomButton, CameraHelpText());
                 ZoomButton.Click += (_, _) => Viewer?.Camera?.Reset();
-                ViewerPanel.ViewerHost.Children.Add(ZoomButton);
+                ViewerPanel.ViewerHost.Children.Add(CreateStatusBar());
             }
             ZoomButton.IsVisible = true;
 
@@ -158,6 +167,73 @@ namespace TypeDCore.ViewModel.Panels
             camera.Changed += CameraChanged;
             ViewerCameraModel?.Attach(camera);
             CameraChanged();
+        }
+
+        // Shows the active property editing state next to the zoom button, with a button to exit it
+        Control CreateStatusBar()
+        {
+            EditStatusText = new TextBlock { VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center, FontSize = 11 };
+            var exit = new Button
+            {
+                Content = "Exit",
+                Padding = new Avalonia.Thickness(6, 2),
+                FontSize = 11,
+                Focusable = false,
+                Margin = new Avalonia.Thickness(6, 0, 0, 0)
+            };
+            ToolTip.SetTip(exit, "Exit the current property editing state");
+            exit.Click += (_, _) => PropertyEditorModel?.Close();
+            EditStatus = new Border
+            {
+                Child = new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal, Children = { EditStatusText, exit } },
+                Margin = new Avalonia.Thickness(6, 6, 0, 6),
+                IsVisible = false
+            };
+
+            var bar = new StackPanel
+            {
+                Orientation = Avalonia.Layout.Orientation.Horizontal,
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right,
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Bottom,
+                ZIndex = 1,
+                Children = { EditStatus, ZoomButton }
+            };
+            UpdateEditStatus();
+            return bar;
+        }
+
+        void UpdateEditStatus()
+        {
+            RunOnUIThread(() =>
+            {
+                var session = PropertyEditorModel?.Current;
+                UpdateEditOutline(session != null);
+                if (EditStatus == null)
+                    return;
+                EditStatus.IsVisible = session != null;
+                if (session != null)
+                    EditStatusText.Text = $"Editing: {session.Template.EditorTitle} ({session.Component.Name}.{session.Property.Name})";
+            });
+        }
+
+        // A colored frame over the whole viewer that does not take part in pointer input
+        void UpdateEditOutline(bool editing)
+        {
+            var setting = SettingModel?.GetContext<ViewerSettingContext>();
+            var show = editing && setting != null && setting.ShowEditOutline.Value;
+            if (show && EditOutline == null)
+            {
+                EditOutline = new Border { BorderThickness = new Avalonia.Thickness(3), IsHitTestVisible = false, ZIndex = 1 };
+                ViewerPanel.ViewerHost.Children.Add(EditOutline);
+            }
+            if (EditOutline == null)
+                return;
+            EditOutline.IsVisible = show;
+            if (show)
+            {
+                var color = setting.EditOutlineColor.Value;
+                EditOutline.BorderBrush = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.FromArgb(color.A, color.R, color.G, color.B));
+            }
         }
 
         string CameraHelpText()

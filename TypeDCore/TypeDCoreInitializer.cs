@@ -977,6 +977,16 @@ namespace TypeDCore
                     SettingModel.SetContext(viewerSettingContext);
                     ApplyViewerDisplaySettings();
                 }, "Viewer"),
+                new SettingItem("Show Edit Outline", "Draws a colored outline around the viewer while a property is being edited.", viewerSettingContext.ShowEditOutline, (value) => {
+                    viewerSettingContext.ShowEditOutline.Value = (bool)value;
+                    SettingModel.SetContext(viewerSettingContext);
+                    Hooks.Shoot(new ViewerEditOutlineChangedHook());
+                }, "Viewer"),
+                new SettingItem("Edit Outline Color", "Color of the outline drawn around the viewer while a property is being edited.", viewerSettingContext.EditOutlineColor, (value) => {
+                    viewerSettingContext.EditOutlineColor.Value = (Color)value;
+                    SettingModel.SetContext(viewerSettingContext);
+                    Hooks.Shoot(new ViewerEditOutlineChangedHook());
+                }, "Viewer"),
                 BoundingBoxColorItem("Selected Bounding Box Color", "Color of the bounding boxes of selected nodes.", viewerSettingContext.SelectedBoundingBoxColor),
                 BoundingBoxColorItem("Unselected Bounding Box Color", "Color of the bounding boxes of unselected nodes.", viewerSettingContext.UnselectedBoundingBoxColor),
                 BoundingBoxColorItem("Parent Bounding Box Color", "Color of the bounding boxes of parents of selected nodes.", viewerSettingContext.ParentBoundingBoxColor),

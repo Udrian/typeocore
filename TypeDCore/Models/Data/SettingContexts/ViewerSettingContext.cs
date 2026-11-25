@@ -29,6 +29,12 @@ namespace TypeDCore.Models.Data.SettingContexts
         /// <summary>Gets or sets the color of the bounding boxes of children of selected nodes.</summary>
         public Setting<Color> ChildBoundingBoxColor { get; set; } = new Setting<Color>(Color.Cyan);
 
+        /// <summary>Gets or sets whether an outline is drawn around the viewer while a property is being edited.</summary>
+        public Setting<bool> ShowEditOutline { get; set; } = new Setting<bool>(true);
+
+        /// <summary>Gets or sets the color of the outline drawn around the viewer while a property is being edited.</summary>
+        public Setting<Color> EditOutlineColor { get; set; } = new Setting<Color>(Color.Orange);
+
         /// <summary>Initializes viewer settings, saved when the editor exits.</summary>
         public ViewerSettingContext()
         {

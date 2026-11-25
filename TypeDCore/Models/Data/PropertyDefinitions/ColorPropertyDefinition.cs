@@ -14,7 +14,53 @@ namespace TypeDCore.Models.Data.PropertyDefinitions
         /// <summary>
         /// Creates a node for a color component property.
         /// </summary>
-        public ColorPropertyNode(Component component, Property property, Action<PropertyNode, object> value_changed) : base(component, property, value_changed) { }
+        public ColorPropertyNode(Component component, Property property, Action<PropertyNode, object> value_changed) : base(component, property, value_changed)
+        {
+            CopyCommand = new RelayCommand(() => _ = CopyAsync());
+            PasteCommand = new RelayCommand(() => _ = PasteAsync());
+        }
+
+        /// <summary>Copies the color to the clipboard as #AARRGGBB.</summary>
+        public System.Windows.Input.ICommand CopyCommand { get; }
+
+        /// <summary>Pastes a color from the clipboard into this property.</summary>
+        public System.Windows.Input.ICommand PasteCommand { get; }
+
+        private static Avalonia.Input.Platform.IClipboard GetClipboard()
+        {
+            var lifetime = Avalonia.Application.Current?.ApplicationLifetime as Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime;
+            return Avalonia.Controls.TopLevel.GetTopLevel(lifetime?.MainWindow)?.Clipboard;
+        }
+
+        private async System.Threading.Tasks.Task CopyAsync()
+        {
+            var clipboard = GetClipboard();
+            if (clipboard != null)
+                await Avalonia.Input.Platform.ClipboardExtensions.SetTextAsync(clipboard, AvaloniaColor.ToString());
+        }
+
+        private async System.Threading.Tasks.Task PasteAsync()
+        {
+            var clipboard = GetClipboard();
+            if (clipboard == null || ReadOnly)
+                return;
+            var text = (await Avalonia.Input.Platform.ClipboardExtensions.TryGetTextAsync(clipboard))?.Trim();
+            if (text != null && Avalonia.Media.Color.TryParse(text, out var parsed))
+                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                {
+                    AvaloniaColor = parsed;
+                    OnPropertyChanged(nameof(AvaloniaColor));
+                });
+        }
+
+        private sealed class RelayCommand : System.Windows.Input.ICommand
+        {
+            private readonly Action _action;
+            public RelayCommand(Action action) { _action = action; }
+            public event EventHandler CanExecuteChanged { add { } remove { } }
+            public bool CanExecute(object parameter) => true;
+            public void Execute(object parameter) => _action();
+        }
 
         /// <summary>
         /// Refreshes the value and notifies bindings of the Avalonia color.

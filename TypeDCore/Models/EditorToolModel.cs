@@ -12,6 +12,7 @@ namespace TypeDCore.Models
         public EditorTool ActiveTool { get; set; }
         public bool MultiSelectModifierDown { get; set; }
         public bool ShowBoundingBoxes { get; set; }
+        public bool SelectionInputSuspended { get; set; }
         public BoundingBoxDisplayMode BoundingBoxDisplayMode { get; set; }
         public Color SelectedBoundingBoxColor { get; set; }
         public Color UnselectedBoundingBoxColor { get; set; }

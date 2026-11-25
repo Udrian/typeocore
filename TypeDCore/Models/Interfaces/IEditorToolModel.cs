@@ -42,6 +42,11 @@ namespace TypeDCore.Models.Interfaces
         /// </summary>
         Color ChildBoundingBoxColor { get; set; }
         /// <summary>
+        /// Gets or sets a value indicating whether the selection overlay ignores pointer input, because
+        /// another editor overlay, such as a property editor, handles it.
+        /// </summary>
+        bool SelectionInputSuspended { get; set; }
+        /// <summary>
         /// Attempts to capture the pointer for an owner.
         /// </summary>
         bool TryCapturePointer(object owner);
