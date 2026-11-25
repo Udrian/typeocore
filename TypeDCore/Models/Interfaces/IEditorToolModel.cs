@@ -17,10 +17,16 @@ namespace TypeDCore.Models.Interfaces
         /// Gets or sets whether the multi-select modifier (Ctrl) is held down, updated by the viewer control.
         /// </summary>
         bool MultiSelectModifierDown { get; set; }
+        /// <summary>Gets or sets whether Shift is held to constrain resizing to a uniform scale.</summary>
+        bool UniformResizeModifierDown { get; set; }
         /// <summary>
         /// Gets or sets whether bounding boxes are drawn in the viewer.
         /// </summary>
         bool ShowBoundingBoxes { get; set; }
+        /// <summary>
+        /// Gets or sets whether moving and resizing snaps bounding boxes to the alignment of other nodes.
+        /// </summary>
+        bool SnapToAlignment { get; set; }
         /// <summary>
         /// Gets or sets which bounding boxes are drawn in the viewer.
         /// </summary>

@@ -97,10 +97,7 @@ namespace TypeDCore.ViewModel.Panels
             HookModel.Shoot(menuHook);
 
             var contextMenu = new ContextMenu() { Placement = PlacementMode.Pointer };
-            foreach (var menu in menuHook.Menu.Items)
-            {
-                ViewHelper.InitMenu(contextMenu, menu, this);
-            }
+            ViewHelper.InitContextMenu(contextMenu, menuHook.Menu, this);
 
             if (contextMenu.Items.Count > 0)
                 contextMenu.Open(viewerControl);
@@ -239,7 +236,10 @@ namespace TypeDCore.ViewModel.Panels
         string CameraHelpText()
         {
             var text = "Click to reset the view\n\n" +
-                "Pan: middle mouse drag, Space + left drag, or WASD / arrow keys (hold Shift for faster)\n" +
+                "Pan: middle mouse drag, Space + left drag, or WASD (hold Shift for faster); arrow keys when not nudging\n" +
+                "Move tool: arrow keys nudge selected nodes (hold Shift for a larger step)\n" +
+                "Resize: arrows grow an edge; hold Ctrl to shrink it\n" +
+                "Rotate: left / right arrows; Origin: arrow keys (hold Shift for larger steps)\n" +
                 "Zoom: mouse wheel at the pointer, or + / -";
             foreach (var id in new[] { "viewer.teleport-to-selection", "viewer.reset-view" })
             {

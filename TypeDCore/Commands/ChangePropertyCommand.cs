@@ -38,7 +38,17 @@ namespace TypeDCore.Commands
             return parameter?.Project != null
                 && (parameter.Component ?? NodeSelectionModel.SelectedNode) is { ReadOnly: false }
                 && parameter.Property != null
-                && !parameter.Property.ReadOnly;
+                && !parameter.Property.ReadOnly
+                && (parameter.AdditionalChanges == null || parameter.AdditionalChanges.All(change =>
+                    change != null && change.Project == parameter.Project && change.Component is { ReadOnly: false, Removed: false }
+                    && change.Property != null && !change.Property.ReadOnly
+                    && change.Component.Properties.Contains(change.Property)
+                    && change.AdditionalChanges == null && !change.ApplyToSelection))
+                && (parameter.AdditionalChanges == null || (!parameter.ApplyToSelection
+                    && (parameter.Component ?? NodeSelectionModel.SelectedNode) is { Removed: false } owner
+                    && owner.Properties.Contains(parameter.Property)
+                    && parameter.AdditionalChanges.Select(change => change.Property)
+                        .Append(parameter.Property).Distinct(ReferenceEqualityComparer.Instance).Count() == parameter.AdditionalChanges.Count + 1));
         }
 
         public override void Execute(ChangePropertyCommandData parameter)
@@ -47,32 +57,36 @@ namespace TypeDCore.Commands
             var component = parameter.Component ?? NodeSelectionModel.SelectedNode;
             var newValue = parameter.Value;
 
-            var targets = new List<(Component Component, Property Property, object Previous)> { (component, property, property.Value) };
+            var targets = new List<(Component Component, Property Property, object Previous, object Next)> { (component, property, property.Value, newValue) };
+            if (parameter.AdditionalChanges != null)
+                targets.AddRange(parameter.AdditionalChanges.Select(change => (change.Component, change.Property, change.Property.Value, change.Value)));
             if (parameter.ApplyToSelection)
             {
                 foreach (var other in NodeSelectionModel.SelectedNodes.Where(node => !ReferenceEquals(node, component) && !node.ReadOnly))
                 {
                     var otherProperty = other.Properties.FirstOrDefault(p => p.Name == property.Name && p.Type == property.Type);
                     if (otherProperty != null && !otherProperty.ReadOnly)
-                        targets.Add((other, otherProperty, otherProperty.Value));
+                        targets.Add((other, otherProperty, otherProperty.Value, newValue));
                 }
             }
 
-            targets = targets.Where(target => !Equals(target.Previous, newValue)).ToList();
+            targets = targets.Where(target => !Equals(target.Previous, target.Next)).ToList();
             if (targets.Count == 0)
                 return;
 
             foreach (var target in targets)
-                ApplyValue(parameter.Project, target.Component, target.Property, newValue);
+                ApplyValue(parameter.Project, target.Component, target.Property, target.Next);
 
             var description = targets.Count == 1
                 ? $"Changed {targets[0].Component.Name}.{property.Name} from {FormatValue(targets[0].Previous)} to {FormatValue(newValue)}."
-                : $"Changed {property.Name} to {FormatValue(newValue)} on {targets.Count} nodes.";
+                : parameter.AdditionalChanges != null
+                    ? $"Changed {targets.Count} properties together."
+                    : $"Changed {property.Name} to {FormatValue(newValue)} on {targets.Count} nodes.";
             CommandHistoryModel.Record(
                 "Change property",
                 description,
                 () => targets.ForEach(target => ApplyValue(parameter.Project, target.Component, target.Property, target.Previous)),
-                () => targets.ForEach(target => ApplyValue(parameter.Project, target.Component, target.Property, newValue)));
+                () => targets.ForEach(target => ApplyValue(parameter.Project, target.Component, target.Property, target.Next)));
         }
 
         private void ApplyValue(Project project, Component component, Property property, object value)

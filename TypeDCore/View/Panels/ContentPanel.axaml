@@ -23,6 +23,7 @@
                 <MenuItem Header="New Folder" Click="NewFolder_Click"/>
                 <MenuItem x:Name="FolderRenameItem" Header="Rename" InputGesture="F2" Click="FolderRename_Click"/>
                 <MenuItem Header="Show in Explorer" Click="FolderShowInExplorer_Click"/>
+                <Separator/>
                 <MenuItem x:Name="FolderDeleteItem" Header="Delete" InputGesture="Delete" Click="FolderDelete_Click"/>
             </ContextMenu>
         </TreeView.ContextMenu>
@@ -59,6 +60,7 @@
                 <ContextMenu Opening="ContextMenu_Opening">
                     <MenuItem Header="Rename" InputGesture="F2" Click="Rename_Click"/>
                     <MenuItem Header="Show in Explorer" Click="ShowInExplorer_Click"/>
+                    <Separator/>
                     <MenuItem Header="Delete" InputGesture="Delete" Click="Delete_Click"/>
                 </ContextMenu>
             </ListBox.ContextMenu>

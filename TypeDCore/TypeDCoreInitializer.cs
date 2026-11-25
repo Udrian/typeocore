@@ -413,7 +413,7 @@ namespace TypeDCore
             hook.Toolbar.Add("Tools", new ToolbarItem()
             {
                 Name = name,
-                ToolTip = name,
+                ToolTip = tool == EditorTool.Resize ? "Resize (hold Shift for uniform scaling)" : name,
                 IconData = iconData,
                 IsToggle = true,
                 IsChecked = () => EditorToolModel.ActiveTool == tool,
@@ -438,6 +438,21 @@ namespace TypeDCore
                     ApplyViewerDisplaySettings();
                 }
             });
+            hook.Toolbar.Add("View", new ToolbarItem()
+            {
+                Name = "Snap to Alignment",
+                ToolTip = "Snap bounding boxes to the alignment of other components while moving and resizing",
+                IconData = "M3,3 L3,21 M12,3 L12,21 M21,3 L21,21 M6,8 L18,8 L18,16 L6,16 Z",
+                IsToggle = true,
+                IsChecked = () => EditorToolModel.SnapToAlignment,
+                Click = _ =>
+                {
+                    var viewerSettingContext = SettingModel.GetContext<ViewerSettingContext>();
+                    viewerSettingContext.SnapToAlignment.Value = !EditorToolModel.SnapToAlignment;
+                    SettingModel.SetContext(viewerSettingContext);
+                    ApplyViewerDisplaySettings();
+                }
+            });
         }
 
         // The viewer overlays read the display state from the tool model each frame instead of merging setting contexts
@@ -445,6 +460,7 @@ namespace TypeDCore
         {
             var context = SettingModel.GetContext<ViewerSettingContext>();
             EditorToolModel.ShowBoundingBoxes = context.ShowBoundingBoxes.Value;
+            EditorToolModel.SnapToAlignment = context.SnapToAlignment.Value;
             EditorToolModel.BoundingBoxDisplayMode = context.BoundingBoxDisplay.Value;
             EditorToolModel.SelectedBoundingBoxColor = context.SelectedBoundingBoxColor.Value;
             EditorToolModel.UnselectedBoundingBoxColor = context.UnselectedBoundingBoxColor.Value;
@@ -539,6 +555,7 @@ namespace TypeDCore
             {
                 var component = hook.Node.Item as Component;
 
+                hook.Menu.Items.Add(new MenuItem { IsSeparator = true });
                 if(!ComponentModel.IsOfType(component, typeof(Game)))
                 {
                     hook.Menu.Items.Add(
@@ -593,6 +610,7 @@ namespace TypeDCore
                    );
                 }
 
+                hook.Menu.Items.Add(new MenuItem { IsSeparator = true });
                 hook.Menu.Items.AddRange(new List<MenuItem>()
                 {
                     new MenuItem()
@@ -731,11 +749,14 @@ namespace TypeDCore
                     }
                 });
 
+                hook.Menu.Items.Add(new MenuItem { IsSeparator = true });
                 hook.Menu.Items.AddRange(clipboardItems);
                 return;
             }
 
+            hook.Menu.Items.Add(new MenuItem { IsSeparator = true });
             hook.Menu.Items.AddRange(clipboardItems);
+            hook.Menu.Items.Add(new MenuItem { IsSeparator = true });
             var teleportTarget = hook.SelectedComponent;
             hook.Menu.Items.Add(
                 new MenuItem()
@@ -767,6 +788,7 @@ namespace TypeDCore
                 );
             }
 
+            hook.Menu.Items.Add(new MenuItem { IsSeparator = true });
             if (hook.SelectedComponent?.ReadOnly != true)
             {
                 hook.Menu.Items.Add(
@@ -851,6 +873,7 @@ namespace TypeDCore
                 );
             }
 
+            hook.Menu.Items.Add(new MenuItem { IsSeparator = true });
             hook.Menu.Items.AddRange(new List<MenuItem>()
             {
                 new MenuItem()
@@ -913,6 +936,7 @@ namespace TypeDCore
                 new MenuItem()
                 {
                     Name = "_Close",
+                    IsLast = true,
                     ClickParameter = "LoadedProject",
                     Click = (param) =>
                     {
@@ -966,6 +990,15 @@ namespace TypeDCore
                     Hooks.Shoot(new ViewerClearColorChangedHook {
                         Color = SettingModel.GetContext<ViewerSettingContext>().ClearColor.Value
                     });
+                }, "Viewer"),
+                new SettingItem("Shift Move Step", "Larger arrow-key step for move, resize and origin (units), and rotation (degrees), while holding Shift. Must be at least 1.", viewerSettingContext.ShiftMoveStep, (value) => {
+                    if (value is not int step || step < 1)
+                    {
+                        Resources.Get<ILogModel>().Log("Shift Move Step must be at least 1.");
+                        return;
+                    }
+                    viewerSettingContext.ShiftMoveStep.Value = step;
+                    SettingModel.SetContext(viewerSettingContext);
                 }, "Viewer"),
                 new SettingItem("Show Bounding Boxes", "Draws the bounding boxes of nodes in the viewer. The bounding boxes of selected nodes are always drawn.", viewerSettingContext.ShowBoundingBoxes, (value) => {
                     viewerSettingContext.ShowBoundingBoxes.Value = (bool)value;

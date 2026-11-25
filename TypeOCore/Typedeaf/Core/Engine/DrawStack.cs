@@ -18,6 +18,8 @@ namespace TypeOEngine.Typedeaf.Core
 
             private SortedDelayedList<IDrawable> Drawables { get; set; }
             private readonly object _sync = new();
+            private readonly Dictionary<IDrawable, long> _drawSequences = new(ReferenceEqualityComparer.Instance);
+            private long _nextDrawSequence;
             private readonly object _commandBufferSync = new();
             private readonly Stack<DrawCommandBuffer> _commandBufferPool = new();
 
@@ -86,18 +88,7 @@ namespace TypeOEngine.Typedeaf.Core
                 IDrawable[] visibleDrawables;
                 lock (_sync)
                 {
-                    var needSort = false;
-                    var lastDraworder = int.MinValue;
-                    foreach (var drawable in Drawables)
-                    {
-                        if(!needSort && lastDraworder > drawable.DrawOrder)
-                        {
-                            needSort = true;
-                        }
-                        lastDraworder = drawable.DrawOrder;
-                    }
-                    if(needSort)
-                        Drawables.Sort();
+                    SortDrawables();
 
                     var visibleCount = 0;
                     foreach(var drawable in Drawables)
@@ -149,7 +140,49 @@ namespace TypeOEngine.Typedeaf.Core
                 }*/
 
                 lock (_sync)
-                    Drawables.Process();
+                {
+                    if (Drawables.ProcessAndReportChanges())
+                    {
+                        var active = new HashSet<IDrawable>(Drawables, ReferenceEqualityComparer.Instance);
+                        foreach (var removed in _drawSequences.Keys.Where(drawable => !active.Contains(drawable)).ToList())
+                            _drawSequences.Remove(removed);
+                    }
+                }
+            }
+
+            private void SortDrawables()
+            {
+                for (var i = 1; i < Drawables.Count; i++)
+                {
+                    var previous = Drawables[i - 1];
+                    var current = Drawables[i];
+                    if (previous.DrawOrder < current.DrawOrder ||
+                        (previous.DrawOrder == current.DrawOrder && _drawSequences[previous] < _drawSequences[current]))
+                        continue;
+
+                    var sorted = Drawables.OrderBy(drawable => drawable.DrawOrder)
+                        .ThenBy(drawable => _drawSequences[drawable]).ToArray();
+                    for (var index = 0; index < sorted.Length; index++)
+                        Drawables[index] = sorted[index];
+                    return;
+                }
+            }
+
+            /// <summary>Returns the currently processed drawables in draw order, with ties ordered by insertion.</summary>
+            public IReadOnlyList<IDrawable> GetDrawablesInDrawOrder()
+            {
+                lock (_sync)
+                {
+                    SortDrawables();
+                    return Drawables.ToArray();
+                }
+            }
+
+            /// <summary>Returns the currently processed drawables in their insertion order.</summary>
+            public IReadOnlyList<IDrawable> GetDrawablesInInsertionOrder()
+            {
+                lock (_sync)
+                    return Drawables.OrderBy(drawable => _drawSequences[drawable]).ToArray();
             }
 
             private DrawCommandBuffer RentCommandBuffer(int itemCount)
@@ -186,7 +219,11 @@ namespace TypeOEngine.Typedeaf.Core
             {
                 if(drawable == null) return;
                 lock (_sync)
+                {
+                    if (!_drawSequences.ContainsKey(drawable))
+                        _drawSequences.Add(drawable, _nextDrawSequence++);
                     Drawables.Add(drawable);
+                }
             }
 
             /// <summary>Queues a drawable component to be removed from the stack.</summary>

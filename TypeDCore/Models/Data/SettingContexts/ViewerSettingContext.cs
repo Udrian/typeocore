@@ -14,6 +14,12 @@ namespace TypeDCore.Models.Data.SettingContexts
         /// <summary>Gets or sets whether bounding boxes are drawn in the viewer.</summary>
         public Setting<bool> ShowBoundingBoxes { get; set; } = new Setting<bool>(true);
 
+        /// <summary>Gets or sets whether moving and resizing snaps bounding boxes to the alignment of other nodes.</summary>
+        public Setting<bool> SnapToAlignment { get; set; } = new Setting<bool>(false);
+
+        /// <summary>Gets or sets the larger keyboard transform step used when Shift is held.</summary>
+        public Setting<int> ShiftMoveStep { get; set; } = new Setting<int>(10);
+
         /// <summary>Gets or sets which bounding boxes are drawn in the viewer.</summary>
         public Setting<BoundingBoxDisplayMode> BoundingBoxDisplay { get; set; } = new Setting<BoundingBoxDisplayMode>(BoundingBoxDisplayMode.All);
 
