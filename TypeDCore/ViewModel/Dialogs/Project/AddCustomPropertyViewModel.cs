@@ -23,6 +23,7 @@ namespace TypeDCore.ViewModel.Dialogs.Project
         public string Description { get; set; } = "";
         public List<TypeOption> Types { get; }
         public string Group { get; set; } = "General";
+        public List<string> Groups { get; }
         public List<string> AccessOptions { get; } = new List<string> { "Public", "Private", "Protected" };
         public string SelectedAccess { get; set; } = "Public";
 
@@ -83,7 +84,7 @@ namespace TypeDCore.ViewModel.Dialogs.Project
         private Component DefaultValueOwner { get; } = new Component();
 
         // Constructors
-        public AddCustomPropertyViewModel(Control element, IEnumerable<IPropertyDefinition> definitions, IEnumerable<string> takenNames) : base(element)
+        public AddCustomPropertyViewModel(Control element, IEnumerable<IPropertyDefinition> definitions, IEnumerable<string> takenNames, IEnumerable<Component> components, CustomProperty existing = null) : base(element)
         {
             // Only concrete types stored by value can be created and edited through the dialog.
             Types = definitions
@@ -92,7 +93,51 @@ namespace TypeDCore.ViewModel.Dialogs.Project
                 .OrderBy(option => option.Name)
                 .ToList();
             TakenNames = new HashSet<string>(takenNames ?? Enumerable.Empty<string>());
-            SelectedType = Types.FirstOrDefault();
+            Groups = GetGroups(components);
+            if (existing == null)
+            {
+                SelectedType = Types.FirstOrDefault();
+            }
+            else
+            {
+                PropertyName = existing.Name;
+                Description = existing.Description;
+                Group = existing.Group;
+                SelectedAccess = existing.Access.ToString();
+                SelectedType = Types.FirstOrDefault(option => option.Type.FullName == existing.TypeName);
+                if (DefaultValueNode != null)
+                {
+                    DefaultValueNode.Property.Value = existing.DefaultValue;
+                    DefaultValueNode.RefreshValue();
+                }
+            }
+        }
+
+        private static List<string> GetGroups(IEnumerable<Component> components)
+        {
+            var groups = new HashSet<string>(StringComparer.Ordinal);
+            var visited = new HashSet<Component>();
+            var pending = new Stack<Component>(components);
+            while (pending.Count > 0)
+            {
+                var component = pending.Pop();
+                if (component == null || !visited.Add(component))
+                    continue;
+
+                foreach (var group in component.Properties.Select(property => property.Group)
+                    .Concat(component.CustomProperties.Select(property => property.Group)))
+                {
+                    if (!string.IsNullOrWhiteSpace(group))
+                        groups.Add(group.Trim());
+                }
+
+                if (component.BaseInheritedComponent != null)
+                    pending.Push(component.BaseInheritedComponent);
+                foreach (var child in component.Children)
+                    pending.Push(child);
+            }
+            return groups.OrderBy(group => group, StringComparer.OrdinalIgnoreCase)
+                .ThenBy(group => group, StringComparer.Ordinal).ToList();
         }
 
         // Functions

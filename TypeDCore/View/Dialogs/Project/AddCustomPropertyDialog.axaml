@@ -5,19 +5,13 @@
         mc:Ignorable="d" d:DesignWidth="450" d:DesignHeight="640"
         xmlns:local="clr-namespace:TypeDCore.View.Dialogs.Project"
         x:Class="TypeDCore.View.Dialogs.Project.AddCustomPropertyDialog"
-        Width="450" Height="640"
+        Width="450" Height="640" MinWidth="300" MinHeight="220"
         Title="Add Property">
-    <Grid>
-        <DockPanel Margin="25,25,25,25">
-            <TextBlock DockPanel.Dock="Top" FontSize="32"><Run Text="Add Property"/></TextBlock>
-            <Separator DockPanel.Dock="Top" Margin="0,0,0,25"/>
-
-            <Grid DockPanel.Dock="Bottom" ColumnDefinitions="*,10,*">
-                <Button Grid.Column="0" Content="_Cancel" Height="50" FontSize="14" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Click="CancelButton_Click"/>
-                <Button Grid.Column="2" Content="_Add" Height="50" FontSize="14" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Click="AddButton_Click"/>
-            </Grid>
-
-            <StackPanel Orientation="Vertical" Margin="0,0,0,10">
+    <Grid Margin="25" RowDefinitions="Auto,Auto,*,Auto">
+        <TextBlock x:Name="dialogHeading" FontSize="32" Text="Add Property"/>
+        <Separator Grid.Row="1" Margin="0,0,0,25"/>
+        <ScrollViewer x:Name="propertyFields" Grid.Row="2" Margin="0,0,0,10" VerticalScrollBarVisibility="Auto">
+            <StackPanel Orientation="Vertical">
                 <Label FontSize="16" Content="_Name:" Target="{Binding ElementName=txtName}"/>
                 <TextBox x:Name="txtName" Margin="5,0,0,0" Text="{Binding PropertyName}"/>
 
@@ -35,13 +29,21 @@
                          AcceptsReturn="True" TextWrapping="Wrap" MinHeight="60" MaxHeight="120"/>
 
                 <Label FontSize="16" Content="_Group:" Target="{Binding ElementName=txtGroup}"/>
-                <TextBox x:Name="txtGroup" Margin="5,0,0,0" Text="{Binding Group}"/>
+                <AutoCompleteBox x:Name="txtGroup" Margin="5,0,0,0"
+                                 ItemsSource="{Binding Groups}" Text="{Binding Group, Mode=TwoWay}"
+                                 FilterMode="StartsWith" MinimumPrefixLength="0" IsTextCompletionEnabled="True"/>
 
                 <Label FontSize="16" Content="A_ccess:" Target="{Binding ElementName=cmbAccess}"/>
                 <ComboBox x:Name="cmbAccess" Margin="5,0,0,0" HorizontalAlignment="Stretch" ItemsSource="{Binding AccessOptions}" SelectedItem="{Binding SelectedAccess}"/>
 
-                <TextBlock Margin="5,10,0,0" Foreground="OrangeRed" TextWrapping="Wrap" Text="{Binding Error}" IsVisible="{Binding HasError}"/>
+                <TextBlock x:Name="validationError" Margin="5,10,0,0" Foreground="OrangeRed" TextWrapping="Wrap" Text="{Binding Error}" IsVisible="{Binding HasError}"/>
             </StackPanel>
-        </DockPanel>
+        </ScrollViewer>
+        <Grid x:Name="buttonPanel" Grid.Row="3" ColumnDefinitions="*,10,*">
+            <Button x:Name="cancelButton" Grid.Column="0" Content="_Cancel" Height="50" FontSize="14"
+                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Click="CancelButton_Click"/>
+            <Button x:Name="submitButton" Grid.Column="2" Content="_Add" Height="50" FontSize="14"
+                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Click="AddButton_Click"/>
+        </Grid>
     </Grid>
 </Window>

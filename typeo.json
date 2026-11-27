@@ -1,14 +1,16 @@
 {
   "name": "TypeOCore",
-  "version": "2.5.0",
+  "version": "2.6.0",
   "externals": [
     "Mock/Content/Lato-Black.ttf;test",
     "Mock/Content/texture.png;test"
   ],
   "dependencies": [
-    "Udrian@TypeD-2.6.0;dev",
+    "Udrian@TypeD-2.7.0;dev",
     "MathNet.Numerics-5.0.0;nuget",
     "MessageBox.Avalonia-12.1.0;nuget;dev",
+    "Microsoft.CodeAnalysis.CSharp.Workspaces-5.0.0;nuget;dev",
+    "Microsoft.CodeAnalysis.Workspaces.MSBuild-5.0.0;nuget;dev",
     "Avalonia-12.1.4;nuget;dev",
     "Avalonia.Desktop-12.1.4;nuget;dev",
     "Avalonia.Themes.Fluent-12.1.4;nuget;dev",

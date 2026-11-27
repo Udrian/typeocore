@@ -69,6 +69,8 @@ namespace TypeDCore
         TogglePublicNodeCommand TogglePublicNodeCommand { get; set; }
         ChangePropertyCommand ChangePropertyCommand { get; set; }
         AddCustomPropertyCommand AddCustomPropertyCommand { get; set; }
+        EditCustomPropertyCommand EditCustomPropertyCommand { get; set; }
+        RemoveCustomPropertyCommand RemoveCustomPropertyCommand { get; set; }
         OpenComponentCommand OpenComponentCommand { get; set; }
         CloseComponentCommand CloseComponentCommand { get; set; }
         OpenInExternalCommand OpenInExternalCommand { get; set; }
@@ -133,6 +135,8 @@ namespace TypeDCore
             TogglePublicNodeCommand = new TogglePublicNodeCommand(Resources);
             ChangePropertyCommand = new ChangePropertyCommand(Resources);
             AddCustomPropertyCommand = new AddCustomPropertyCommand(Resources);
+            EditCustomPropertyCommand = new EditCustomPropertyCommand(Resources);
+            RemoveCustomPropertyCommand = new RemoveCustomPropertyCommand(Resources);
             OpenComponentCommand = new OpenComponentCommand(project, Resources);
             CloseComponentCommand = new CloseComponentCommand(Resources);
             OpenInExternalCommand = new OpenInExternalCommand(project, Resources);
@@ -153,6 +157,7 @@ namespace TypeDCore
             Hooks.AddHook<NodeClipboardPositionHook>(PositionPastedNode);
             Hooks.AddHook<CreateComponentDialogHook>(CreateComponentDialogRequested);
             Hooks.AddHook<AddCustomPropertyDialogHook>(AddCustomPropertyDialogRequested);
+            Hooks.AddHook<PropertyContextMenuHook>(PropertyContextMenuRequested);
 
             // Settings
 
@@ -190,6 +195,8 @@ namespace TypeDCore
             TogglePublicNodeCommand.Dispose();
             ChangePropertyCommand.Dispose();
             AddCustomPropertyCommand.Dispose();
+            EditCustomPropertyCommand.Dispose();
+            RemoveCustomPropertyCommand.Dispose();
             OpenComponentCommand.Dispose();
             CloseComponentCommand.Dispose();
             OpenInExternalCommand.Dispose();
@@ -215,6 +222,7 @@ namespace TypeDCore
             Hooks.RemoveHook<NodeClipboardPositionHook>(PositionPastedNode);
             Hooks.RemoveHook<CreateComponentDialogHook>(CreateComponentDialogRequested);
             Hooks.RemoveHook<AddCustomPropertyDialogHook>(AddCustomPropertyDialogRequested);
+            Hooks.RemoveHook<PropertyContextMenuHook>(PropertyContextMenuRequested);
 
             // Settings
 
@@ -273,9 +281,29 @@ namespace TypeDCore
                 hook.Result = ShowCustomPropertyDialog(hook);
         }
 
+        void PropertyContextMenuRequested(PropertyContextMenuHook hook)
+        {
+            var parameter = new ChangePropertyCommandData
+            {
+                Project = hook.Project,
+                Component = hook.Component,
+                Property = hook.Property
+            };
+            if (EditCustomPropertyCommand.CanExecute(parameter))
+                hook.Menu.Items.Add(new MenuItem("Edit _Property",
+                    _ => EditorCommandRegistry.Execute("component.edit-custom-property", parameter)));
+            if (RemoveCustomPropertyCommand.CanExecute(parameter))
+                hook.Menu.Items.Add(new MenuItem("Remove _Property",
+                    _ => EditorCommandRegistry.Execute("component.remove-custom-property", parameter)));
+        }
+
         async Task<(CustomProperty Property, Type Type)?> ShowCustomPropertyDialog(AddCustomPropertyDialogHook hook)
         {
-            var dialog = new AddCustomPropertyDialog(hook.Definitions, hook.TakenNames);
+            var components = ComponentProvider.ListAll(Project)
+                .Concat(ComponentProvider.GetBaseTypeComponents())
+                .Concat(new[] { NodeSelectionModel.OpenedComponent, NodeSelectionModel.SelectedNode, NodeSelectionModel.SelectedComponentType })
+                .Where(component => component != null);
+            var dialog = new AddCustomPropertyDialog(hook.Definitions, hook.TakenNames, components);
             return await dialog.ShowDialog<bool>(TypeD.ViewModel.ViewModelBase.MainWindow) == true
                 ? (dialog.ViewModel.Build(), dialog.ViewModel.SelectedType.Type) : null;
         }
@@ -1146,6 +1174,15 @@ namespace TypeDCore
                 return;
             foreach (var property in componentType.GetProperties())
             {
+                if (hook.Component.IsRemovedCustomProperty(property.DeclaringType.FullName, property.Name))
+                    continue;
+                var declaring = hook.Component;
+                while (declaring != null && declaring.FullName != property.DeclaringType.FullName)
+                    declaring = declaring.BaseInheritedComponent;
+                if (declaring?.CustomProperties.Any(custom => custom.Name == property.Name
+                    && custom.Access != CustomPropertyAccess.Public) == true)
+                    continue;
+
                 var typeOPropertyAttribute = property.GetCustomAttribute<TypeOPropertyAttribute>(true);
 
                 if(typeOPropertyAttribute == null)

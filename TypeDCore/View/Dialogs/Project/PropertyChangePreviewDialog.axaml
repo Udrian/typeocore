@@ -1,0 +1,60 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="TypeDCore.View.Dialogs.Project.PropertyChangePreviewDialog"
+        Title="Confirm property changes" Width="1000" Height="650" WindowStartupLocation="CenterOwner">
+    <Grid RowDefinitions="Auto,*,Auto,Auto" Margin="16" RowSpacing="10">
+        <TextBlock x:Name="message" TextWrapping="Wrap"/>
+        <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto">
+            <StackPanel Spacing="8">
+                <TextBlock Text="Other affected components and property values" FontWeight="Bold"/>
+                <TextBlock x:Name="noComponentReferences" Text="No other component references." IsVisible="False"/>
+                <ItemsControl x:Name="componentGroups">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Margin="0,8,0,4" MinWidth="800" Spacing="4">
+                                <TextBlock Text="{Binding Name}" FontWeight="Bold"/>
+                                <Border BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}" BorderThickness="1">
+                                    <StackPanel>
+                                        <Grid ColumnDefinitions="240,170,*">
+                                            <TextBlock Grid.Column="0" Text="Node" FontWeight="Bold" Margin="6"/>
+                                            <TextBlock Grid.Column="1" Text="Current value" FontWeight="Bold" Margin="6"/>
+                                            <TextBlock Grid.Column="2" Text="New value" FontWeight="Bold" Margin="6"/>
+                                        </Grid>
+                                        <ItemsControl ItemsSource="{Binding Rows}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Grid ColumnDefinitions="240,170,*">
+                                                        <Border Grid.Column="0" BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}" BorderThickness="0,1,1,0">
+                                                            <TextBlock Text="{Binding NodePath}" TextWrapping="Wrap" Margin="6"/>
+                                                        </Border>
+                                                        <Border Grid.Column="1" BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}" BorderThickness="0,1,1,0">
+                                                            <TextBlock Text="{Binding OldValue}" TextWrapping="Wrap" Margin="6"/>
+                                                        </Border>
+                                                        <Border Grid.Column="2" BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}" BorderThickness="0,1,0,0">
+                                                            <StackPanel Margin="6" Spacing="4">
+                                                                <TextBlock Text="{Binding NewValue}" IsVisible="{Binding HasTextValue}" TextWrapping="Wrap"/>
+                                                                <ContentControl Content="{Binding Node}" ContentTemplate="{Binding Template}"
+                                                                                IsVisible="{Binding HasEditor}" HorizontalContentAlignment="Stretch"/>
+                                                            </StackPanel>
+                                                        </Border>
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <TextBlock x:Name="sourceHeading" Text="Affected or possible source references" FontWeight="Bold" Margin="0,8,0,0"/>
+                <ItemsControl x:Name="sources"/>
+            </StackPanel>
+        </ScrollViewer>
+        <TextBlock x:Name="error" Grid.Row="2" Foreground="OrangeRed" TextWrapping="Wrap"/>
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+            <Button Content="_Cancel" Click="Cancel_Click"/>
+            <Button x:Name="confirmButton" Content="_Apply" Click="Apply_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>

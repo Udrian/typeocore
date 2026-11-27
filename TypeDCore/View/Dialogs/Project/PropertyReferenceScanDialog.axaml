@@ -1,0 +1,10 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="TypeDCore.View.Dialogs.Project.PropertyReferenceScanDialog"
+        Title="Edit property" Width="420" SizeToContent="Height"
+        WindowStartupLocation="CenterOwner" CanResize="False">
+    <StackPanel Margin="20" Spacing="12">
+        <TextBlock x:Name="scanMessage" Text="Scanning the project for property references..." TextWrapping="Wrap"/>
+        <ProgressBar x:Name="scanProgress" Height="6" MinHeight="6" IsIndeterminate="True"/>
+    </StackPanel>
+</Window>

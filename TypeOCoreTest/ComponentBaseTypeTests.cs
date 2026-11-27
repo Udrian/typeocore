@@ -3,14 +3,25 @@
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
+using System.Text.Json.Serialization;
 using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Controls.Presenters;
+using Avalonia.Controls.Primitives;
+using Avalonia.Controls.Templates;
+using Avalonia.Interactivity;
+using Avalonia.Layout;
+using Avalonia.Themes.Fluent;
+using Avalonia.VisualTree;
 using TypeD;
 using TypeD.Code;
 using TypeD.Helpers;
 using TypeD.Models.Data;
+using TypeD.Models.Data.PropertyDefinitions;
 using TypeD.Models.Data.Hooks;
 using TypeD.Models.Interfaces;
 using TypeD.Models.Providers.Interfaces;
+using TypeD.ViewModel;
 using TypeDCore.Code.Drawable;
 using TypeDCore.Code.Entity;
 using TypeDCore.Code.Game;
@@ -18,7 +29,9 @@ using TypeDCore.Components;
 using TypeDCore.Models.Data.Hooks;
 using TypeDCore.Models.Data;
 using TypeDCore.Models.Data.PropertyDefinitions;
+using TypeDCore.View.Dialogs.Project;
 using TypeOEngine.Typedeaf.Core.Common;
+using TypeOEngine.Typedeaf.Core.Attributes;
 using TypeOEngine.Typedeaf.Core.Entities;
 using TypeOEngine.Typedeaf.Core.Entities.Drawables;
 
@@ -37,13 +50,683 @@ public class ComponentBaseTypeTests
     private const string DrawStackName = "TypeOEngine.Typedeaf.Core.Engine.DrawStack";
 
     [Fact]
+    public void AddPropertyGroups_IncludeComponentPropertiesAndCustomPropertiesAcrossTheTree()
+    {
+        var baseComponent = new Component();
+        baseComponent.Properties.Add(new Property { Group = "Transform" });
+        var first = new Component { BaseInheritedComponent = baseComponent };
+        first.Properties.Add(new Property { Group = "Stats" });
+        first.CustomProperties.Add(new CustomProperty { Group = "Private", Access = CustomPropertyAccess.Private });
+        var second = new Component();
+        second.CustomProperties.Add(new CustomProperty { Group = "Stats", Access = CustomPropertyAccess.Protected });
+        var child = new Component();
+        child.Properties.Add(new Property { Group = "Rendering" });
+        second.Children.Add(child);
+
+        var viewModel = typeof(CoreComponent).Assembly.GetType("TypeDCore.ViewModel.Dialogs.Project.AddCustomPropertyViewModel", throwOnError: true);
+        var getGroups = viewModel.GetMethod("GetGroups", BindingFlags.Static | BindingFlags.NonPublic);
+        var groups = (List<string>)getGroups.Invoke(null, new object[] { new[] { first, second, baseComponent } });
+
+        Assert.Equal(new[] { "Private", "Rendering", "Stats", "Transform" }, groups);
+    }
+
+    [Fact]
+    public void EditPropertyDialog_LoadsExistingValuesWithoutChangingOriginal()
+    {
+        var existing = new CustomProperty
+        {
+            Name = "Health",
+            TypeName = typeof(int).FullName,
+            DefaultValue = 42,
+            Description = "Hit points",
+            Group = "Stats",
+            Access = CustomPropertyAccess.Public
+        };
+        var viewModelType = typeof(CoreComponent).Assembly.GetType("TypeDCore.ViewModel.Dialogs.Project.AddCustomPropertyViewModel", throwOnError: true);
+        var viewModel = Activator.CreateInstance(viewModelType, new object[]
+        {
+            null, new IPropertyDefinition[] { new TestIntDefinition() }, Array.Empty<string>(), Array.Empty<Component>(), existing
+        });
+
+        Assert.True((bool)viewModelType.GetMethod("Validate").Invoke(viewModel, null));
+        var copy = (CustomProperty)viewModelType.GetMethod("Build").Invoke(viewModel, null);
+        Assert.Equal(existing.Name, copy.Name);
+        Assert.Equal(existing.TypeName, copy.TypeName);
+        Assert.Equal(existing.DefaultValue, copy.DefaultValue);
+        Assert.Equal(existing.Description, copy.Description);
+        Assert.Equal(existing.Group, copy.Group);
+        Assert.Equal(existing.Access, copy.Access);
+        Assert.NotSame(existing, copy);
+    }
+
+    [Fact]
+    public void EditPropertyDialog_DoesNotReplaceAnUnavailableType()
+    {
+        var existing = new CustomProperty { Name = "Health", TypeName = "Unavailable.Type", DefaultValue = 42 };
+        var viewModelType = typeof(CoreComponent).Assembly.GetType("TypeDCore.ViewModel.Dialogs.Project.AddCustomPropertyViewModel", throwOnError: true);
+        var viewModel = Activator.CreateInstance(viewModelType, new object[]
+        {
+            null, new IPropertyDefinition[] { new TestIntDefinition() }, Array.Empty<string>(), Array.Empty<Component>(), existing
+        });
+
+        Assert.False((bool)viewModelType.GetMethod("Validate").Invoke(viewModel, null));
+        Assert.Null(viewModelType.GetProperty("SelectedType").GetValue(viewModel));
+    }
+
+    [Fact]
+    public void RemoveCustomProperty_RemovesOverridesAndUndoRestoresThem()
+    {
+        var owner = new Component { Namespace = "Game", ClassName = "Actor" };
+        var custom = new CustomProperty { Name = "Health", TypeName = typeof(int).FullName, DefaultValue = 10 };
+        owner.CustomProperties.Add(custom);
+        var ownerProperty = new Property { Name = "Health", DeclaringTypeName = owner.FullName, Value = 10 };
+        owner.Properties.Add(ownerProperty);
+        owner.OveriddenProperties.Add(new Property(ownerProperty));
+
+        var derived = new Component { Namespace = "Game", ClassName = "Enemy", BaseInheritedComponent = owner };
+        var derivedProperty = new Property { Name = "Health", DeclaringTypeName = owner.FullName, Value = 25 };
+        derived.Properties.Add(derivedProperty);
+        derived.OveriddenProperties.Add(new Property { Name = "Health", DeclaringTypeName = owner.FullName, Value = 10 });
+        var unrelated = new Property { Name = "Health", DeclaringTypeName = "Game.Other", Value = 99 };
+        var other = new Component { Namespace = "Game", ClassName = "Other" };
+        other.Properties.Add(unrelated);
+        var parent = new Component { Namespace = "Game", ClassName = "Scene" };
+        var instance = new Component { Namespace = "Game", ClassName = "Actor" };
+        instance.CustomProperties.Add(new CustomProperty(custom));
+        var instanceProperty = new Property { Name = "Health", DeclaringTypeName = owner.FullName, Value = 30 };
+        instance.Properties.Add(instanceProperty);
+        instance.OveriddenProperties.Add(new Property { Name = "Health", DeclaringTypeName = owner.FullName, Value = 10 });
+        parent.Children.Add(instance);
+
+        var planType = typeof(CoreComponent).Assembly.GetType("TypeDCore.Commands.RemoveCustomPropertyPlan", throwOnError: true);
+        var plan = Activator.CreateInstance(planType, new object[] { new[] { owner, derived, other, parent }, owner.FullName, "Health" });
+        planType.GetMethod("Apply").Invoke(plan, null);
+
+        Assert.Empty(owner.CustomProperties);
+        Assert.Empty(owner.Properties);
+        Assert.Empty(derived.Properties);
+        Assert.Empty(derived.OveriddenProperties);
+        Assert.Empty(instance.Properties);
+        Assert.Empty(instance.CustomProperties);
+        Assert.Same(unrelated, Assert.Single(other.Properties));
+        Assert.True(owner.IsRemovedCustomProperty(owner.FullName, "Health"));
+        Assert.True(derived.IsRemovedCustomProperty(owner.FullName, "Health"));
+
+        planType.GetMethod("Undo").Invoke(plan, null);
+        Assert.Same(custom, Assert.Single(owner.CustomProperties));
+        Assert.Same(ownerProperty, Assert.Single(owner.Properties));
+        Assert.Same(derivedProperty, Assert.Single(derived.Properties));
+        Assert.Same(instanceProperty, Assert.Single(instance.Properties));
+        Assert.Equal(30, instance.Properties[0].Value);
+        Assert.Equal(10, Assert.Single(derived.OveriddenProperties).Value);
+        Assert.False(owner.IsRemovedCustomProperty(owner.FullName, "Health"));
+
+        planType.GetMethod("Apply").Invoke(plan, null);
+        Assert.Empty(owner.CustomProperties);
+        Assert.True(owner.IsRemovedCustomProperty(owner.FullName, "Health"));
+    }
+
+    [Fact]
+    public void EditCustomProperty_UpdatesOverridesAndRestoresThemOnUndo()
+    {
+        var owner = new Component { Namespace = "Game", ClassName = "Actor" };
+        var old = new CustomProperty { Name = "Health", TypeName = typeof(int).FullName, DefaultValue = 10, Group = "Stats" };
+        owner.CustomProperties.Add(old);
+        owner.Properties.Add(new Property { Name = old.Name, Type = typeof(int), DeclaringTypeName = owner.FullName, Value = 10 });
+        owner.OveriddenProperties.Add(new Property(owner.Properties[0]));
+        var derived = new Component { Namespace = "Game", ClassName = "Enemy", BaseInheritedComponent = owner };
+        derived.Properties.Add(new Property { Name = old.Name, Type = typeof(int), DeclaringTypeName = owner.FullName, Value = 25 });
+        derived.OveriddenProperties.Add(new Property { Name = old.Name, Type = typeof(int), DeclaringTypeName = owner.FullName, Value = 10 });
+        var replacement = new CustomProperty { Name = "HitPoints", TypeName = typeof(double).FullName, DefaultValue = 12.0, Group = "Combat" };
+        var type = typeof(CoreComponent).Assembly.GetType("TypeDCore.Commands.EditCustomPropertyPlan", throwOnError: true);
+        var plan = Activator.CreateInstance(type, new object[] { new[] { owner, derived }, owner.FullName, old, replacement, typeof(double) });
+
+        type.GetMethod("Apply").Invoke(plan, null);
+        Assert.Equal("HitPoints", old.Name);
+        Assert.Equal("Combat", owner.Properties[0].Group);
+        Assert.Equal(12.0, owner.Properties[0].Value);
+        Assert.Equal(25.0, derived.Properties[0].Value);
+        Assert.Equal(12.0, derived.OveriddenProperties[0].Value);
+        Assert.True(owner.IsRemovedCustomProperty(owner.FullName, "Health"));
+
+        type.GetMethod("Undo").Invoke(plan, null);
+        Assert.Equal("Health", old.Name);
+        Assert.Equal(10, owner.Properties[0].Value);
+        Assert.Equal(25, derived.Properties[0].Value);
+        Assert.False(owner.IsRemovedCustomProperty(owner.FullName, "Health"));
+    }
+
+    [Fact]
+    public void EditCustomProperty_UsesDefaultForUnconvertibleValues()
+    {
+        var owner = new Component { Namespace = "Game", ClassName = "Actor" };
+        var old = new CustomProperty { Name = "Label", TypeName = typeof(string).FullName, DefaultValue = "10" };
+        owner.CustomProperties.Add(old);
+        owner.Properties.Add(new Property { Name = old.Name, Type = typeof(string), DeclaringTypeName = owner.FullName, Value = "invalid" });
+        owner.OveriddenProperties.Add(new Property { Name = old.Name, Type = typeof(string), DeclaringTypeName = owner.FullName, Value = "10" });
+        var replacement = new CustomProperty { Name = "Label", TypeName = typeof(int).FullName, DefaultValue = 1 };
+        var type = typeof(CoreComponent).Assembly.GetType("TypeDCore.Commands.EditCustomPropertyPlan", throwOnError: true);
+        var plan = Activator.CreateInstance(type, new object[] { new[] { owner }, owner.FullName, old, replacement, typeof(int) });
+        type.GetMethod("Apply").Invoke(plan, null);
+        Assert.Equal(1, owner.Properties[0].Value);
+        type.GetMethod("Undo").Invoke(plan, null);
+        Assert.Equal("invalid", owner.Properties[0].Value);
+        type.GetMethod("Apply").Invoke(plan, null);
+        Assert.Equal(1, owner.Properties[0].Value);
+    }
+
+    [Fact]
+    public void EditCustomProperty_DefaultChangePreservesDifferentInheritedBaseline()
+    {
+        var owner = new Component { Namespace = "Game", ClassName = "Actor" };
+        var old = new CustomProperty { Name = "Health", TypeName = typeof(int).FullName, DefaultValue = 10 };
+        owner.CustomProperties.Add(old);
+        owner.Properties.Add(new Property { Name = old.Name, Type = typeof(int), DeclaringTypeName = owner.FullName, Value = 10 });
+        owner.OveriddenProperties.Add(new Property(owner.Properties[0]));
+        var derived = new Component { Namespace = "Game", ClassName = "Enemy", BaseInheritedComponent = owner };
+        derived.Properties.Add(new Property { Name = old.Name, Type = typeof(int), DeclaringTypeName = owner.FullName, Value = 8 });
+        derived.OveriddenProperties.Add(new Property(derived.Properties[0]));
+        var replacement = new CustomProperty { Name = old.Name, TypeName = old.TypeName, DefaultValue = 12 };
+        var type = typeof(CoreComponent).Assembly.GetType("TypeDCore.Commands.EditCustomPropertyPlan", throwOnError: true);
+        var plan = Activator.CreateInstance(type, new object[] { new[] { owner, derived }, owner.FullName, old, replacement, typeof(int) });
+
+        type.GetMethod("Apply").Invoke(plan, null);
+        Assert.Equal(12, owner.Properties[0].Value);
+        Assert.Equal(12, owner.OveriddenProperties[0].Value);
+        Assert.Equal(8, derived.Properties[0].Value);
+        Assert.Equal(8, derived.OveriddenProperties[0].Value);
+        Assert.False(derived.HasPropertyOverridesFor("Health"));
+
+        type.GetMethod("Undo").Invoke(plan, null);
+        Assert.Equal(10, owner.OveriddenProperties[0].Value);
+        Assert.Equal(8, derived.OveriddenProperties[0].Value);
+    }
+
+    [Fact]
+    public void EditCustomProperty_UpdatesUnconvertibleBaselinesWithoutExtraConfirmation()
+    {
+        var owner = new Component { Namespace = "Game", ClassName = "Actor" };
+        var old = new CustomProperty { Name = "Label", TypeName = typeof(string).FullName, DefaultValue = "0" };
+        owner.CustomProperties.Add(old);
+        owner.Properties.Add(new Property { Name = old.Name, Type = typeof(string), DeclaringTypeName = owner.FullName, Value = "invalid" });
+        owner.OveriddenProperties.Add(new Property { Name = old.Name, Type = typeof(string), DeclaringTypeName = owner.FullName, Value = "invalid" });
+        var derived = new Component { Namespace = "Game", ClassName = "Enemy", BaseInheritedComponent = owner };
+        derived.Properties.Add(new Property { Name = old.Name, Type = typeof(string), DeclaringTypeName = owner.FullName, Value = "25" });
+        derived.OveriddenProperties.Add(new Property { Name = old.Name, Type = typeof(string), DeclaringTypeName = owner.FullName, Value = "other" });
+        var replacement = new CustomProperty { Name = "Label", TypeName = typeof(int).FullName, DefaultValue = 3 };
+        var type = typeof(CoreComponent).Assembly.GetType("TypeDCore.Commands.EditCustomPropertyPlan", throwOnError: true);
+        var plan = Activator.CreateInstance(type, new object[] { new[] { owner, derived }, owner.FullName, old, replacement, typeof(int) });
+        var values = ((System.Collections.IEnumerable)type.GetProperty("Values").GetValue(plan)).Cast<object>();
+        var value = values.Single(item => ReferenceEquals(item.GetType().GetProperty("Property").GetValue(item), owner.Properties[0]));
+        value.GetType().GetProperty("Replacement").SetValue(value, 42);
+
+        type.GetMethod("Apply").Invoke(plan, null);
+        Assert.Equal(42, owner.Properties[0].Value);
+        Assert.Equal(42, owner.OveriddenProperties[0].Value);
+        Assert.False(owner.HasPropertyOverridesFor("Label"));
+        Assert.Equal(25, derived.Properties[0].Value);
+        Assert.Equal(3, derived.OveriddenProperties[0].Value);
+        Assert.True(derived.HasPropertyOverridesFor("Label"));
+
+        type.GetMethod("Undo").Invoke(plan, null);
+        Assert.Equal("invalid", owner.OveriddenProperties[0].Value);
+        Assert.Equal("other", derived.OveriddenProperties[0].Value);
+        type.GetMethod("Apply").Invoke(plan, null);
+        Assert.Equal(42, owner.OveriddenProperties[0].Value);
+        Assert.Equal(3, derived.OveriddenProperties[0].Value);
+    }
+
+    [Fact]
+    public void EditCustomProperty_RemovingPublicAccessRemovesValuesAndUndoRestoresThem()
+    {
+        var owner = new Component { Namespace = "Game", ClassName = "Actor" };
+        var old = new CustomProperty { Name = "Health", TypeName = typeof(int).FullName, DefaultValue = 10 };
+        owner.CustomProperties.Add(old);
+        owner.Properties.Add(new Property { Name = old.Name, Type = typeof(int), DeclaringTypeName = owner.FullName, Value = 20 });
+        owner.OveriddenProperties.Add(new Property { Name = old.Name, Type = typeof(int), DeclaringTypeName = owner.FullName, Value = 10 });
+        var replacement = new CustomProperty(old) { Access = CustomPropertyAccess.Private };
+        var type = typeof(CoreComponent).Assembly.GetType("TypeDCore.Commands.EditCustomPropertyPlan", throwOnError: true);
+        var plan = Activator.CreateInstance(type, new object[] { new[] { owner }, owner.FullName, old, replacement, typeof(int) });
+        type.GetMethod("Apply").Invoke(plan, null);
+        Assert.Empty(owner.Properties);
+        Assert.Empty(owner.OveriddenProperties);
+        Assert.Equal(CustomPropertyAccess.Private, old.Access);
+        type.GetMethod("Undo").Invoke(plan, null);
+        Assert.Equal(20, Assert.Single(owner.Properties).Value);
+        Assert.Equal(CustomPropertyAccess.Public, old.Access);
+    }
+
+    [Fact]
+    public void EditCustomProperty_RejectsConflictingDerivedProperty()
+    {
+        var owner = new Component { Namespace = "Game", ClassName = "Actor" };
+        var old = new CustomProperty { Name = "Health", TypeName = typeof(int).FullName, DefaultValue = 10 };
+        owner.CustomProperties.Add(old);
+        owner.Properties.Add(new Property { Name = old.Name, DeclaringTypeName = owner.FullName });
+        var derived = new Component { Namespace = "Game", ClassName = "Enemy", BaseInheritedComponent = owner };
+        derived.Properties.Add(new Property { Name = old.Name, DeclaringTypeName = owner.FullName });
+        derived.CustomProperties.Add(new CustomProperty { Name = "HitPoints", Access = CustomPropertyAccess.Private });
+        var replacement = new CustomProperty(old) { Name = "HitPoints" };
+        var type = typeof(CoreComponent).Assembly.GetType("TypeDCore.Commands.EditCustomPropertyPlan", throwOnError: true);
+        Assert.IsType<InvalidOperationException>(Assert.Throws<TargetInvocationException>(() =>
+            Activator.CreateInstance(type, new object[] { new[] { owner, derived }, owner.FullName, old, replacement, typeof(int) })).InnerException);
+    }
+
+    [Fact]
+    public async Task EditCustomProperty_RenamesOnlyBoundReferencesAndSupportsUndo()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), $"TypeOEditProperty-{Guid.NewGuid():N}");
+        var sourceDirectory = Path.Combine(directory, "Game");
+        var generatedDirectory = Path.Combine(directory, "TypeO", "code");
+        Directory.CreateDirectory(sourceDirectory);
+        Directory.CreateDirectory(generatedDirectory);
+        try
+        {
+            var projectFile = Path.Combine(sourceDirectory, "Game.csproj");
+            File.WriteAllText(projectFile, "<Project Sdk=\"Microsoft.NET.Sdk\"><PropertyGroup><TargetFramework>net10.0</TargetFramework></PropertyGroup><ItemGroup><Compile Include=\"..\\TypeO\\code\\*.cs\" /></ItemGroup></Project>");
+            var generated = Path.Combine(generatedDirectory, "Actor.typed.cs");
+            File.WriteAllText(generated, "namespace Game; public partial class Actor { public int Health { get; set; } }");
+            var source = Path.Combine(sourceDirectory, "Actor.cs");
+            const string original = "namespace Game; public partial class Actor { public int Get(Other other) => Health + other.Health; public string Text = \"Health\"; } public class Other { public int Health { get; set; } }";
+            File.WriteAllText(source, original);
+            var start = new System.Diagnostics.ProcessStartInfo("dotnet")
+            {
+                WorkingDirectory = sourceDirectory,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false
+            };
+            start.ArgumentList.Add("restore");
+            start.ArgumentList.Add(projectFile);
+            using var process = System.Diagnostics.Process.Start(start);
+            var output = await process.StandardOutput.ReadToEndAsync();
+            var errors = await process.StandardError.ReadToEndAsync();
+            await process.WaitForExitAsync();
+            Assert.True(process.ExitCode == 0, output + errors);
+
+            var project = (Project)RuntimeHelpers.GetUninitializedObject(typeof(Project));
+            typeof(Project).GetProperty("Location").SetValue(project, directory);
+            typeof(Project).GetProperty("ProjectName").SetValue(project, "Game");
+            var modulePath = typeof(CoreComponent).Assembly.Location;
+            var loader = new MemoryCompilerLoadContext(Path.GetDirectoryName(modulePath));
+            using var moduleStream = File.OpenRead(modulePath);
+            var module = loader.LoadFromStream(moduleStream);
+            var type = module.GetType("TypeDCore.Commands.PropertyCodeRename", throwOnError: true);
+            var task = (Task)type.GetMethod("CreateAsync").Invoke(null, new object[] { project, "Game.Actor", "Health", "HitPoints" });
+            await task;
+            var rename = task.GetType().GetProperty("Result").GetValue(task);
+            type.GetMethod("Apply").Invoke(rename, null);
+            Assert.Contains("=> HitPoints + other.Health", File.ReadAllText(source));
+            Assert.Contains("\"Health\"", File.ReadAllText(source));
+            Assert.Contains("int Health", File.ReadAllText(generated));
+            var renamedSource = File.ReadAllText(source);
+            File.AppendAllText(source, " // edited externally");
+            Assert.IsType<IOException>(Assert.Throws<TargetInvocationException>(() => type.GetMethod("Undo").Invoke(rename, null)).InnerException);
+            Assert.EndsWith("// edited externally", File.ReadAllText(source));
+            File.WriteAllText(source, renamedSource);
+            type.GetMethod("Undo").Invoke(rename, null);
+            Assert.Equal(original, File.ReadAllText(source));
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    private sealed class MemoryCompilerLoadContext : System.Runtime.Loader.AssemblyLoadContext
+    {
+        private readonly string Folder;
+        public MemoryCompilerLoadContext(string folder) => Folder = folder;
+
+        protected override Assembly Load(AssemblyName name)
+        {
+            if (name.Name.StartsWith("Microsoft.CodeAnalysis", StringComparison.Ordinal)
+                || name.Name.StartsWith("System.Composition", StringComparison.Ordinal))
+            {
+                var path = Path.Combine(Folder, name.Name + ".dll");
+                if (File.Exists(path))
+                {
+                    using var stream = File.OpenRead(path);
+                    return LoadFromStream(stream);
+                }
+            }
+            return null;
+        }
+    }
+
+    [Fact]
+    public void RemoveCustomProperty_OnlyOffersActionForOwnEditableCustomProperties()
+    {
+        var component = new Component { Namespace = "Game", ClassName = "Actor" };
+        component.CustomProperties.Add(new CustomProperty { Name = "Health" });
+        var property = new Property { Name = "Health", DeclaringTypeName = component.FullName };
+        component.Properties.Add(property);
+        var command = typeof(CoreComponent).Assembly.GetType("TypeDCore.Commands.RemoveCustomPropertyCommand", throwOnError: true);
+        var canRemove = command.GetMethod("CanRemove", BindingFlags.Static | BindingFlags.NonPublic);
+        bool CanRemove(Component owner, Property candidate) => (bool)canRemove.Invoke(null, new object[] { owner, candidate });
+
+        Assert.True(CanRemove(component, property));
+        property.DeclaringTypeName = "Game.Base";
+        Assert.False(CanRemove(component, property));
+        property.DeclaringTypeName = component.FullName;
+        component.ReadOnly = true;
+        Assert.False(CanRemove(component, property));
+        component.ReadOnly = false;
+        component.CustomProperties.Clear();
+        Assert.False(CanRemove(component, property));
+    }
+
+    [Fact]
+    public void PropertyContextMenu_OffersRemoveOnlyForOwnCustomProperty()
+    {
+        var initializerType = typeof(CoreComponent).Assembly.GetType("TypeDCore.TypeDCoreInitializer", throwOnError: true);
+        var initializer = Activator.CreateInstance(initializerType, nonPublic: true);
+        var commandType = typeof(CoreComponent).Assembly.GetType("TypeDCore.Commands.RemoveCustomPropertyCommand", throwOnError: true);
+        initializerType.GetProperty("RemoveCustomPropertyCommand", BindingFlags.Instance | BindingFlags.NonPublic)
+            .SetValue(initializer, RuntimeHelpers.GetUninitializedObject(commandType));
+        var editType = typeof(CoreComponent).Assembly.GetType("TypeDCore.Commands.EditCustomPropertyCommand", throwOnError: true);
+        initializerType.GetProperty("EditCustomPropertyCommand", BindingFlags.Instance | BindingFlags.NonPublic)
+            .SetValue(initializer, RuntimeHelpers.GetUninitializedObject(editType));
+        var component = new Component { Namespace = "Game", ClassName = "Actor" };
+        component.CustomProperties.Add(new CustomProperty { Name = "Health" });
+        var property = new Property { Name = "Health", DeclaringTypeName = component.FullName };
+        component.Properties.Add(property);
+        var hook = new PropertyContextMenuHook
+        {
+            Project = (Project)RuntimeHelpers.GetUninitializedObject(typeof(Project)),
+            Component = component,
+            Property = property
+        };
+        var handler = initializerType.GetMethod("PropertyContextMenuRequested", BindingFlags.Instance | BindingFlags.NonPublic);
+        handler.Invoke(initializer, new object[] { hook });
+        Assert.Equal(new[] { "Edit _Property", "Remove _Property" }, hook.Menu.Items.Select(item => item.Name));
+
+        property.DeclaringTypeName = "Game.Base";
+        var inherited = new PropertyContextMenuHook { Project = hook.Project, Component = component, Property = property };
+        handler.Invoke(initializer, new object[] { inherited });
+        Assert.Empty(inherited.Menu.Items);
+    }
+
+    [Fact]
+    public void RemovePropertyPreview_FindsPossibleSourceReferencesWithoutBuildOutput()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), $"TypeORemoveProperty-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(Path.Combine(directory, "bin"));
+        try
+        {
+            File.WriteAllText(Path.Combine(directory, "Actor.cs"), "actor.Health = 10;");
+            File.WriteAllText(Path.Combine(directory, "Other.cs"), "actor.HealthPoints = 10;");
+            File.WriteAllText(Path.Combine(directory, "bin", "Generated.cs"), "actor.Health = 10;");
+            var commandType = typeof(CoreComponent).Assembly.GetType("TypeDCore.Commands.RemoveCustomPropertyCommand", throwOnError: true);
+            var find = commandType.GetMethod("FindPossibleCodeReferences", BindingFlags.Static | BindingFlags.NonPublic);
+            var paths = (IEnumerable<string>)find.Invoke(null, new object[] { directory, "Health" });
+
+            Assert.Equal(new[] { "Actor.cs" }, paths.ToArray());
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void RemovedProperty_IsNotExtractedFromStaleCompiledType()
+    {
+        var type = typeof(CompiledPropertyOwner);
+        var component = new Component
+        {
+            Namespace = type.Namespace,
+            ClassName = type.FullName.Substring(type.Namespace.Length + 1)
+        };
+        component.RemovedCustomProperties.Add("Health");
+        var initializerType = typeof(CoreComponent).Assembly.GetType("TypeDCore.TypeDCoreInitializer", throwOnError: true);
+        var initializer = Activator.CreateInstance(initializerType, nonPublic: true);
+        var modelType = typeof(TypeDInit).Assembly.GetType("TypeD.Models.ComponentModel", throwOnError: true);
+        var propertyModelType = typeof(TypeDInit).Assembly.GetType("TypeD.Models.PropertyModel", throwOnError: true);
+        initializerType.GetProperty("ComponentModel", BindingFlags.Instance | BindingFlags.NonPublic)
+            .SetValue(initializer, Activator.CreateInstance(modelType, nonPublic: true));
+        initializerType.GetProperty("PropertyModel", BindingFlags.Instance | BindingFlags.NonPublic)
+            .SetValue(initializer, Activator.CreateInstance(propertyModelType, nonPublic: true));
+        var extract = initializerType.GetMethod("ExtractProperties");
+
+        var removed = new ExtractPropertiesHook(component);
+        extract.Invoke(initializer, new object[] { removed });
+        Assert.DoesNotContain(removed.Properties, property => property.Name == "Health");
+
+        component.CustomProperties.Add(new CustomProperty { Name = "Health" });
+        var readded = new ExtractPropertiesHook(component);
+        extract.Invoke(initializer, new object[] { readded });
+        Assert.Contains(readded.Properties, property => property.Name == "Health");
+
+        component.CustomProperties[0].Access = CustomPropertyAccess.Private;
+        var privateProperty = new ExtractPropertiesHook(component);
+        extract.Invoke(initializer, new object[] { privateProperty });
+        Assert.DoesNotContain(privateProperty.Properties, property => property.Name == "Health");
+    }
+
+    public sealed class CompiledPropertyOwner
+    {
+        [TypeOProperty]
+        public int Health { get; set; }
+    }
+
+    private sealed class TestIntDefinition : IPropertyDefinition
+    {
+        public Type Type => typeof(int);
+        public Type ValueType => typeof(int);
+        public Type PropertyTemplateType => typeof(int);
+        public JsonConverter JsonConverter => null;
+        public IDataTemplate CreateTemplate() => null;
+        public string ToCode(object value) => value.ToString();
+        public PropertyNode CreateNode(Component component, Property property, Action<PropertyNode, object> valueChanged)
+            => new Int32PropertyNode(component, property, valueChanged);
+    }
+
+    [Fact]
     public void EnginePropertyTemplates_LoadWithoutEditorAssembly()
     {
         AppBuilder.Configure<Application>().UsePlatformDetect().SetupWithoutStarting();
+        VerifyCustomPropertyDialogLayout();
+        var progressType = typeof(CoreComponent).Assembly.GetType("TypeDCore.View.Dialogs.Project.PropertyReferenceScanDialog", throwOnError: true);
+        var progress = (Window)Activator.CreateInstance(progressType);
+        Assert.True(progress.FindControl<ProgressBar>("scanProgress").IsIndeterminate);
+        Assert.Contains("Scanning the project for property references", progress.FindControl<TextBlock>("scanMessage").Text);
         Assert.NotNull(new Vec2PropertyDefinition().CreateTemplate());
         Assert.NotNull(new Vec2iPropertyDefinition().CreateTemplate());
         Assert.NotNull(new ColorPropertyDefinition().CreateTemplate());
         Assert.NotNull(new ContentPropertyDefinition(null).CreateTemplate());
+
+        var owner = new Component { Namespace = "Game", ClassName = "Actor" };
+        var original = new CustomProperty { Name = "Health", TypeName = typeof(string).FullName, DefaultValue = "10" };
+        owner.CustomProperties.Add(original);
+        owner.Properties.Add(new Property { Name = "Health", Type = typeof(string), DeclaringTypeName = owner.FullName, Value = "invalid" });
+        owner.OveriddenProperties.Add(new Property { Name = "Health", Type = typeof(string), DeclaringTypeName = owner.FullName, Value = "baseline-only" });
+        var scene = new Component { Namespace = "Game", ClassName = "Scene" };
+        var parent = new Component { Namespace = "Game", ClassName = "Container" };
+        parent.Properties.Add(new Property { Name = "Name", Value = "Enemies" });
+        parent.Properties.Add(new Property { Name = "ID", Value = "parent-id" });
+        var child = new Component { Namespace = "Game", ClassName = "Actor" };
+        child.Properties.Add(new Property { Name = "ID", Value = "child-id" });
+        child.Properties.Add(new Property { Name = "Health", Type = typeof(string), DeclaringTypeName = owner.FullName, Value = "20" });
+        child.OveriddenProperties.Add(new Property { Name = "Health", Type = typeof(string), DeclaringTypeName = owner.FullName, Value = "10" });
+        parent.Children.Add(child);
+        scene.Children.Add(parent);
+        var derived = new Component { Namespace = "Game", ClassName = "Enemy", BaseInheritedComponent = owner };
+        derived.Properties.Add(new Property { Name = "Health", Type = typeof(string), DeclaringTypeName = owner.FullName, Value = "invalid" });
+        var game = new Component { Namespace = "Game", ClassName = "Game" };
+        var sceneInstance = new Component { Namespace = "Game", ClassName = "Scene" };
+        var parentInstance = new Component { Namespace = "Game", ClassName = "Container" };
+        var inheritedChild = new Component { Namespace = "Game", ClassName = "Actor" };
+        inheritedChild.Properties.Add(new Property { Name = "Health", Type = typeof(string), DeclaringTypeName = owner.FullName, Value = "20" });
+        inheritedChild.OveriddenProperties.Add(new Property(inheritedChild.Properties[0]));
+        parentInstance.Children.Add(inheritedChild);
+        parentInstance.DefinitionChildren.Add(inheritedChild);
+        sceneInstance.Children.Add(parentInstance);
+        sceneInstance.DefinitionChildren.Add(parentInstance);
+        game.Children.Add(sceneInstance);
+        var roots = new[] { owner, scene, derived, game };
+        var dialogType = typeof(CoreComponent).Assembly.GetType("TypeDCore.View.Dialogs.Project.PropertyChangePreviewDialog", throwOnError: true);
+        var removeType = typeof(CoreComponent).Assembly.GetType("TypeDCore.Commands.RemoveCustomPropertyPlan", throwOnError: true);
+        var removePlan = Activator.CreateInstance(removeType, new object[] { roots, owner.FullName, "Health" });
+        var removal = (Window)Activator.CreateInstance(dialogType, BindingFlags.Instance | BindingFlags.NonPublic, null,
+            new object[] { "Game.Actor.Health", removePlan, new[] { "Actor.cs" } }, null);
+        Assert.Contains("Game.Actor.Health", removal.FindControl<TextBlock>("message").Text);
+        Assert.Contains("manual changes", removal.FindControl<TextBlock>("message").Text);
+        Assert.Equal("_Remove", removal.FindControl<Button>("confirmButton").Content);
+        var groups = removal.FindControl<ItemsControl>("componentGroups").ItemsSource.Cast<object>().ToList();
+        Assert.Equal(new[] { "Game.Scene", "Game.Enemy" },
+            groups.Select(group => (string)group.GetType().GetProperty("Name").GetValue(group)));
+        Assert.False(removal.FindControl<TextBlock>("noComponentReferences").IsVisible);
+        var sceneRows = ((System.Collections.IEnumerable)groups[0].GetType().GetProperty("Rows").GetValue(groups[0])).Cast<object>().ToList();
+        var sceneRow = Assert.Single(sceneRows);
+        var nodePath = (string)sceneRow.GetType().GetProperty("NodePath").GetValue(sceneRow);
+        Assert.Contains("Enemies", nodePath);
+        Assert.Contains("Actor", nodePath);
+        Assert.Contains(Environment.NewLine, nodePath);
+        Assert.DoesNotContain("-id", nodePath);
+        Assert.Equal("(removed)", sceneRow.GetType().GetProperty("NewValue").GetValue(sceneRow));
+        Assert.Single(removal.FindControl<ItemsControl>("sources").ItemsSource.Cast<object>());
+        var groupView = removal.FindControl<ItemsControl>("componentGroups").ItemTemplate.Build(groups[0]);
+        groupView.DataContext = groups[0];
+        groupView.Measure(new Size(900, 600));
+        groupView.Arrange(new Rect(0, 0, 900, 600));
+        Assert.Contains(groupView.GetVisualDescendants().OfType<TextBlock>(), text => text.Text == "Game.Scene");
+        var rowView = Assert.Single(groupView.GetVisualDescendants().OfType<ItemsControl>()).ItemTemplate.Build(sceneRow);
+        rowView.DataContext = sceneRow;
+        rowView.Measure(new Size(900, 600));
+        rowView.Arrange(new Rect(0, 0, 900, 600));
+        Assert.Contains(rowView.GetVisualDescendants().OfType<TextBlock>(), text => text.Text == nodePath);
+        Assert.Contains(rowView.GetVisualDescendants().OfType<TextBlock>(), text => text.Text == "(removed)");
+        var derivedRows = ((System.Collections.IEnumerable)groups[1].GetType().GetProperty("Rows").GetValue(groups[1])).Cast<object>().ToList();
+        Assert.Single(derivedRows);
+
+        inheritedChild.Properties[0].Value = "25";
+        var removalWithOverride = (Window)Activator.CreateInstance(dialogType, BindingFlags.Instance | BindingFlags.NonPublic, null,
+            new object[] { "Game.Actor.Health", removePlan, Array.Empty<string>() }, null);
+        var groupsWithOverride = removalWithOverride.FindControl<ItemsControl>("componentGroups").ItemsSource.Cast<object>().ToList();
+        var gameGroup = Assert.Single(groupsWithOverride, group => (string)group.GetType().GetProperty("Name").GetValue(group) == "Game.Game");
+        var gameRow = Assert.Single(((System.Collections.IEnumerable)gameGroup.GetType().GetProperty("Rows").GetValue(gameGroup)).Cast<object>());
+        Assert.Equal("25", gameRow.GetType().GetProperty("OldValue").GetValue(gameRow));
+        inheritedChild.Properties[0].Value = "20";
+
+        var replacement = new CustomProperty(original) { TypeName = typeof(int).FullName, DefaultValue = 1 };
+        var planType = typeof(CoreComponent).Assembly.GetType("TypeDCore.Commands.EditCustomPropertyPlan", throwOnError: true);
+        var plan = Activator.CreateInstance(planType, new object[] { roots, owner.FullName, original, replacement, typeof(int) });
+        var edit = (Window)Activator.CreateInstance(dialogType, BindingFlags.Instance | BindingFlags.NonPublic, null,
+            new object[] { plan, new TestIntDefinition(), Array.Empty<string>(), true, false, false }, null);
+        var editGroups = edit.FindControl<ItemsControl>("componentGroups").ItemsSource.Cast<object>().ToList();
+        Assert.DoesNotContain(editGroups, group => (string)group.GetType().GetProperty("Name").GetValue(group) == "Game.Game");
+        Assert.Equal(new[] { "Game.Scene", "Game.Enemy" },
+            editGroups.Select(group => (string)group.GetType().GetProperty("Name").GetValue(group)));
+        var editDerivedRows = ((System.Collections.IEnumerable)editGroups[1].GetType().GetProperty("Rows").GetValue(editGroups[1])).Cast<object>().ToList();
+        var valueRow = Assert.Single(editDerivedRows);
+        Assert.DoesNotContain("could not be converted", edit.FindControl<TextBlock>("message").Text);
+        Assert.Equal("invalid", valueRow.GetType().GetProperty("OldValue").GetValue(valueRow));
+        var valueNode = (PropertyNode)valueRow.GetType().GetProperty("Node").GetValue(valueRow);
+        Assert.Equal(1, valueNode.Value);
+        dialogType.GetMethod("Apply_Click", BindingFlags.Instance | BindingFlags.NonPublic)
+            .Invoke(edit, new object[] { edit, new RoutedEventArgs() });
+        Assert.True(string.IsNullOrEmpty(edit.FindControl<TextBlock>("error").Text));
+        Assert.Equal("invalid", owner.Properties[0].Value);
+        valueNode.Value = 15;
+        var editGroupView = edit.FindControl<ItemsControl>("componentGroups").ItemTemplate.Build(editGroups[1]);
+        editGroupView.DataContext = editGroups[1];
+        var editRow = Assert.Single(editGroupView.GetVisualDescendants().OfType<ItemsControl>()).ItemTemplate.Build(valueRow);
+        editRow.DataContext = valueRow;
+        Assert.Empty(editRow.GetVisualDescendants().OfType<CheckBox>());
+        planType.GetMethod("Apply").Invoke(plan, null);
+        Assert.Equal(1, owner.Properties.Single(property => property.Name == "Health").Value);
+        Assert.Equal(15, derived.Properties.Single(property => property.Name == "Health").Value);
+        Assert.Equal(1, owner.OveriddenProperties.Single(property => property.Name == "Health").Value);
+        Assert.Equal(20, child.Properties.Single(property => property.Name == "Health").Value);
+        Assert.Equal(20, inheritedChild.Properties[0].Value);
+        planType.GetMethod("Undo").Invoke(plan, null);
+        Assert.Equal("20", inheritedChild.Properties[0].Value);
+
+        var ownerOnlyPlan = Activator.CreateInstance(planType, new object[] { new[] { owner }, owner.FullName, original, replacement, typeof(int) });
+        var ownerOnlyEdit = (Window)Activator.CreateInstance(dialogType, BindingFlags.Instance | BindingFlags.NonPublic, null,
+            new object[] { ownerOnlyPlan, new TestIntDefinition(), Array.Empty<string>(), true, false, false }, null);
+        Assert.Empty(ownerOnlyEdit.FindControl<ItemsControl>("componentGroups").ItemsSource.Cast<object>());
+        Assert.True(ownerOnlyEdit.FindControl<TextBlock>("noComponentReferences").IsVisible);
+        planType.GetMethod("Apply").Invoke(ownerOnlyPlan, null);
+        Assert.Equal(1, owner.Properties[0].Value);
+        planType.GetMethod("Undo").Invoke(ownerOnlyPlan, null);
+
+        var ownerOnlyRemovePlan = Activator.CreateInstance(removeType, new object[] { new[] { owner }, owner.FullName, "Health" });
+        var ownerOnlyRemoval = (Window)Activator.CreateInstance(dialogType, BindingFlags.Instance | BindingFlags.NonPublic, null,
+            new object[] { "Game.Actor.Health", ownerOnlyRemovePlan, Array.Empty<string>() }, null);
+        Assert.Empty(ownerOnlyRemoval.FindControl<ItemsControl>("componentGroups").ItemsSource.Cast<object>());
+        Assert.True(ownerOnlyRemoval.FindControl<TextBlock>("noComponentReferences").IsVisible);
+        removeType.GetMethod("Apply").Invoke(ownerOnlyRemovePlan, null);
+        Assert.Empty(owner.Properties);
+        removeType.GetMethod("Undo").Invoke(ownerOnlyRemovePlan, null);
+        Assert.Equal("invalid", Assert.Single(owner.Properties).Value);
+    }
+
+    private static void VerifyCustomPropertyDialogLayout()
+    {
+        var theme = new FluentTheme();
+        Application.Current.Styles.Add(theme);
+        var resources = DispatchProxy.Create<IResourceModel, ResourceProxy>();
+        var notifyType = typeof(Component).Assembly.GetType("TypeD.Models.UINotifyModel", throwOnError: true);
+        ((ResourceProxy)resources).UINotify = (IUINotifyModel)Activator.CreateInstance(notifyType);
+        var resourceProperty = typeof(ViewModelBase).GetProperty(nameof(ViewModelBase.ResourceModel));
+        var previousResources = resourceProperty.GetValue(null);
+        resourceProperty.SetValue(null, resources);
+        try
+        {
+            var definitions = new IPropertyDefinition[] { new TestIntDefinition() };
+            foreach (var existing in new CustomProperty?[]
+            {
+                null,
+                new CustomProperty { Name = "Health", TypeName = typeof(int).FullName, DefaultValue = 10 }
+            })
+            {
+                var dialog = new AddCustomPropertyDialog(definitions, Array.Empty<string>(), Array.Empty<Component>(), existing);
+                var root = (Grid)dialog.Content;
+                var fields = dialog.FindControl<ScrollViewer>("propertyFields");
+                var footer = dialog.FindControl<Grid>("buttonPanel");
+                var cancel = dialog.FindControl<Button>("cancelButton");
+                var submit = dialog.FindControl<Button>("submitButton");
+                foreach (var size in new[] { new Size(300, 220), new Size(450, 640) })
+                {
+                    root.Measure(size);
+                    root.Arrange(new Rect(size));
+                    Assert.True(fields.Bounds.Bottom <= footer.Bounds.Top);
+                    Assert.True(footer.Bounds.Bottom <= root.Bounds.Height);
+                    foreach (var button in new[] { cancel, submit })
+                    {
+                        Assert.Equal(HorizontalAlignment.Center, button.HorizontalContentAlignment);
+                        Assert.Equal(VerticalAlignment.Center, button.VerticalContentAlignment);
+                        var presenter = Assert.Single(button.GetVisualDescendants().OfType<ContentPresenter>());
+                        var content = Assert.IsAssignableFrom<Control>(presenter.Child);
+                        var origin = content.TranslatePoint(new Point(), button);
+                        Assert.NotNull(origin);
+                        Assert.InRange(Math.Abs(origin.Value.X + content.Bounds.Width / 2 - button.Bounds.Width / 2), 0, 1);
+                        Assert.InRange(Math.Abs(origin.Value.Y + content.Bounds.Height / 2 - button.Bounds.Height / 2), 0, 1);
+                    }
+                    if (size.Height == 220)
+                    {
+                        var content = Assert.IsAssignableFrom<Control>(fields.Content);
+                        content.Measure(new Size(fields.Bounds.Width, double.PositiveInfinity));
+                        Assert.True(content.DesiredSize.Height > fields.Bounds.Height);
+                        Assert.Equal(ScrollBarVisibility.Auto, fields.VerticalScrollBarVisibility);
+                    }
+                }
+                if (existing == null)
+                {
+                    submit.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                    var error = dialog.FindControl<TextBlock>("validationError");
+                    Assert.True(error.IsVisible);
+                    Assert.Contains("Enter a property name", error.Text);
+                }
+            }
+        }
+        finally
+        {
+            resourceProperty.SetValue(null, previousResources);
+            Application.Current.Styles.Remove(theme);
+        }
     }
 
     [Fact]
@@ -480,11 +1163,17 @@ public class ComponentBaseTypeTests
     public class ResourceProxy : DispatchProxy
     {
         public IComponentProvider Provider { get; set; }
+        public IUINotifyModel UINotify { get; set; }
 
         protected override object Invoke(MethodInfo targetMethod, object[] args)
         {
             if (targetMethod.Name == nameof(IResourceModel.Get))
-                return targetMethod.GetGenericArguments()[0] == typeof(IComponentProvider) ? Provider : null;
+            {
+                var type = targetMethod.GetGenericArguments()[0];
+                if (type == typeof(IComponentProvider)) return Provider;
+                if (type == typeof(IUINotifyModel)) return UINotify;
+                return null;
+            }
             throw new NotSupportedException(targetMethod.Name);
         }
     }
