@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using TypeD.Models.Data;
+using TypeOEngine.Typedeaf.Core.Entities;
 using TypeOEngine.Typedeaf.Core.Entities.Interfaces;
 using TypeOEngine.Typedeaf.Core.Interfaces;
 
@@ -8,12 +9,16 @@ namespace TypeDCore.ViewModel.Dialogs.Project
     internal class CreateEntityTypeViewModel : CreateComponentTypeBaseViewModel
     {
         // Properties
-        public bool ComponentUpdatable { get; set; }
-        public bool ComponentDrawable { get; set; }
+        public bool ComponentUpdatable { get; set; } = true;
+        public bool ComponentDrawable { get; set; } = true;
         public bool? ComponentUpdatableSet { get; set; }
         public bool? ComponentDrawableSet { get; set; }
         public bool ComponentUpdatableEnabled { get; set; }
         public bool ComponentDrawableEnabled { get; set; }
+        public string UpdatableDescription => ComponentUpdatableEnabled
+            ? "Calls Update(dt) while active." : $"Inherited from {ParentComponent.ClassName}.";
+        public string DrawableDescription => ComponentDrawableEnabled
+            ? "Provides Draw(canvas); implement it to draw this entity." : $"Inherited from {ParentComponent.ClassName}.";
 
         // Constructors
         public CreateEntityTypeViewModel(Control element, TypeD.Models.Data.Project project, string @namespace, Component componentBaseType) : base(element, project, @namespace, componentBaseType)
@@ -27,9 +32,10 @@ namespace TypeDCore.ViewModel.Dialogs.Project
         {
             base.OnParentComponentSet(parentComponent);
 
-            if (parentComponent.Interfaces.Contains(typeof(IUpdatable)))
+            if (parentComponent.IsBasedOn(typeof(Entity)) && parentComponent.HasInterface(typeof(IUpdatable)))
             {
-                ComponentUpdatableSet = ComponentUpdatable;
+                if (!ComponentUpdatableSet.HasValue)
+                    ComponentUpdatableSet = ComponentUpdatable;
 
                 ComponentUpdatable = true;
                 ComponentUpdatableEnabled = false;
@@ -46,9 +52,10 @@ namespace TypeDCore.ViewModel.Dialogs.Project
                 ComponentUpdatableSet = null;
             }
 
-            if (parentComponent.Interfaces.Contains(typeof(IDrawable)))
+            if (parentComponent.IsBasedOn(typeof(Entity)) && parentComponent.HasInterface(typeof(IDrawable)))
             {
-                ComponentDrawableSet = ComponentDrawable;
+                if (!ComponentDrawableSet.HasValue)
+                    ComponentDrawableSet = ComponentDrawable;
 
                 ComponentDrawable = true;
                 ComponentDrawableEnabled = false;
@@ -64,6 +71,8 @@ namespace TypeDCore.ViewModel.Dialogs.Project
 
                 ComponentDrawableSet = null;
             }
+            OnPropertyChanged(nameof(UpdatableDescription));
+            OnPropertyChanged(nameof(DrawableDescription));
         }
     }
 }

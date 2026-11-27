@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
-using Window = Avalonia.Controls.Window;
 using Dock.Model.Core;
 using TypeD;
 using TypeD.Models;
@@ -55,6 +54,8 @@ namespace TypeDCore
         EditorToolModel EditorToolModel { get; set; }
 
         // Commands
+        CreateComponentTypeCommand CreateComponentTypeCommand { get; set; }
+        EditComponentTypeCommand EditComponentTypeCommand { get; set; }
         CreateEntityTypeCommand CreateEntityTypeCommand { get; set; }
         CreateSceneTypeCommand CreateSceneTypeCommand { get; set; }
         CreateDrawableTypeCommand CreateDrawableTypeCommand { get; set; }
@@ -96,6 +97,8 @@ namespace TypeDCore
             PropertyModel.Register(new ContentPropertyDefinition(Resources.Get<IContentProvider>()));
             Resources.Get<ISettingModel>().InitContext<ViewerSettingContext>(project);
             Resources.Get<ISettingModel>().InitContext<OutputSettingContext>(project);
+            Resources.Get<ISettingModel>().InitContext<ComponentCreationSettingContext>(project);
+            Resources.Get<ISettingModel>().InitContext<PropertyCreationSettingContext>(project);
 
             // Internal Models
             TypeDCoreProjectModel = new TypeDCoreProjectModel();
@@ -121,6 +124,8 @@ namespace TypeDCore
             ApplyViewerDisplaySettings();
 
             // Commands
+            CreateComponentTypeCommand = new CreateComponentTypeCommand(project, Resources);
+            EditComponentTypeCommand = new EditComponentTypeCommand(Resources);
             CreateEntityTypeCommand = new CreateEntityTypeCommand(project, Resources);
             CreateSceneTypeCommand = new CreateSceneTypeCommand(project, Resources);
             CreateDrawableTypeCommand = new CreateDrawableTypeCommand(project, Resources);
@@ -181,6 +186,8 @@ namespace TypeDCore
             foreach (var type in new[] { typeof(Vec2), typeof(Vec2i), typeof(Color), typeof(TypeOEngine.Typedeaf.Core.Engine.Contents.Content) })
                 PropertyModel.Unregister(type);
 
+            CreateComponentTypeCommand.Dispose();
+            EditComponentTypeCommand.Dispose();
             CreateEntityTypeCommand.Dispose();
             CreateSceneTypeCommand.Dispose();
             CreateDrawableTypeCommand.Dispose();
@@ -210,6 +217,8 @@ namespace TypeDCore
             Resources.Remove("TypeDCoreProjectModel");
             Resources.Remove("TypeDCoreRestoreModel");
             Resources.Remove("EditorToolModel");
+            SettingModel.RemoveContext<ComponentCreationSettingContext>();
+            SettingModel.RemoveContext<PropertyCreationSettingContext>();
 
             // Hooks
             Hooks.RemoveHook<ProjectCreateHook>();
@@ -243,9 +252,9 @@ namespace TypeDCore
         // Events
         void CreateComponentDialogRequested(CreateComponentDialogHook hook)
         {
-            var baseType = hook.BaseComponent?.FullName;
+            var baseType = hook.BaseComponent?.RootBaseComponent.FullName;
             if (hook.Project != Project || hook.Result != null ||
-                (baseType != typeof(TypeOEngine.Typedeaf.Core.Entities.Entity).FullName &&
+                (baseType != null && baseType != typeof(TypeOEngine.Typedeaf.Core.Entities.Entity).FullName &&
                  baseType != typeof(TypeOEngine.Typedeaf.Core.Entities.Drawables.Drawable).FullName &&
                  baseType != typeof(TypeOEngine.Typedeaf.Core.Scene).FullName))
                 return;
@@ -254,24 +263,24 @@ namespace TypeDCore
 
         async Task<ComponentCreationOptions> ShowComponentCreationDialog(CreateComponentDialogHook hook)
         {
-            Window dialog = hook.BaseComponent.FullName == typeof(TypeOEngine.Typedeaf.Core.Entities.Entity).FullName
-                ? new CreateEntityTypeDialog(hook.Project, hook.ComponentNamespace)
-                : hook.BaseComponent.FullName == typeof(TypeOEngine.Typedeaf.Core.Entities.Drawables.Drawable).FullName
-                    ? new CreateDrawableTypeDialog(hook.Project, hook.ComponentNamespace)
-                    : new CreateSceneTypeDialog(hook.Project, hook.ComponentNamespace);
+            var remembered = SettingModel.GetContext<ComponentCreationSettingContext>(SettingLevel.User);
+            var dialog = new CreateComponentTypeDialog(hook.Project, hook.ComponentNamespace, hook.BaseComponent,
+                ComponentProvider.GetBaseTypeComponents(), remembered);
             if (await dialog.ShowDialog<bool>(TypeD.ViewModel.ViewModelBase.MainWindow) != true)
                 return null;
-            var viewModel = (CreateComponentTypeBaseViewModel)dialog.DataContext;
-            var entity = viewModel as CreateEntityTypeViewModel;
+            var viewModel = dialog.ViewModel;
             return new ComponentCreationOptions
             {
                 Name = viewModel.ComponentName,
-                Namespace = viewModel.ComponentNamespace,
+                Namespace = viewModel.FullNamespace,
                 ParentComponent = viewModel.ParentComponent,
                 BaseType = viewModel.ComponentBaseType,
                 Icon = viewModel.IconName,
-                Updatable = entity?.ComponentUpdatable ?? false,
-                Drawable = entity?.ComponentDrawable ?? false
+                Updatable = viewModel.IsEntity && viewModel.ComponentUpdatable,
+                Drawable = viewModel.IsEntity && viewModel.ComponentDrawable,
+                RememberFields = viewModel.RememberFields,
+                CustomProperties = viewModel.CustomProperties.Select(property => new CustomProperty(property)).ToList(),
+                PropertyPreference = viewModel.PropertyPreference
             };
         }
 
@@ -297,15 +306,16 @@ namespace TypeDCore
                     _ => EditorCommandRegistry.Execute("component.remove-custom-property", parameter)));
         }
 
-        async Task<(CustomProperty Property, Type Type)?> ShowCustomPropertyDialog(AddCustomPropertyDialogHook hook)
+        async Task<(CustomProperty Property, Type Type, bool RememberFields)?> ShowCustomPropertyDialog(AddCustomPropertyDialogHook hook)
         {
             var components = ComponentProvider.ListAll(Project)
                 .Concat(ComponentProvider.GetBaseTypeComponents())
                 .Concat(new[] { NodeSelectionModel.OpenedComponent, NodeSelectionModel.SelectedNode, NodeSelectionModel.SelectedComponentType })
                 .Where(component => component != null);
-            var dialog = new AddCustomPropertyDialog(hook.Definitions, hook.TakenNames, components);
+            var settings = SettingModel.GetContext<PropertyCreationSettingContext>(SettingLevel.User);
+            var dialog = new AddCustomPropertyDialog(hook.Definitions, hook.TakenNames, components, null, settings);
             return await dialog.ShowDialog<bool>(TypeD.ViewModel.ViewModelBase.MainWindow) == true
-                ? (dialog.ViewModel.Build(), dialog.ViewModel.SelectedType.Type) : null;
+                ? (dialog.ViewModel.Build(), dialog.ViewModel.SelectedType.Type, dialog.ViewModel.RememberFields) : null;
         }
 
         void PositionPastedNode(NodeClipboardPositionHook hook)
@@ -379,29 +389,10 @@ namespace TypeDCore
                         new MenuItem()
                         {
                             Name = "_Create Component",
-                            Items = new List<MenuItem>()
+                            ClickParameter = "LoadedProject",
+                            Click = (param) =>
                             {
-                                new MenuItem() {
-                                    Name = "_Entity",
-                                    ClickParameter = "LoadedProject",
-                                    Click = (param) => {
-                                        EditorCommandRegistry.Execute("component.create-entity", new CreateComponentCommandData(param as Project, "Entities"));
-                                    }
-                                },
-                                new MenuItem() {
-                                    Name = "_Scene",
-                                    ClickParameter = "LoadedProject",
-                                    Click = (param) => {
-                                        EditorCommandRegistry.Execute("component.create-scene", new CreateComponentCommandData(param as Project, "Scenes"));
-                                    }
-                                },
-                                new MenuItem() {
-                                    Name = "_Drawable",
-                                    ClickParameter = "LoadedProject",
-                                    Click = (param) => {
-                                        EditorCommandRegistry.Execute("component.create-drawable", new CreateComponentCommandData(param as Project, "Drawables"));
-                                    }
-                                }
+                                EditorCommandRegistry.Execute("component.create", new CreateComponentCommandData(param as Project, null));
                             }
                         },
                         new MenuItem()
@@ -502,80 +493,22 @@ namespace TypeDCore
                 new MenuItem()
                 {
                     Name = "_Create Component",
-                    Items = new List<MenuItem>()
+                    ClickParameter = "LoadedProject",
+                    Click = (param) =>
                     {
-                        new MenuItem() {
-                            Name = "_Entity",
-                            ClickParameter = "LoadedProject",
-                            Click = (param) => {
-                                var @namespace = "Entities";
-                                if(hook.Node != null)
-                                {
-                                    Func<Node, string> getParentName = null;
-                                    getParentName = (node) => {
-                                        var retVal = "";
-                                        if(node.Parent != null)
-                                        {
-                                            retVal = getParentName(node.Parent);
-                                        }
-
-                                        if(node.Nodes.Count != 0)
-                                            return retVal == "" ? node.Name : $"{retVal}.{node.Name}";
-                                        return retVal;
-                                    };
-                                    @namespace = getParentName(hook.Node);
-                                }
-                                EditorCommandRegistry.Execute("component.create-entity", new CreateComponentCommandData(param as Project, @namespace));
-                            }
-                        },
-                        new MenuItem() {
-                            Name = "_Scene",
-                            ClickParameter = "LoadedProject",
-                            Click = (param) => {
-                                var @namespace = "Scenes";
-                                if(hook.Node != null)
-                                {
-                                    Func<Node, string> getParentName = null;
-                                    getParentName = (node) => {
-                                        var retVal = "";
-                                        if(node.Parent != null)
-                                        {
-                                            retVal = getParentName(node.Parent);
-                                        }
-
-                                        if(node.Nodes.Count != 0)
-                                            return retVal == "" ? node.Name : $"{retVal}.{node.Name}";
-                                        return retVal;
-                                    };
-                                    @namespace = getParentName(hook.Node);
-                                }
-                                EditorCommandRegistry.Execute("component.create-scene", new CreateComponentCommandData(param as Project, @namespace));
-                            }
-                        },
-                        new MenuItem() {
-                            Name = "_Drawable",
-                            ClickParameter = "LoadedProject",
-                            Click = (param) => {
-                                var @namespace = "Drawables";
-                                if(hook.Node != null)
-                                {
-                                    Func<Node, string> getParentName = null;
-                                    getParentName = (node) => {
-                                        var retVal = "";
-                                        if(node.Parent != null)
-                                        {
-                                            retVal = getParentName(node.Parent);
-                                        }
-
-                                        if(node.Nodes.Count != 0)
-                                            return retVal == "" ? node.Name : $"{retVal}.{node.Name}";
-                                        return retVal;
-                                    };
-                                    @namespace = getParentName(hook.Node);
-                                }
-                                EditorCommandRegistry.Execute("component.create-drawable", new CreateComponentCommandData(param as Project, @namespace));
-                            }
+                        string componentNamespace = null;
+                        if (hook.Node != null)
+                        {
+                            Func<Node, string> getParentName = null;
+                            getParentName = node =>
+                            {
+                                var parent = node.Parent != null ? getParentName(node.Parent) : "";
+                                return node.Nodes.Count != 0
+                                    ? (parent == "" ? node.Name : $"{parent}.{node.Name}") : parent;
+                            };
+                            componentNamespace = getParentName(hook.Node);
                         }
+                        EditorCommandRegistry.Execute("component.create", new CreateComponentCommandData(param as Project, componentNamespace));
                     }
                 }
             );
@@ -584,6 +517,29 @@ namespace TypeDCore
                 var component = hook.Node.Item as Component;
 
                 hook.Menu.Items.Add(new MenuItem { IsSeparator = true });
+                var root = component.RootBaseComponent.FullName;
+                if (root == typeof(TypeOEngine.Typedeaf.Core.Entities.Entity).FullName ||
+                    root == typeof(TypeOEngine.Typedeaf.Core.Scene).FullName ||
+                    root == typeof(TypeOEngine.Typedeaf.Core.Entities.Drawables.Drawable).FullName)
+                {
+                    if (!component.ReadOnly)
+                    {
+                        hook.Menu.Items.Add(new MenuItem
+                        {
+                            Name = "_Edit Component...",
+                            ClickParameter = "LoadedProject",
+                            Click = param => EditorCommandRegistry.Execute("component.edit-type",
+                                new ComponentCommandData { Component = component, Project = param as Project })
+                        });
+                    }
+                    hook.Menu.Items.Add(new MenuItem
+                    {
+                        Name = "Create _Derived Component",
+                        ClickParameter = "LoadedProject",
+                        Click = param => EditorCommandRegistry.Execute("component.create",
+                            new CreateComponentCommandData(param as Project, component.Namespace, component))
+                    });
+                }
                 if(!ComponentModel.IsOfType(component, typeof(Game)))
                 {
                     hook.Menu.Items.Add(
@@ -747,32 +703,10 @@ namespace TypeDCore
                     new MenuItem()
                     {
                         Name = "_Create Component",
-                        Items = new List<MenuItem>()
+                        ClickParameter = "LoadedProject",
+                        Click = (param) =>
                         {
-                            new MenuItem() {
-                                Name = "_Entity",
-                                ClickParameter = "LoadedProject",
-                                Click = (param) => {
-                                    var @namespace = "Entities";
-                                    EditorCommandRegistry.Execute("component.create-entity", new CreateComponentCommandData(param as Project, @namespace));
-                                }
-                            },
-                            new MenuItem() {
-                                Name = "_Scene",
-                                ClickParameter = "LoadedProject",
-                                Click = (param) => {
-                                    var @namespace = "Scenes";
-                                    EditorCommandRegistry.Execute("component.create-scene", new CreateComponentCommandData(param as Project, @namespace));
-                                }
-                            },
-                            new MenuItem() {
-                                Name = "_Drawable",
-                                ClickParameter = "LoadedProject",
-                                Click = (param) => {
-                                    var @namespace = "Drawables";
-                                    EditorCommandRegistry.Execute("component.create-drawable", new CreateComponentCommandData(param as Project, @namespace));
-                                }
-                            }
+                            EditorCommandRegistry.Execute("component.create", new CreateComponentCommandData(param as Project, null));
                         }
                     }
                 });
@@ -1169,10 +1103,43 @@ namespace TypeDCore
                 hook.Properties.Add(startingScene);
             }
 
-            var componentType = ComponentModel.GetType(hook.Component);
-            if(componentType == null)
-                return;
-            foreach (var property in componentType.GetProperties())
+            var chain = new List<Component>();
+            var visited = new HashSet<Component>();
+            for (var current = hook.Component; current != null; current = current.BaseInheritedComponent)
+            {
+                if (!visited.Add(current))
+                    throw new InvalidOperationException("The component inheritance chain contains a cycle.");
+                chain.Add(current);
+            }
+            var types = chain.Select(ComponentModel.GetType).ToList();
+            var componentType = types[0];
+            var staleInheritance = chain.Take(chain.Count - 1).Select((component, index) => index)
+                .Any(index => types[index] == null || types[index].BaseType?.FullName != chain[index + 1].FullName);
+            IEnumerable<PropertyInfo> reflected;
+            if (!staleInheritance)
+            {
+                if (componentType == null)
+                    return;
+                reflected = componentType.GetProperties();
+            }
+            else
+            {
+                var names = new HashSet<string>(StringComparer.Ordinal);
+                var properties = new List<PropertyInfo>();
+                for (var index = 0; index < chain.Count; index++)
+                {
+                    if (types[index] == null)
+                        continue;
+                    var flags = BindingFlags.Public | BindingFlags.Instance;
+                    if (index != chain.Count - 1)
+                        flags |= BindingFlags.DeclaredOnly;
+                    foreach (var property in types[index].GetProperties(flags))
+                        if (names.Add(property.Name))
+                            properties.Add(property);
+                }
+                reflected = properties;
+            }
+            foreach (var property in reflected)
             {
                 if (hook.Component.IsRemovedCustomProperty(property.DeclaringType.FullName, property.Name))
                     continue;
@@ -1207,8 +1174,10 @@ namespace TypeDCore
                         Group = typeOPropertyAttribute.Group,
                         DeclaringTypeName = property.DeclaringType.FullName,
                         Type = property.PropertyType,
-                        Value = typeOPropertyAttribute.DefaultValue ?? GetDefaultValue(componentType, property),
-                        FromComponent = property.DeclaringType.FullName == componentType.FullName ? hook.Component : ComponentProvider.Load(Project, property.DeclaringType.FullName),
+                        Value = typeOPropertyAttribute.DefaultValue ?? GetDefaultValue(
+                            componentType != null && property.DeclaringType.IsAssignableFrom(componentType)
+                                ? componentType : property.DeclaringType, property),
+                        FromComponent = declaring ?? ComponentProvider.Load(Project, property.DeclaringType.FullName),
                         ReadOnly = (property.CanWrite && property.GetSetMethod(true).IsPublic) ? false : true
                     });
                 }

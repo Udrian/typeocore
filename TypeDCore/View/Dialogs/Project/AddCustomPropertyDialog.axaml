@@ -39,10 +39,14 @@
                 <TextBlock x:Name="validationError" Margin="5,10,0,0" Foreground="OrangeRed" TextWrapping="Wrap" Text="{Binding Error}" IsVisible="{Binding HasError}"/>
             </StackPanel>
         </ScrollViewer>
-        <Grid x:Name="buttonPanel" Grid.Row="3" ColumnDefinitions="*,10,*">
-            <Button x:Name="cancelButton" Grid.Column="0" Content="_Cancel" Height="50" FontSize="14"
+        <Grid x:Name="buttonPanel" Grid.Row="3" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+            <CheckBox x:Name="rememberFields" IsChecked="{Binding RememberFields}" IsVisible="{Binding IsAdding}"
+                      HorizontalAlignment="Right" VerticalAlignment="Center">
+                <AccessText Text="_Remember fields" TextWrapping="Wrap"/>
+            </CheckBox>
+            <Button x:Name="cancelButton" Grid.Column="1" Content="_Cancel" Height="50" MinWidth="80" FontSize="14"
                     HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Click="CancelButton_Click"/>
-            <Button x:Name="submitButton" Grid.Column="2" Content="_Add" Height="50" FontSize="14"
+            <Button x:Name="submitButton" Grid.Column="2" Content="_Add" Height="50" MinWidth="80" FontSize="14"
                     HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Click="AddButton_Click"/>
         </Grid>
     </Grid>

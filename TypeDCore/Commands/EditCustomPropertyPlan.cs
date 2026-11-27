@@ -1,4 +1,6 @@
 using System.Globalization;
+using System.Text.Json;
+using TypeD.Helpers;
 using TypeD.Models.Data;
 
 namespace TypeDCore.Commands
@@ -25,6 +27,7 @@ namespace TypeDCore.Commands
         }
 
         private readonly List<PropertyChange> Properties = new();
+        private readonly List<(Component Component, Property Property, Property Baseline)> AddedProperties = new();
         private readonly List<(Component Component, CustomProperty Property, CustomProperty Original)> Definitions = new();
         private readonly List<Component> Tombstones = new();
         private readonly CustomProperty Old;
@@ -97,10 +100,39 @@ namespace TypeDCore.Commands
                 }
                 AddProperties(component.Properties, false);
                 AddProperties(component.OveriddenProperties, true);
+                if (Old.Access != CustomPropertyAccess.Public && New.Access == CustomPropertyAccess.Public
+                    && !component.Properties.Any(Matches))
+                {
+                    var visited = new HashSet<Component>();
+                    var declaring = component;
+                    while (declaring != null && visited.Add(declaring) && declaring.FullName != declaringType)
+                        declaring = declaring.BaseInheritedComponent;
+                    if (declaring != null && declaring.FullName == declaringType)
+                    {
+                        if (component.Properties.Any(property => property.Name == New.Name))
+                            throw new InvalidOperationException($"'{New.Name}' already exists on {component.FullName}.");
+                        var value = JsonSerializer.SerializeToElement(New.DefaultValue, newType, JSON.CreateOptions());
+                        var added = new Property
+                        {
+                            Name = New.Name,
+                            Description = New.Description,
+                            Group = New.Group,
+                            DeclaringTypeName = declaringType,
+                            Type = newType,
+                            Value = value.Deserialize(newType, JSON.CreateOptions()),
+                            FromComponent = declaring
+                        };
+                        AddedProperties.Add((component, added, new Property(added)
+                        {
+                            Value = value.Deserialize(newType, JSON.CreateOptions())
+                        }));
+                    }
+                }
             }
 
             var affected = Properties.Select(change => change.Component)
-                .Concat(Definitions.Select(change => change.Component)).Concat(Tombstones).ToHashSet();
+                .Concat(Definitions.Select(change => change.Component)).Concat(Tombstones)
+                .Concat(AddedProperties.Select(change => change.Component)).ToHashSet();
             AffectedComponents = affected.ToList();
             AffectedRoots = rootList.Where(root => RemoveCustomPropertyPlan.Traverse(root).Any(affected.Contains)).ToList();
         }
@@ -152,10 +184,20 @@ namespace TypeDCore.Commands
                     change.Property.Value = change.Value.FollowValue != null
                         ? change.Value.FollowValue.Replacement : change.Value.Replacement;
             }
+            foreach (var change in AddedProperties)
+            {
+                change.Component.Properties.Add(change.Property);
+                change.Component.OveriddenProperties.Add(change.Baseline);
+            }
         }
 
         public void Undo()
         {
+            foreach (var change in AddedProperties)
+            {
+                change.Component.Properties.Remove(change.Property);
+                change.Component.OveriddenProperties.Remove(change.Baseline);
+            }
             foreach (var entry in Definitions)
                 CopyCustom(entry.Original, entry.Property);
             foreach (var component in Tombstones)

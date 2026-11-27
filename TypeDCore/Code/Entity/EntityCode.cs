@@ -41,8 +41,8 @@ namespace TypeDCore.Code.Entity
         /// functionality.</param>
         public EntityCode(Component component) : base(component)
         {
-            Updatable = component.Interfaces.Contains(typeof(IUpdatable));
-            Drawable = component.Interfaces.Contains(typeof(IDrawable)); ;
+            Updatable = component.HasInterface(typeof(IUpdatable));
+            Drawable = component.HasInterface(typeof(IDrawable));
         }
 
         /// <summary>
@@ -70,7 +70,7 @@ namespace TypeDCore.Code.Entity
                 }));
             }
 
-            if (Updatable && (BaseInheritedComponent == null || !BaseInheritedComponent.Interfaces.Contains(typeof(IUpdatable))))
+            if (Updatable && (BaseInheritedComponent == null || !BaseInheritedComponent.HasInterface(typeof(IUpdatable))))
             {
                 AddFunction(new Function("public virtual void Update(double dt)", () => { }));
             }
@@ -81,7 +81,7 @@ namespace TypeDCore.Code.Entity
                 }));
             }
 
-            if (Drawable && (BaseInheritedComponent == null || !BaseInheritedComponent.Interfaces.Contains(typeof(IDrawable))))
+            if (Drawable && (BaseInheritedComponent == null || !BaseInheritedComponent.HasInterface(typeof(IDrawable))))
             {
                 AddUsing("TypeOEngine.Typedeaf.Core.Engine.Graphics.Interfaces");
                 AddFunction(new Function("public virtual void Draw(ICanvas canvas)", () => { }));

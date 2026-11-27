@@ -37,7 +37,10 @@ namespace TypeDCore.Models
         }
 
         // Functions
-        public Component CreateEntity(Project project, string className, string @namespace, Component parentComponent,         bool updatable, bool drawable, string icon = null)
+        public Component CreateEntity(Project project, string className, string @namespace, Component parentComponent, bool updatable, bool drawable, string icon = null)
+            => CreateEntity(project, className, @namespace, parentComponent, updatable, drawable, icon, null);
+
+        public Component CreateEntity(Project project, string className, string @namespace, Component parentComponent, bool updatable, bool drawable, string icon, List<CustomProperty> customProperties)
         {
             @namespace = ProjectModel.TransformNamespaceString(project, @namespace);
 
@@ -57,11 +60,15 @@ namespace TypeDCore.Models
                 @namespace,
                 parentComponent,
                 interfaces,
-                icon
+                icon,
+                customProperties
             ).Component;
         }
 
-        public Component         CreateScene(Project project, string className, string @namespace, Component parentComponent, string icon = null)
+        public Component CreateScene(Project project, string className, string @namespace, Component parentComponent, string icon = null)
+            => CreateScene(project, className, @namespace, parentComponent, icon, null);
+
+        public Component CreateScene(Project project, string className, string @namespace, Component parentComponent, string icon, List<CustomProperty> customProperties)
         {
             @namespace = ProjectModel.TransformNamespaceString(project, @namespace);
 
@@ -69,12 +76,17 @@ namespace TypeDCore.Models
                 project,
                 className,
                 @namespace,
-                        parentComponent,
-                        icon: icon
-                    ).Component;
+                parentComponent,
+                interfaces: null,
+                icon: icon,
+                customProperties: customProperties
+            ).Component;
         }
 
-        public Component         CreateDrawable(Project project, string className, string @namespace, Component parentComponent, string icon = null)
+        public Component CreateDrawable(Project project, string className, string @namespace, Component parentComponent, string icon = null)
+            => CreateDrawable(project, className, @namespace, parentComponent, icon, null);
+
+        public Component CreateDrawable(Project project, string className, string @namespace, Component parentComponent, string icon, List<CustomProperty> customProperties)
         {
             @namespace = ProjectModel.TransformNamespaceString(project, @namespace);
 
@@ -82,9 +94,11 @@ namespace TypeDCore.Models
                 project,
                 className,
                 @namespace,
-                        parentComponent,
-                        icon: icon
-                    ).Component;
+                parentComponent,
+                interfaces: null,
+                icon: icon,
+                customProperties: customProperties
+            ).Component;
         }
 
         public void SetStartScene(Project project, Component scene)

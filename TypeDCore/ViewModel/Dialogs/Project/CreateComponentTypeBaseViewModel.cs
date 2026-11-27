@@ -11,11 +11,25 @@ namespace TypeDCore.ViewModel.Dialogs.Project
     internal class CreateComponentTypeBaseViewModel : ViewModelBase
     {
         // Data
-        TypeD.Models.Data.Project Project { get; set; }
+        protected TypeD.Models.Data.Project Project { get; }
+        private string componentName;
+        private string componentNamespace;
 
         // Properties
-        public string ComponentName { get; set; }
-        public string ComponentNamespace { get; set; }
+        public string ComponentName { get => componentName; set => SetProperty(ref componentName, value); }
+        public string ComponentNamespace
+        {
+            get => componentNamespace;
+            set
+            {
+                if (SetProperty(ref componentNamespace, value) && NamespaceSelectionError != null)
+                {
+                    NamespaceSelectionError = null;
+                    OnPropertyChanged(nameof(NamespaceSelectionError));
+                }
+            }
+        }
+        public string NamespaceSelectionError { get; private set; }
 
         public string ParentComponentFullName { get; set; }
         public Component ParentComponent { get; set; }
@@ -24,7 +38,7 @@ namespace TypeDCore.ViewModel.Dialogs.Project
         /// <summary>
         /// The icon explicitly chosen for the new component, or <see langword="null"/> to inherit the one of the parent component.
         /// </summary>
-        public string IconName { get; private set; }
+        public string IconName { get; protected set; }
         public Avalonia.Media.Imaging.Bitmap IconPreview
         {
             get { return IconCache.Get(Project, IconName ?? ParentComponent?.ResolvedIcon); }
@@ -72,23 +86,47 @@ namespace TypeDCore.ViewModel.Dialogs.Project
             var files = await MainWindow.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
             {
                 Title = "Open Location Folder",
-                SuggestedStartLocation = await MainWindow.StorageProvider.TryGetFolderFromPathAsync(@$"{Project.ProjectSourcePath}\{ComponentNamespace.Replace(".", "\\")}"),
+                SuggestedStartLocation = await MainWindow.StorageProvider.TryGetFolderFromPathAsync(Project.ProjectSourcePath),
                 AllowMultiple = false
 
             });
 
             if (files.Count >= 1)
             {
-                ComponentNamespace = files[0].Path.AbsolutePath.Replace("\\", ".").Substring(@$"{Project.ProjectSourcePath}\".Length);
-                OnPropertyChanged(nameof(ComponentNamespace));
+                if (!TryGetNamespace(Project.ProjectSourcePath, files[0].Path.LocalPath, Project.ProjectName, out var selectedNamespace))
+                {
+                    NamespaceSelectionError = "Choose a folder inside the project source folder.";
+                }
+                else
+                {
+                    NamespaceSelectionError = null;
+                    ComponentNamespace = selectedNamespace;
+                }
+                OnPropertyChanged(nameof(NamespaceSelectionError));
             }
+        }
+
+        internal static bool TryGetNamespace(string sourceFolder, string selectedFolder, string projectName, out string componentNamespace)
+        {
+            var relative = Path.GetRelativePath(sourceFolder, selectedFolder);
+            if (Path.IsPathRooted(relative) || relative == ".." ||
+                relative.StartsWith(".." + Path.DirectorySeparatorChar, StringComparison.Ordinal))
+            {
+                componentNamespace = null;
+                return false;
+            }
+
+            componentNamespace = relative == "." ? projectName
+                : projectName + "." + relative.Replace(Path.DirectorySeparatorChar, '.').Replace(Path.AltDirectorySeparatorChar, '.');
+            return true;
         }
 
         public async Task OpenComponents()
         {
-            var filter = new FilterHelper { Filters = $"{ComponentBaseType};" };
+            var baseType = ComponentBaseType;
+            var filter = new FilterHelper { Filters = baseType, ExactMatch = true };
             var component = await ResourceModel.Get<IEditorDialogModel>().SelectComponentAsync(Project, filter);
-            if (component != null)
+            if (component != null && ComponentBaseType == baseType && component.RootBaseComponent.FullName == baseType)
             {
                 OnParentComponentSet(component);
                 OnPropertyChanged(nameof(ParentComponentFullName));
@@ -99,6 +137,8 @@ namespace TypeDCore.ViewModel.Dialogs.Project
         {
             ParentComponent = parentComponent;
             ParentComponentFullName = ParentComponent.FullName;
+            OnPropertyChanged(nameof(ParentComponent));
+            OnPropertyChanged(nameof(ParentComponentFullName));
             OnPropertyChanged(nameof(IconPreview));
             OnPropertyChanged(nameof(IconText));
         }
@@ -112,6 +152,13 @@ namespace TypeDCore.ViewModel.Dialogs.Project
                 OnPropertyChanged(nameof(IconPreview));
                 OnPropertyChanged(nameof(IconText));
             }
+        }
+
+        public void InheritIcon()
+        {
+            IconName = null;
+            OnPropertyChanged(nameof(IconPreview));
+            OnPropertyChanged(nameof(IconText));
         }
     }
 }

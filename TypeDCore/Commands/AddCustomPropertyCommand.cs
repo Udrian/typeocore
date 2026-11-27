@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
+using TypeD.Helpers;
 using TypeD.Commands;
 using TypeD.Models.Data;
 using TypeD.Models.Data.Hooks;
@@ -8,6 +10,7 @@ using TypeD.Models.Interfaces;
 using TypeD.Models.Providers.Interfaces;
 using TypeD.ViewModel;
 using TypeDCore.Commands.Data;
+using TypeDCore.Models.Data.SettingContexts;
 
 namespace TypeDCore.Commands
 {
@@ -66,6 +69,11 @@ namespace TypeDCore.Commands
 
         public override async void Execute(ComponentCommandData parameter)
         {
+            await ExecuteAsync(parameter);
+        }
+
+        internal async Task ExecuteAsync(ComponentCommandData parameter)
+        {
             var node = GetTargetNode(parameter);
             if (node == null)
                 return;
@@ -90,6 +98,8 @@ namespace TypeDCore.Commands
                 return;
             var custom = result.Value.Property;
             var type = result.Value.Type;
+            var defaultValueJson = result.Value.RememberFields
+                ? JsonSerializer.Serialize(custom.DefaultValue, type, JSON.CreateOptions()) : null;
 
             var targets = new List<Component> { definition };
             if (!ReferenceEquals(node, definition))
@@ -138,6 +148,23 @@ namespace TypeDCore.Commands
                 $"Added {custom.Access.ToString().ToLowerInvariant()} property {custom.Name} to {definition.FullName}.",
                 Revert,
                 Apply);
+            SavePreference(ResourceModel, custom, type, result.Value.RememberFields, defaultValueJson);
+        }
+
+        internal static void SavePreference(IResourceModel resources, CustomProperty custom, Type type, bool remember, string defaultValueJson)
+        {
+            var settings = resources.Get<ISettingModel>();
+            var creationSettings = settings.GetContext<PropertyCreationSettingContext>(SettingLevel.User);
+            creationSettings.RememberFields.Value = remember;
+            if (remember)
+            {
+                creationSettings.TypeName.Value = type.FullName;
+                creationSettings.DefaultValueJson.Value = defaultValueJson;
+                creationSettings.Description.Value = custom.Description;
+                creationSettings.Group.Value = custom.Group;
+                creationSettings.Access.Value = custom.Access;
+            }
+            settings.SetContext(creationSettings);
         }
 
         private void SaveDefinition(Project project, Component definition)

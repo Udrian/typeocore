@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using TypeD.Models.Data;
 using TypeDCore.ViewModel.Dialogs.Project;
+using TypeDCore.Models.Data.SettingContexts;
 
 namespace TypeDCore.View.Dialogs.Project
 {
@@ -37,9 +38,16 @@ namespace TypeDCore.View.Dialogs.Project
         /// <param name="components">Components whose property groups can be suggested.</param>
         /// <param name="existing">The property being edited, or null when adding.</param>
         public AddCustomPropertyDialog(IEnumerable<IPropertyDefinition> definitions, IEnumerable<string> takenNames, IEnumerable<Component> components, CustomProperty existing)
+            : this(definitions, takenNames, components, existing, new PropertyCreationSettingContext())
+        {
+        }
+
+        /// <summary>Creates a property dialog with remembered creation fields.</summary>
+        public AddCustomPropertyDialog(IEnumerable<IPropertyDefinition> definitions, IEnumerable<string> takenNames, IEnumerable<Component> components,
+            CustomProperty existing, PropertyCreationSettingContext settings)
         {
             InitializeComponent();
-            DataContext = ViewModel = new AddCustomPropertyViewModel(this, definitions, takenNames, components, existing);
+            DataContext = ViewModel = new AddCustomPropertyViewModel(this, definitions, takenNames, components, existing, settings);
             if (existing != null)
             {
                 Title = "Edit Property";

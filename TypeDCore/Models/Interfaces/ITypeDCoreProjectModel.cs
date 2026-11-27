@@ -11,15 +11,21 @@ namespace TypeDCore.Models.Interfaces
         /// <summary>
         /// Creates an entity component type in a project.
         /// </summary>
-        public Component CreateEntity(Project project, string className, string @namespace, Component parentComponent,         bool updatable, bool drawable, string icon = null);
+        public Component CreateEntity(Project project, string className, string @namespace, Component parentComponent, bool updatable, bool drawable, string icon = null);
+        /// <summary>Creates an entity with its custom properties.</summary>
+        public Component CreateEntity(Project project, string className, string @namespace, Component parentComponent, bool updatable, bool drawable, string icon, List<CustomProperty> customProperties);
         /// <summary>
         /// Creates a scene component type in a project.
         /// </summary>
-                public Component CreateScene(Project project, string className, string @namespace, Component parentComponent, string icon = null);
+        public Component CreateScene(Project project, string className, string @namespace, Component parentComponent, string icon = null);
+        /// <summary>Creates a scene with its custom properties.</summary>
+        public Component CreateScene(Project project, string className, string @namespace, Component parentComponent, string icon, List<CustomProperty> customProperties);
         /// <summary>
         /// Creates a drawable component type in a project.
         /// </summary>
-                public Component CreateDrawable(Project project, string className, string @namespace, Component parentComponent, string icon = null);
+        public Component CreateDrawable(Project project, string className, string @namespace, Component parentComponent, string icon = null);
+        /// <summary>Creates a drawable with its custom properties.</summary>
+        public Component CreateDrawable(Project project, string className, string @namespace, Component parentComponent, string icon, List<CustomProperty> customProperties);
         /// <summary>
         /// Sets the game's StartingScene property to the scene, adding the scene to the game when it is not already a child.
         /// </summary>

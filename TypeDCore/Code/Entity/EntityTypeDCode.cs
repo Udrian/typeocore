@@ -35,14 +35,14 @@ namespace TypeDCore.Code.Entity
                 }
             }));
 
-            if (Updatable && (BaseInheritedComponent == null || !BaseInheritedComponent.Interfaces.Contains(typeof(IUpdatable))))
+            if (Updatable && (BaseInheritedComponent == null || !BaseInheritedComponent.HasInterface(typeof(IUpdatable))))
             {
                 AddUsing("TypeOEngine.Typedeaf.Core.Interfaces");
                 AddInterface(typeof(IUpdatable));
                 AddProperty(new Property("public bool Pause"));
             }
 
-            if (Drawable && (BaseInheritedComponent == null || !BaseInheritedComponent.Interfaces.Contains(typeof(IDrawable))))
+            if (Drawable && (BaseInheritedComponent == null || !BaseInheritedComponent.HasInterface(typeof(IDrawable))))
             {
                 AddUsing("TypeOEngine.Typedeaf.Core.Entities.Interfaces");
                 AddInterface(typeof(IDrawable));

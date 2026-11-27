@@ -1,8 +1,10 @@
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
+using System.Text.Json;
 using TypeD.Helpers;
 using TypeD.Models.Data;
 using TypeD.ViewModel;
+using TypeDCore.Models.Data.SettingContexts;
 using TypeOEngine.Typedeaf.Core.Common;
 
 namespace TypeDCore.ViewModel.Dialogs.Project
@@ -26,6 +28,8 @@ namespace TypeDCore.ViewModel.Dialogs.Project
         public List<string> Groups { get; }
         public List<string> AccessOptions { get; } = new List<string> { "Public", "Private", "Protected" };
         public string SelectedAccess { get; set; } = "Public";
+        public bool IsAdding { get; }
+        public bool RememberFields { get; set; }
 
         private TypeOption _selectedType;
         public TypeOption SelectedType
@@ -84,7 +88,13 @@ namespace TypeDCore.ViewModel.Dialogs.Project
         private Component DefaultValueOwner { get; } = new Component();
 
         // Constructors
-        public AddCustomPropertyViewModel(Control element, IEnumerable<IPropertyDefinition> definitions, IEnumerable<string> takenNames, IEnumerable<Component> components, CustomProperty existing = null) : base(element)
+        public AddCustomPropertyViewModel(Control element, IEnumerable<IPropertyDefinition> definitions, IEnumerable<string> takenNames, IEnumerable<Component> components, CustomProperty existing = null)
+            : this(element, definitions, takenNames, components, existing, new PropertyCreationSettingContext())
+        {
+        }
+
+        public AddCustomPropertyViewModel(Control element, IEnumerable<IPropertyDefinition> definitions, IEnumerable<string> takenNames,
+            IEnumerable<Component> components, CustomProperty existing, PropertyCreationSettingContext settings) : base(element)
         {
             // Only concrete types stored by value can be created and edited through the dialog.
             Types = definitions
@@ -94,9 +104,26 @@ namespace TypeDCore.ViewModel.Dialogs.Project
                 .ToList();
             TakenNames = new HashSet<string>(takenNames ?? Enumerable.Empty<string>());
             Groups = GetGroups(components);
+            IsAdding = existing == null;
             if (existing == null)
             {
-                SelectedType = Types.FirstOrDefault();
+                RememberFields = settings.RememberFields.Value;
+                if (RememberFields && !string.IsNullOrEmpty(settings.TypeName.Value))
+                {
+                    Description = settings.Description.Value ?? "";
+                    Group = settings.Group.Value;
+                    SelectedAccess = settings.Access.Value.ToString();
+                    SelectedType = Types.FirstOrDefault(option => option.Type.FullName == settings.TypeName.Value);
+                    if (SelectedType == null)
+                        Error = "The remembered value type is unavailable. Select a value type.";
+                    else if (settings.DefaultValueJson.Value != null)
+                    {
+                        DefaultValueNode.Property.Value = JsonSerializer.Deserialize(settings.DefaultValueJson.Value, SelectedType.Type, JSON.CreateOptions());
+                        DefaultValueNode.RefreshValue();
+                    }
+                }
+                else
+                    SelectedType = Types.FirstOrDefault();
             }
             else
             {

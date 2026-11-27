@@ -23,5 +23,8 @@ namespace TypeDCore.Models.Data.DTO
         /// Gets or sets the parent <see cref="Component"/> of the current <see cref="Component"/>.
         /// </summary>
         public required Component ParentComponent { get; set; }
+
+        /// <summary>Gets or sets the custom properties to declare on the new component.</summary>
+        public List<CustomProperty> CustomProperties { get; set; } = new();
     }
 }

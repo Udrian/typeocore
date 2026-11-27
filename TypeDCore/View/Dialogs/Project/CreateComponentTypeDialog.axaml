@@ -1,0 +1,82 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:converters="using:Avalonia.Data.Converters"
+        x:Class="TypeDCore.View.Dialogs.Project.CreateComponentTypeDialog"
+        Title="Create Component" Width="560" Height="720" MinWidth="320" MinHeight="280">
+    <Grid RowDefinitions="Auto,*,Auto" Margin="25" RowSpacing="12">
+        <TextBlock Name="ComponentHeading" Text="Create Component" FontSize="26"/>
+        <ScrollViewer Name="ComponentFields" Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Spacing="6" Margin="0,0,24,0">
+                <Label Content="_Type:" Target="{Binding ElementName=RootType}"/>
+                <ComboBox Name="RootType" ItemsSource="{Binding RootTypes}" SelectedItem="{Binding SelectedRoot}" HorizontalAlignment="Stretch">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate><TextBlock Text="{Binding ClassName}"/></DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+                <Label Content="_Name:" Target="{Binding ElementName=ComponentName}"/>
+                <TextBox Name="ComponentName" Text="{Binding ComponentName}"/>
+                <Label Name="NamespaceLabel" Content="N_amespace:" Target="{Binding ElementName=ComponentNamespace}"/>
+                <Grid Name="NamespaceRow" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                    <AutoCompleteBox Name="ComponentNamespace" Text="{Binding ComponentNamespace, Mode=TwoWay}"
+                                     ItemsSource="{Binding NamespaceSuggestions}" FilterMode="Contains"
+                                     MinimumPrefixLength="0" IsTextCompletionEnabled="True"/>
+                    <Button Grid.Column="1" Content="_Browse..." Click="OpenNamespace_Click"/>
+                </Grid>
+                <TextBlock Name="NamespaceError" Text="{Binding NamespaceSelectionError}" Foreground="OrangeRed" TextWrapping="Wrap"
+                           IsVisible="{Binding NamespaceSelectionError, Converter={x:Static converters:ObjectConverters.IsNotNull}}"/>
+                <Label Name="BaseTypeLabel" Content="_Base type:" Target="{Binding ElementName=ParentComponent}"/>
+                <Grid Name="BaseTypeRow" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                    <StackPanel>
+                        <AutoCompleteBox Name="ParentComponent" Text="{Binding BaseTypeText, Mode=TwoWay}"
+                                         ItemsSource="{Binding BaseTypeSuggestions}" FilterMode="Contains"
+                                         MinimumPrefixLength="0" IsTextCompletionEnabled="True"
+                                         LostFocus="BaseType_LostFocus" DropDownClosed="BaseType_DropDownClosed"/>
+                        <TextBlock Text="{Binding ParentComponent.Namespace}" Opacity="0.75" TextWrapping="Wrap" Margin="0,6,0,0"/>
+                    </StackPanel>
+                    <Button Grid.Column="1" Content="_Choose..." Click="OpenParent_Click" VerticalAlignment="Top"/>
+                </Grid>
+                <Label Content="_Icon:" Target="{Binding ElementName=OpenIcon}"/>
+                <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8">
+                    <Image Source="{Binding IconPreview}" Width="24" Height="24"/>
+                    <TextBlock Grid.Column="1" Text="{Binding IconText}" VerticalAlignment="Center"/>
+                    <Button Name="OpenIcon" Grid.Column="2" Content="Choose..." Click="OpenIcon_Click"/>
+                    <Button Grid.Column="3" Content="Inherit" Click="InheritIcon_Click"/>
+                </Grid>
+                <StackPanel Name="EntityOptions" IsVisible="{Binding IsEntity}" Spacing="8" Margin="0,8,0,0">
+                    <TextBlock Text="Entity capabilities" FontWeight="SemiBold"/>
+                    <CheckBox Content="_Update this entity" IsChecked="{Binding ComponentUpdatable}" IsEnabled="{Binding ComponentUpdatableEnabled}"/>
+                    <TextBlock Text="{Binding UpdatableDescription}" Opacity="0.75" TextWrapping="Wrap" Margin="24,0,0,0"/>
+                    <CheckBox Content="_Draw this entity" IsChecked="{Binding ComponentDrawable}" IsEnabled="{Binding ComponentDrawableEnabled}"/>
+                    <TextBlock Text="{Binding DrawableDescription}" Opacity="0.75" TextWrapping="Wrap" Margin="24,0,0,0"/>
+                </StackPanel>
+                <TextBlock Text="Custom properties" FontWeight="SemiBold" Margin="0,10,0,0"/>
+                <TextBlock Text="Inherited properties are read-only." Opacity="0.75"/>
+                <ListBox Name="CustomProperties" ItemsSource="{Binding PropertyRows}" SelectedItem="{Binding SelectedProperty}"
+                         MinHeight="80" MaxHeight="180" HorizontalAlignment="Stretch">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Margin="0,2">
+                                <TextBlock TextWrapping="Wrap"><Run Text="{Binding Property.Name}" FontWeight="SemiBold"/><Run Text="{Binding InheritedFrom}"/></TextBlock>
+                                <TextBlock Text="{Binding Details}" Opacity="0.75" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+                <WrapPanel Orientation="Horizontal">
+                    <Button Content="_Add..." Click="AddProperty_Click" Margin="0,0,8,0"/>
+                    <Button Name="EditCustomProperty" Content="_Edit..." Click="EditProperty_Click" IsEnabled="{Binding CanEditDraftProperty}" Margin="0,0,8,0"/>
+                    <Button Name="RemoveCustomProperty" Content="_Remove" Click="RemoveProperty_Click" IsEnabled="{Binding CanEditDraftProperty}"/>
+                </WrapPanel>
+                <TextBlock Text="{Binding ValidationError}" Foreground="OrangeRed" TextWrapping="Wrap"/>
+            </StackPanel>
+        </ScrollViewer>
+        <Grid Name="CreationFooter" Grid.Row="2" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+            <CheckBox Name="RememberFields" IsChecked="{Binding RememberFields}"
+                      HorizontalAlignment="Right" VerticalAlignment="Center">
+                <AccessText Text="_Remember fields" TextWrapping="Wrap"/>
+            </CheckBox>
+            <Button Name="CancelButton" Grid.Column="1" Content="_Cancel" MinWidth="80" HorizontalContentAlignment="Center" IsCancel="True" Click="Cancel_Click"/>
+            <Button Name="CreateButton" Grid.Column="2" Content="_Create" MinWidth="80" HorizontalContentAlignment="Center" IsDefault="True" Click="Create_Click"/>
+        </Grid>
+    </Grid>
+</Window>
